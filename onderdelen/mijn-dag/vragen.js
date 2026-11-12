@@ -156,9 +156,12 @@ const vItem = s => {
   const m = dagenCleanRx.exec(s); if(m) return m[1] + (m[1] === "1" ? " day clean" : " days clean");
   return ITEM_EN[s] || s;
 };
+// hoofdletter-ongevoelig: "’s Avonds" en "’s avonds" (of "Called my sponsor" / "called my sponsor") zijn hetzelfde knopje
+const ITEM_LC = {};
+Object.keys(ITEM_EN).forEach(nl => { ITEM_LC[nl.toLowerCase()] = nl; ITEM_LC[ITEM_EN[nl].toLowerCase()] = ITEM_LC[ITEM_EN[nl].toLowerCase()] || nl; });
 const nlItem = s => {
   const m = dagenCleanRx.exec(s); if(m) return m[1] + (m[1] === "1" ? " dag clean" : " dagen clean");
-  return ITEM_NL[s] || s;
+  return ITEM_NL[s] || ITEM_LC[s.toLowerCase()] || s;
 };
 // alle schrijfwijzen van een knopje (nl en en), voor het herkennen in opgeslagen antwoorden
 const itemVariants = s => { const out = [s, ITEM_EN[s]]; const m = dagenCleanRx.exec(s); if(m) out.push(m[1] + (m[1] === "1" ? " day clean" : " days clean")); return out.filter((x, i, a) => x && a.indexOf(x) === i); };

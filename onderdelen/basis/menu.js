@@ -1,5 +1,5 @@
 // ---------- menu & pagina's ----------
-const VIEWS = {today:["Mijn dag","My day"], jft:["Alleen voor vandaag","Just for Today"], hist:["Eerdere dagen","Earlier days"], month:["Maandoverzicht","Month overview"], review:["Weekterugblik","Week in review"], talk:["Voor mijn 1-op-1","For my 1-to-1"], wf:["Weekformulieren","Weekly forms"], meetings:["Meetings","Meetings"], steps:["Stappenwerk","Step work"], sos:["Noodplan","Emergency plan"], backup:["Back-up","Backup"]};
+const VIEWS = {today:["Mijn dag","My day"], jft:["Alleen voor vandaag","Just for Today"], hist:["Eerdere dagen","Earlier days"], month:["Maandoverzicht","Month overview"], patterns:["Mijn patronen","My patterns"], review:["Weekterugblik","Week in review"], talk:["Voor mijn 1-op-1","For my 1-to-1"], wf:["Weekformulieren","Weekly forms"], meetings:["Meetings","Meetings"], steps:["Stappenwerk","Step work"], sos:["Noodplan","Emergency plan"], backup:["Back-up","Backup"]};
 function openMenu(){ const d = daysClean(todayKey()); $("drawerSub").textContent = d === null ? vt("Dagbeschouwing", "Daily reflection") : aantal(d, "dag", "dagen", "day", "days") + " clean"; $("drawer").classList.add("open"); $("drawerBg").classList.add("show"); }
 function closeMenu(){ $("drawer").classList.remove("open"); $("drawerBg").classList.remove("show"); }
 function showView(v){
@@ -11,6 +11,7 @@ function showView(v){
   document.querySelectorAll("#drawer [data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));
   closeMenu(); window.scrollTo(0,0);
   if(v === "hist" || v === "month") renderHistory();
+  if(v === "patterns") renderPatterns();
   if(v === "sos"){ sosEdit = false; renderSos(); }
   if(v === "jft"){ jftShift = 0; renderJft(); }
   if(v === "talk"){ renderTalk(); goalWeek = null; renderGoals(); }
