@@ -1,7 +1,7 @@
 // ---------- vragen van de dagbeschouwing ----------
 const YNB = [["nee","Nee"],["beetje","Een beetje"],["ja","Ja"]];
-const WHO = ["mezelf","iemand thuis","mijn familie","een vriend","mijn sponsor","een hulpverlener","iemand op werk/school","een onbekende"];
-const FEELINGS = ["onrustig","gespannen","verdrietig","eenzaam","onzeker","boos","schuldig","beschaamd","moe","overweldigd","jaloers","opgelucht","rustig","blij"];
+const WHO = ["mezelf","iemand thuis","mijn familie","een vriend","mijn sponsor","een hulpverlener","iemand op werk/school","een onbekende","een huisgenoot","de begeleiding","een fellow"];
+const FEELINGS = ["onrustig","gespannen","verdrietig","eenzaam","onzeker","boos","schuldig","beschaamd","moe","overweldigd","jaloers","opgelucht","rustig","blij","angstig","leeg","teleurgesteld","gekwetst","afgewezen","dankbaar","hoopvol","trots","geïrriteerd","zenuwachtig"];
 const COPING = ["mijn sponsor gebeld","iemand anders gebeld","erover gepraat","naar een meeting gegaan","naar buiten gegaan","afleiding gezocht","de situatie verlaten","gebeden of gemediteerd","de film doorgespoeld tot het eind","iets gegeten of gedronken","gewacht tot het overging","literatuur gelezen"];
 const TRIGGERS = ["een plek","bepaalde mensen","geld","stress","verveling","eenzaamheid","boosheid","vermoeidheid","honger","muziek","social media","middelen zien of ruiken","een herinnering","een ruzie"];
 
@@ -29,7 +29,7 @@ const QUESTIONS = [
   {id:"q4", title:"Wat heb ik gedaan voor herstel: meeting, stappen, sponsor bellen en service?", type:"open",
    tip:"Tik aan wat je gedaan hebt en vul aan met details: welke meeting en aan welke stap je werkte.",
    rows:[
-     {label:"Wat heb ik gedaan?", lead:"Voor mijn herstel heb ik", sub:{item:"een meeting bezocht", label:"Welke meeting?"}, items:["een meeting bezocht","aan mijn stappen gewerkt","mijn sponsor gebeld","service gedaan","literatuur gelezen","gebeden of gemediteerd","contact gehad met iemand uit het programma","nazorg","deze dagbeschouwing ingevuld"]}
+     {label:"Wat heb ik gedaan?", lead:"Voor mijn herstel heb ik", sub:{item:"een meeting bezocht", label:"Welke meeting?"}, items:["een meeting bezocht","aan mijn stappen gewerkt","mijn sponsor gebeld","service gedaan","literatuur gelezen","gebeden of gemediteerd","contact gehad met iemand uit het programma","nazorg","deze dagbeschouwing ingevuld","een Alleen voor vandaag-tekst gelezen","met mijn begeleider gepraat","in de groep gedeeld"]}
    ]},
   {id:"q5", title:"Heb ik cravings gehad vandaag? Zo ja, hoe ben ik er mee om gegaan", type:"scale", opts:YNB, doneOn:["nee"], detailOn:["beetje","ja"],
    tip:"Een craving is zucht of verlangen naar gebruiken. Schrijf op wanneer het kwam, hoe sterk het was en wat je hebt gedaan zodat het overging.",
@@ -44,13 +44,15 @@ const QUESTIONS = [
    rows:[
      {label:"Wat was de trigger?", lead:"Mijn trigger was:", items:TRIGGERS},
      {label:"Hoe voelde ik me?", lead:"Ik voelde me", items:FEELINGS, cls:"feel"},
-     {label:"Wat heb ik gedaan?", lead:"Wat ik heb gedaan:", items:COPING}
+     {label:"Wat heb ik gedaan?", lead:"Wat ik heb gedaan:", items:COPING},
+     // onderaan: picked(e, "q6", 0/1/2) en eigen knopjes (q6|0..2) rekenen op de volgorde hierboven
+     {label:"HALT-check", lead:"HALT:", items:["honger","boos","eenzaam","moe"]}
    ],
    noText:"Nee, ik had vandaag geen triggers."},
   {id:"q7", title:"Wat ging er vandaag goed?", type:"open",
    tip:"Kleine dingen tellen ook. Een dag zonder grote problemen is al iets wat goed ging.",
    rows:[
-     {label:"Wat ging goed?", lead:"Vandaag ging goed:", items:["ik ben nuchter/clean gebleven","mijn rust gepakt","ik ben mijn afspraken nagekomen","ik heb iemand geholpen","ik heb om hulp gevraagd","ik heb goed voor mezelf gezorgd","ik ben naar buiten geweest","ik heb iets nieuws geleerd","ik heb eerlijk gezegd wat ik voelde","ik bleef rustig in een lastige situatie"]}
+     {label:"Wat ging goed?", lead:"Vandaag ging goed:", items:["ik ben nuchter/clean gebleven","mijn rust gepakt","ik ben mijn afspraken nagekomen","ik heb iemand geholpen","ik heb om hulp gevraagd","ik heb goed voor mezelf gezorgd","ik ben naar buiten geweest","ik heb iets nieuws geleerd","ik heb eerlijk gezegd wat ik voelde","ik bleef rustig in een lastige situatie","ik heb gelachen","ik heb goed geslapen","ik ben naar een meeting gegaan","ik heb nee gezegd","ik heb een craving doorstaan"]}
    ]},
   {id:"q8", title:"Wat kon er vandaag beter?", type:"open",
    tip:"Niet om jezelf af te kraken, maar om ervan te leren. Wat neem je mee naar morgen?",
@@ -67,12 +69,12 @@ const QUESTIONS = [
   {id:"q10", title:"Waar ben ik vandaag dankbaar voor geweest?", type:"open",
    tip:"Probeer er minstens drie te noemen. Groot of klein, alles mag.",
    rows:[
-     {label:"Waar ben ik dankbaar voor?", lead:"Ik ben dankbaar voor", items:["mijn nuchterheid","mijn familie","mijn sponsor","de meeting","een goed gesprek","een dak boven mijn hoofd","goed eten","mijn gezondheid","de mensen om me heen","een nieuwe kans vandaag"]}
+     {label:"Waar ben ik dankbaar voor?", lead:"Ik ben dankbaar voor", items:["mijn nuchterheid","mijn familie","mijn sponsor","de meeting","een goed gesprek","een dak boven mijn hoofd","goed eten","mijn gezondheid","de mensen om me heen","een nieuwe kans vandaag","mijn huisgenoten","de begeleiding","het safehouse","het programma","mijn fellows","een rustig hoofd","een tweede kans"]}
    ]},
   {id:"trots", title:"Waar ben ik trots op?", type:"open",
    tip:"Geef jezelf erkenning. Waar heb je je best voor gedaan, ook als het niet perfect ging? Klein mag ook.",
    rows:[
-     {label:"Waar ben ik trots op?", lead:"Ik ben trots", items:["dat ik nuchter/clean ben gebleven","dat ik deze dagbeschouwing invul","dat ik iets moeilijks heb gedaan","dat ik rustig bleef","dat ik eerlijk was","dat ik om hulp heb gevraagd","dat ik iemand heb geholpen","dat ik heb doorgezet"]}
+     {label:"Waar ben ik trots op?", lead:"Ik ben trots", items:["dat ik nuchter/clean ben gebleven","dat ik deze dagbeschouwing invul","dat ik iets moeilijks heb gedaan","dat ik rustig bleef","dat ik eerlijk was","dat ik om hulp heb gevraagd","dat ik iemand heb geholpen","dat ik heb doorgezet","dat ik naar een meeting ben gegaan","dat ik nee heb gezegd","dat ik mijn gevoel heb gedeeld","dat ik een craving heb doorstaan"]}
    ]},
   {id:"q11", title:"Wat is mijn planning voor morgen?", type:"open",
    tip:"Een simpele planning geeft houvast. Zet er ook iets voor je herstel in.",
