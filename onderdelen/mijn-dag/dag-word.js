@@ -104,6 +104,12 @@ function documentXml(e, withLogo){
   body += '<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/><w:tblCellSpacing w:w="60" w:type="dxa"/>' + none + '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="3120"/><w:gridCol w:w="3120"/><w:gridCol w:w="3120"/></w:tblGrid><w:tr>' +
     cell(vt("Naam", "Name"), settings.naam || "") + cell(vt("Dagen nuchter/clean", "Days sober/clean"), d === null ? "" : String(d)) + cell(vt("Datum", "Date"), shortDate(e.date)) + '</w:tr></w:tbl>';
   body += p(r(vt("Bij een dagbeschouwing doe je zelfonderzoek. Je gaat na wat er op de dag goed verlopen is en wat voor verbetering vatbaar is. Wees open en eerlijk.", "In a daily reflection you take a personal inventory. You look at what went well during the day and what could be better. Be open and honest."), {i: 1, sz: 19, c: GRAY}), {before: 240, after: 120});
+  // ochtendmoment (alleen als het is ingevuld)
+  const ochR = ochtendRegels(e);
+  if(ochR){
+    body += p(r("☀   ", {b: 1, sz: 24, c: "E0A020"}) + r(vt("Ochtend", "Morning"), {b: 1, sz: 23}), {keep: 1, bdrTop: 1, before: 280, after: 100});
+    ochR.forEach(([k, v]) => { body += p(r(k + ": ", {b: 1, sz: 21}) + r(v, {sz: 21}), {ind: 400, after: 40}); });
+  }
   QUESTIONS.forEach((q, i) => {
     body += p(r(String(i + 1) + "   ", {b: 1, sz: 24, c: TH.hex}) + r(qTitle(q), {b: 1, sz: 23}), {keep: 1, bdrTop: 1, before: 280, after: 100});
     answerLines(q, e).forEach(l => {

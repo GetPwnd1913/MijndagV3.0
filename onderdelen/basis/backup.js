@@ -29,6 +29,7 @@ $("backupFile").onchange = async ev => {
       const cur = map[e.date];
       if(cur && hasContent(cur) && (cur.updated||0) >= (e.updated||0)){ kept++; continue; }
       const clean = {date:e.date, answers:e.answers||{}, cijfer:e.cijfer||"", planDone:e.planDone||{}, updated:e.updated||Date.now()};
+      if(e.ochtend) clean.ochtend = e.ochtend;   // ochtendmoment (alleen als het er is; oude back-ups hebben het niet)
       local.set("day:"+clean.date, clean);
       if(col){ try{ await col.doc(clean.date).set(clean); }catch(err){} }
       added++;

@@ -513,3 +513,6 @@
     .sky[data-tod="ochtend"],.sky[data-tod="middag"]{--sk1:#24344a;--sk2:#1c2a27;--skink:#fff}
     .sky .datebar{background:rgba(255,255,255,.12)} .sky .datebar .d{color:#fff} .sky .iconbtn{background:rgba(255,255,255,.16);color:#fff}
   }
+  /* ochtendmoment: één rustige regel bovenaan Mijn dag */
+  .ochrij{display:flex;align-items:center;gap:10px;width:100%;min-height:50px;margin:0 0 14px;padding:12px 16px;border:0;border-radius:16px;background:var(--card);color:var(--ink);font:inherit;font-size:16px;font-weight:600;text-align:left;cursor:pointer;box-shadow:var(--shadow)}
+  .ochrij:active{background:var(--accent-soft)}

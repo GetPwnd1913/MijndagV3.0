@@ -509,6 +509,7 @@ function renderGreeting(){
 function render(){
   pasTaalToe();
   renderGreeting();
+  renderOchtendRij();
   $("dateLabel").textContent = niceDate(curKey);
   $("nextDay").disabled = curKey >= todayKey();
   renderInfo();
@@ -519,6 +520,7 @@ function render(){
   renderGreetingWf();
   if(typeof renderJft === "function") try{ renderJft(); }catch(e){}
   const qs = $("questions"); qs.innerHTML="";
+  const ochKaart = buildOchtendKaart(); if(ochKaart) qs.appendChild(ochKaart);   // alleen op dagen met een ochtendvoornemen
   QUESTIONS.forEach((q,i)=>qs.appendChild(buildQuestion(q,i)));
   updateProgress();
 }

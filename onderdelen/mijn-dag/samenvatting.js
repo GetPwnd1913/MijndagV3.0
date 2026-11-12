@@ -18,6 +18,9 @@ function summaryText(e){
     vt("Datum: ", "Date: ") + shortDate(e.date),
     ""
   ];
+  // ochtendmoment (alleen als het is ingevuld)
+  const ochR = ochtendRegels(e);
+  if(ochR){ lines.push("☀ " + vt("Ochtend", "Morning")); ochR.forEach(([k, v]) => lines.push(k + ": " + v)); lines.push(""); }
   QUESTIONS.forEach((q,i)=>{
     lines.push((i+1)+". "+qTitle(q));
     lines.push(answerText(q,e) || "-");

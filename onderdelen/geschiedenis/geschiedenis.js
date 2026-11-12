@@ -36,6 +36,12 @@ async function renderHistory(){
     c.querySelector(".emo").textContent = e.cijfer || "–";
     c.querySelector(".t").textContent = niceDate(e.date);
     c.querySelector(".s").textContent = first.replace(/\n+/g," ") || vt("Bekijk dagbeschouwing", "View daily reflection");
+    // ochtendvoornemen (alleen als het is ingevuld): "☀ mijn sponsor bellen ✓"
+    if(e.ochtend && e.ochtend.voornemen){
+      const o = e.ochtend, regel = el("div", null, "☀ " + och(o.voornemen) + (o.gelukt === "ja" ? " ✓" : o.gelukt === "beetje" ? " ~" : ""));
+      regel.style.cssText = "font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+      c.querySelector(".s").after(regel);
+    }
     c.onclick = () => openSummary(e, true);
     v.appendChild(c);
   });

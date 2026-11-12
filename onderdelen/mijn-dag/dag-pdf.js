@@ -103,6 +103,15 @@ function buildPdf(e){
   wrap(vt("Bij een dagbeschouwing doe je zelfonderzoek. Je gaat na wat er op de dag goed verlopen is en wat voor verbetering vatbaar is. Wees open en eerlijk.", "In a daily reflection you take a personal inventory. You look at what went well during the day and what could be better. Be open and honest."), 9.5, false, CW).forEach(l => { txt(l, M, y - 9.5, 9.5, "F3", MUT); y -= 13; });
   y -= 10;
   hline(M, M + CW, y, LINE); y -= 18;
+  // ochtendmoment (alleen als het is ingevuld); oranje rondje als zon (☀ zit niet in het PDF-lettertype)
+  const ochR = ochtendRegels(e);
+  if(ochR){
+    circle(M + 11, y - 9, 8, [0.878, 0.627, 0.125]);
+    txt(cp1252(vt("Ochtend", "Morning")), M + IND, y - 13, 11, "F2", INK);
+    y -= 15 + 8;
+    ochR.forEach(([k, v]) => wrap(k + ": " + v, 10.5, false, CW - IND).forEach(l => { if(y - 14 < BOTTOM) newPage(false); txt(l, M + IND, y - 10.5, 10.5, "F1", INK); y -= 14; }));
+    y -= 6; hline(M, M + CW, y, LINE); y -= 15;
+  }
   // vragen
   QUESTIONS.forEach((q, i) => {
     const ql = wrap(qTitle(q), 11, true, CW - IND);
