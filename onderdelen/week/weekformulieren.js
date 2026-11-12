@@ -1,16 +1,25 @@
 // ---------- weekformulieren ----------
-const WF_DAYS = ["Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag","Zondag"];
+// WF_DAYS, PLAN_CHIPS en WV_REMIND volgen de gekozen taal: het zijn getters op window (geen const),
+// zodat alle bestaande plekken die ze gebruiken vanzelf de juiste taal krijgen.
+const taalLijst = (naam, nl, en) => Object.defineProperty(window, naam, {get: () => isEn() ? en : nl, configurable: true});
+taalLijst("WF_DAYS", ["Maandag","Dinsdag","Woensdag","Donderdag","Vrijdag","Zaterdag","Zondag"], ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]);
 const WF_SLOTS = (() => { const a = []; for(let m = 8 * 60; m <= 22 * 60; m += 30) a.push(pad(Math.floor(m / 60)) + "." + pad(m % 60)); return a; })();
 const WF_BAND = i => i <= 8 ? "E3ECF7" : i <= 20 ? "CFDDEF" : "EEF3FA";
 const WF_BAND_T = i => i <= 8 ? "C9D9EE" : i <= 20 ? "B3C9E4" : "DAE5F3";
-const PLAN_CHIPS = ["programma","meeting","sporten","wandelen","koken","huistaken","boodschappen","nazorg","1-op-1 gesprek","sponsor bellen","stappenwerk","werk of dagbesteding","vrije tijd","voetbal kijken","rust","familie","vrienden"];
+taalLijst("PLAN_CHIPS", ["programma","meeting","sporten","wandelen","koken","huistaken","boodschappen","nazorg","1-op-1 gesprek","sponsor bellen","stappenwerk","werk of dagbesteding","vrije tijd","voetbal kijken","rust","familie","vrienden"],
+  ["programme","meeting","exercise","walk","cooking","household chores","groceries","aftercare","1-to-1 talk","call sponsor","step work","work or day activities","free time","watch football","rest","family","friends"]);
 const HULP = ["Voedingsbegeleiding","Herstelbegeleiding","Werk begeleiding","Studie begeleiding","Sociale begeleiding m.b.t. contacten","Huisvestingsbegeleiding","Financiële begeleiding","Administratieve begeleiding","Justitiële begeleiding","Medicatiebegeleiding","Begeleiding met plannen"];
-const WV_REMIND = [["Vermijd zelfmedelijden, honger, boosheid, eenzaamheid en moeheid","Check je motieven","Alleen voor vandaag","Ook dit gaat voorbij","Slim zijn en niet sterk"],
-  ["Herstel staat op 1","Plan B","De slechtste plek voor een verslaafde is alleen in zijn hoofd","Wil je gebruiken? Gebruik dan de telefoon"]];
+// HULP blijft Nederlands: het zijn de sleutels waaronder je keuzes bewaard worden (u.hulp). HULP_EN is alleen voor de weergave.
+const HULP_EN = ["Nutrition support","Recovery support","Work support","Study support","Social support with contacts","Housing support","Financial support","Administrative support","Legal support","Medication support","Support with planning"];
+const hulpNaam = h => isEn() ? (HULP_EN[HULP.indexOf(h)] || h) : h;
+taalLijst("WV_REMIND", [["Vermijd zelfmedelijden, honger, boosheid, eenzaamheid en moeheid","Check je motieven","Alleen voor vandaag","Ook dit gaat voorbij","Slim zijn en niet sterk"],
+  ["Herstel staat op 1","Plan B","De slechtste plek voor een verslaafde is alleen in zijn hoofd","Wil je gebruiken? Gebruik dan de telefoon"]],
+  [["Avoid self-pity, hunger, anger, loneliness and tiredness","Check your motives","Just for today","This too shall pass","Be smart, not strong"],
+  ["Recovery comes first","Plan B","The worst place for an addict is alone in their own head","Want to use? Use the phone instead"]]);
 const WF_FORMS = [
-  {id: "plan", title: "Weekplanning", when: "zondag", desc: "Je planning voor de komende week"},
-  {id: "upd", title: "Wekelijkse Update", when: "zondag", desc: "Terugblik op de afgelopen week"},
-  {id: "wv", title: "Weekendvoorbespreking", when: "woensdagavond", desc: "Je plan voor het weekend"}
+  {id: "plan", get title(){ return vt("Weekplanning", "Weekly planning"); }, when: "zondag", desc: "Je planning voor de komende week"},
+  {id: "upd", get title(){ return vt("Wekelijkse Update", "Weekly update"); }, when: "zondag", desc: "Terugblik op de afgelopen week"},
+  {id: "wv", get title(){ return vt("Weekendvoorbespreking", "Weekend plan"); }, when: "woensdagavond", desc: "Je plan voor het weekend"}
 ];
 let wfWeek = null, wfOpen = "", planDay = 0, planSel = null, wfTimer = null, planCopy = false;
 
@@ -24,8 +33,9 @@ function wfSet(wk, form, key, val, now){
 const wfGet = (wk, form) => (wfData(wk)[form]) || {};
 const planWeekStart = wk => addDaysKey(wk, 7);
 const rangeLabel = (a, b) => { const A = parseKey(a), B = parseKey(b);
-  if(A.getFullYear() !== B.getFullYear()) return shortDate(a) + " t/m " + shortDate(b);
-  return A.getMonth() === B.getMonth() ? A.getDate() + " t/m " + shortDate(b) : dayMonth(a) + " t/m " + shortDate(b); };
+  const tm = vt(" t/m ", " – ");
+  if(A.getFullYear() !== B.getFullYear()) return shortDate(a) + tm + shortDate(b);
+  return A.getMonth() === B.getMonth() ? A.getDate() + tm + shortDate(b) : dayMonth(a) + tm + shortDate(b); };
 const isoYear = k => { const d = parseKey(k); return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 3 - ((d.getDay() + 6) % 7)).getFullYear(); };
 function wfWeekInfo(wk, id){
   const start = id === "plan" ? planWeekStart(wk) : wk;
@@ -34,14 +44,14 @@ function wfWeekInfo(wk, id){
 }
 function wfFooterText(wk, id){
   const f = WF_FORMS.find(x => x.id === id), w = wfWeekInfo(wk, id);
-  return "Mijn dag  \u00b7  " + f.title + "  \u00b7  week " + w.week + " (" + w.range + ")";
+  return vt("Mijn dag", "My day") + "  \u00b7  " + f.title + "  \u00b7  week " + w.week + " (" + w.range + ")";
 }
 function wfStatus(wk, f){
   const d = wfData(wk), s = (d.sent || {})[f.id];
-  if(s) return {t: "✓ Verstuurd op " + dayMonth(s), cls: "ok"};
+  if(s) return {t: vt("✓ Verstuurd op ", "✓ Sent on ") + dayMonth(s), cls: "ok"};
   const v = d[f.id] || {};
   const has = f.id === "plan" ? Object.keys(v).some(k => /^\d$/.test(k) && Object.values(v[k] || {}).some(Boolean)) : Object.keys(v).some(k => { const x = v[k]; return typeof x === "object" ? Object.values(x || {}).some(Boolean) : !!x; });
-  return has ? {t: "Bezig", cls: "busy"} : {t: "Nog invullen", cls: ""};
+  return has ? {t: vt("Bezig", "In progress"), cls: "busy"} : {t: vt("Nog invullen", "To fill in"), cls: ""};
 }
 
 // velden
@@ -73,8 +83,8 @@ function wfYN(wk, form, key, label, opts){
   const f = el("div", "wff");
   if(label) f.appendChild(el("div", "label", label));
   const sc = el("div", "scale");
-  (opts || [["ja","Ja"],["nee","Nee"]]).forEach(([v, l]) => {
-    const b = el("button", null, l); b.type = "button";
+  (opts || [["ja","Ja","Yes"],["nee","Nee","No"]]).forEach(([v, l, len]) => {
+    const b = el("button", null, vt(l, len || l)); b.type = "button";
     if(wfGet(wk, form)[key] === v) b.classList.add("on");
     b.onclick = () => { const cur = wfGet(wk, form)[key]; wfSet(wk, form, key, cur === v ? "" : v, true); renderWf(); };
     sc.appendChild(b);
@@ -98,23 +108,23 @@ function renderWf(){
   if(wfOpen){ renderWfForm(box); if(renderWf._keep) window.scrollTo(0, keepY); renderWf._keep = false; return; }
   const thisWk = mondayOf(todayKey());
   const nav = el("div", "datebar");
-  const pv = el("button", "iconbtn"); pv.appendChild(icon("chevL")); pv.type = "button"; pv.setAttribute("aria-label", "Vorige week");
+  const pv = el("button", "iconbtn"); pv.appendChild(icon("chevL")); pv.type = "button"; pv.setAttribute("aria-label", vt("Vorige week", "Previous week"));
   pv.onclick = () => { wfWeek = addDaysKey(wfWeek, -7); renderWf(); };
-  const nx = el("button", "iconbtn"); nx.appendChild(icon("chevR")); nx.type = "button"; nx.setAttribute("aria-label", "Volgende week");
+  const nx = el("button", "iconbtn"); nx.appendChild(icon("chevR")); nx.type = "button"; nx.setAttribute("aria-label", vt("Volgende week", "Next week"));
   nx.disabled = wfWeek >= thisWk; nx.onclick = () => { wfWeek = addDaysKey(wfWeek, 7); renderWf(); };
-  const mid = el("div", "d", (wfWeek === thisWk ? "Deze week · " : "") + "week " + isoWeek(wfWeek));
+  const mid = el("div", "d", (wfWeek === thisWk ? vt("Deze week · ", "This week · ") : "") + "week " + isoWeek(wfWeek));
   const ms = el("div", null, dayMonth(wfWeek) + " – " + dayMonth(addDaysKey(wfWeek, 6))); ms.style.cssText = "font-size:13px;color:var(--muted);font-weight:400"; mid.appendChild(ms);
   nav.appendChild(pv); nav.appendChild(mid); nav.appendChild(nx);
   box.appendChild(nav);
-  const intro = note("Elke zondag vul je de weekplanning en de wekelijkse update in, en op woensdagavond de weekendvoorbespreking. Daarna maak je er een Word- of PDF-bestand van om te mailen.");
+  const intro = note(vt("Elke zondag vul je de weekplanning en de wekelijkse update in, en op woensdagavond de weekendvoorbespreking. Daarna maak je er een Word- of PDF-bestand van om te mailen.", "Every Sunday you fill in the weekly planning and the weekly update, and on Wednesday evening the weekend plan. Then you make a Word or PDF file of it to email."));
   intro.style.margin = "0 2px 14px"; box.appendChild(intro);
   WF_FORMS.forEach(f => {
     const st = wfStatus(wfWeek, f);
     const c = el("button", "card wfitem"); c.type = "button";
     const tx = el("div"); tx.style.cssText = "flex:1;min-width:0;text-align:left";
     tx.appendChild(el("div", "qtitle", f.title));
-    const sub = f.id === "plan" ? "Voor week " + isoWeek(planWeekStart(wfWeek)) + " · in te vullen op zondag"
-      : f.id === "upd" ? "Over deze week · in te vullen op zondag" : "Voor dit weekend · in te vullen op woensdagavond";
+    const sub = f.id === "plan" ? vt("Voor week ", "For week ") + isoWeek(planWeekStart(wfWeek)) + vt(" · in te vullen op zondag", " · fill in on Sunday")
+      : f.id === "upd" ? vt("Over deze week · in te vullen op zondag", "About this week · fill in on Sunday") : vt("Voor dit weekend · in te vullen op woensdagavond", "For this weekend · fill in on Wednesday evening");
     const n = note(sub); n.style.margin = "2px 0 0"; tx.appendChild(n);
     const s = el("div", "wfst " + st.cls, st.t); tx.appendChild(s);
     c.appendChild(tx); const chv = el("div", "cnt"); chv.appendChild(icon("chevR", 20)); c.appendChild(chv);
@@ -125,7 +135,7 @@ function renderWf(){
 
 function renderWfForm(box){
   const f = WF_FORMS.find(x => x.id === wfOpen);
-  const back = el("button", "linkbtn back", "Alle weekformulieren"); back.type = "button"; back.style.margin = "0 2px 10px";
+  const back = el("button", "linkbtn back", vt("Alle weekformulieren", "All weekly forms")); back.type = "button"; back.style.margin = "0 2px 10px";
   back.onclick = () => { wfOpen = ""; planSel = null; renderWf(); window.scrollTo(0, 0); };
   box.appendChild(back);
   const h = el("div", "sectionhead", f.title); h.style.marginTop = "0"; box.appendChild(h);

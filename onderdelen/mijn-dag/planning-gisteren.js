@@ -3,13 +3,13 @@ const PLAN_Q = QUESTIONS.find(q => q.id === "q11");
 function planFrom(e){
   const a = e && e.answers && e.answers.q11, txt = a ? (a.text || "") : "";
   if(!txt.trim()) return [];
-  const heads = PLAN_Q.rows.map(r => headerOf(r));
+  // title = Nederlandse sleutel (ook voor entry.planDone), toon = wat je ziet in de gekozen taal
   const groups = []; let cur = null;
-  const other = () => { let g = groups.find(x => x.title === "Overig"); if(!g){ g = {title:"Overig", items:[]}; groups.push(g); } return g; };
+  const other = () => { let g = groups.find(x => x.title === "Overig"); if(!g){ g = {title:"Overig", toon: vt("Overig", "Other"), items:[]}; groups.push(g); } return g; };
   txt.split("\n").forEach(raw => {
     const l = raw.trim(); if(!l) return;
-    const hi = heads.indexOf(l);
-    if(hi >= 0){ cur = {title: PLAN_Q.rows[hi].label, items: []}; groups.push(cur); return; }
+    const hi = PLAN_Q.rows.findIndex(r => headersOf(r).indexOf(l) >= 0);
+    if(hi >= 0){ cur = {title: PLAN_Q.rows[hi].label, toon: rowLabel(PLAN_Q.rows[hi]), items: []}; groups.push(cur); return; }
     const isBullet = /^[-•]\s/.test(l);
     if(!cur || !isBullet) cur = other();
     cur.items.push(l.replace(/^[-•]\s*/, ""));
@@ -26,13 +26,13 @@ async function renderPlan(){
     if(!groups.length) return;
     const keys = [];
     const head = el("div"); head.style.cssText = "display:flex;justify-content:space-between;align-items:baseline;gap:8px";
-    head.appendChild(el("div", "qtitle", k === todayKey() ? "Mijn planning voor vandaag" : "Planning voor deze dag"));
+    head.appendChild(el("div", "qtitle", k === todayKey() ? vt("Mijn planning voor vandaag", "My plan for today") : vt("Planning voor deze dag", "Plan for this day")));
     const cnt = el("div", "note"); cnt.style.cssText = "margin:0;flex:none"; head.appendChild(cnt);
     card.appendChild(head);
-    const sub = note("Gemaakt bij je dagbeschouwing van " + shortDate(pk) + ". Vink af wat je gedaan hebt."); sub.style.cssText = "margin-top:2px;font-size:14px"; card.appendChild(sub);
-    const upd = () => { const d = entry.planDone || {}; cnt.textContent = keys.filter(x => d[x]).length + " van " + keys.length + " gedaan"; };
+    const sub = note(vt("Gemaakt bij je dagbeschouwing van ", "Made in your daily reflection of ") + shortDate(pk) + vt(". Vink af wat je gedaan hebt.", ". Tick off what you have done.")); sub.style.cssText = "margin-top:2px;font-size:14px"; card.appendChild(sub);
+    const upd = () => { const d = entry.planDone || {}; cnt.textContent = keys.filter(x => d[x]).length + vt(" van ", " of ") + keys.length + vt(" gedaan", " done"); };
     groups.forEach(g => {
-      card.appendChild(el("div", "label", g.title));
+      card.appendChild(el("div", "label", g.toon));
       g.items.forEach(it => {
         const key = g.title + "|" + it; keys.push(key);
         const row = el("label", "planitem");

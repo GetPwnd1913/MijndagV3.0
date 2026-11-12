@@ -65,7 +65,7 @@ function answerLines(q, e){
   const raw = answerText(q, e) || "";
   if(!raw.trim()) return [{t: "–", k: "empty"}];
   const a = e.answers && e.answers[q.id];
-  const lab = q.type === "scale" && a ? (q.opts.find(o => o[0] === a.level) || [])[1] : null;
+  const lab = q.type === "scale" && a ? optLabel(q, a.level) : null;
   let src = raw.split("\n");
   if(q.type === "free"){
     // vraag 1: lege regels behouden als witregel (meerdere achter elkaar = één witregel)
@@ -77,17 +77,17 @@ function answerLines(q, e){
     if(i === 0 && lab && l === lab) return {t: l, k: "label"};
     if(isHeaderLine(q, l)) return {t: l, k: "head"};
     if(/^- /.test(l)) return {t: l.slice(2), k: "bullet"};
-    if(q.type === "score" && /^(Ik geef deze dag een|Cijfer:)/.test(l)) return {t: l, k: "label"};
+    if(q.type === "score" && /^(Ik geef deze dag een|Cijfer:|I give this day a|Score:)/.test(l)) return {t: l, k: "label"};
     return {t: l, k: "text"};
   });
 }
-const longDate2 = k => parseKey(k).toLocaleDateString("nl-NL", {weekday: "long", day: "numeric", month: "long", year: "numeric"});
+const longDate2 = k => parseKey(k).toLocaleDateString(locale(), {weekday: "long", day: "numeric", month: "long", year: "numeric"});
 function documentXml(e, withLogo){
   const TH = exportTheme(), d = daysClean(e.date), GRAY = "6B7370", INK = "1F2A28";
   const r = (t, o) => { o = o || {}; return '<w:r><w:rPr>' + (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '') + (o.caps ? '<w:caps/>' : '') + '<w:color w:val="' + (o.c || INK) + '"/>' + (o.sz ? '<w:sz w:val="' + o.sz + '"/><w:szCs w:val="' + o.sz + '"/>' : '') + (o.sp ? '<w:spacing w:val="' + o.sp + '"/>' : '') + '</w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>'; };
   const p = (runs, o) => { o = o || {}; return '<w:p><w:pPr>' + (o.keep ? '<w:keepNext/>' : '') + (o.bdrTop ? '<w:pBdr><w:top w:val="single" w:sz="4" w:space="12" w:color="E3DED3"/></w:pBdr>' : '') + '<w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after == null ? 60 : o.after) + '"/>' + (o.ind ? '<w:ind w:left="' + o.ind + '"' + (o.hang ? ' w:hanging="' + o.hang + '"' : '') + '/>' : '') + (o.jc ? '<w:jc w:val="' + o.jc + '"/>' : '') + '</w:pPr>' + runs + '</w:p>'; };
   let body = "";
-  const titleP = p(r("Dagbeschouwing", {b: 1, sz: 52, c: TH.hex}), {after: 40}) + p(r(cap(longDate2(e.date)) + (d !== null ? "  ·  " + d + (d === 1 ? " dag" : " dagen") + " clean" : ""), {sz: 22, c: GRAY}), {after: 0});
+  const titleP = p(r(vt("Dagbeschouwing", "Daily reflection"), {b: 1, sz: 52, c: TH.hex}), {after: 40}) + p(r(cap(longDate2(e.date)) + (d !== null ? "  ·  " + aantal(d, "dag", "dagen", "day", "days") + " clean" : ""), {sz: 22, c: GRAY}), {after: 0});
   if(withLogo){
     const EMU = 594360;
     const pic = '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + EMU + '" cy="' + EMU + '"/><wp:docPr id="1" name="Logo Mijn dag"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + EMU + '" cy="' + EMU + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
@@ -102,10 +102,10 @@ function documentXml(e, withLogo){
     p(r(label, {sz: 15, c: GRAY, caps: 1, sp: 10}), {after: 40}) + p(r(value || "–", {b: 1, sz: 24}), {after: 0}) + '</w:tc>';
   const none = '<w:tblBorders>' + ["top","left","bottom","right","insideH","insideV"].map(x => '<w:' + x + ' w:val="nil"/>').join("") + '</w:tblBorders>';
   body += '<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/><w:tblCellSpacing w:w="60" w:type="dxa"/>' + none + '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="3120"/><w:gridCol w:w="3120"/><w:gridCol w:w="3120"/></w:tblGrid><w:tr>' +
-    cell("Naam", settings.naam || "") + cell("Dagen nuchter/clean", d === null ? "" : String(d)) + cell("Datum", shortDate(e.date)) + '</w:tr></w:tbl>';
-  body += p(r("Bij een dagbeschouwing doe je zelfonderzoek. Je gaat na wat er op de dag goed verlopen is en wat voor verbetering vatbaar is. Wees open en eerlijk.", {i: 1, sz: 19, c: GRAY}), {before: 240, after: 120});
+    cell(vt("Naam", "Name"), settings.naam || "") + cell(vt("Dagen nuchter/clean", "Days sober/clean"), d === null ? "" : String(d)) + cell(vt("Datum", "Date"), shortDate(e.date)) + '</w:tr></w:tbl>';
+  body += p(r(vt("Bij een dagbeschouwing doe je zelfonderzoek. Je gaat na wat er op de dag goed verlopen is en wat voor verbetering vatbaar is. Wees open en eerlijk.", "In a daily reflection you take a personal inventory. You look at what went well during the day and what could be better. Be open and honest."), {i: 1, sz: 19, c: GRAY}), {before: 240, after: 120});
   QUESTIONS.forEach((q, i) => {
-    body += p(r(String(i + 1) + "   ", {b: 1, sz: 24, c: TH.hex}) + r(q.title, {b: 1, sz: 23}), {keep: 1, bdrTop: 1, before: 280, after: 100});
+    body += p(r(String(i + 1) + "   ", {b: 1, sz: 24, c: TH.hex}) + r(qTitle(q), {b: 1, sz: 23}), {keep: 1, bdrTop: 1, before: 280, after: 100});
     answerLines(q, e).forEach(l => {
       if(l.k === "head") body += p(r(l.t, {b: 1, sz: 18, c: TH.hex}), {keep: 1, ind: 400, before: 100, after: 40});
       else if(l.k === "bullet") body += p(r("•", {b: 1, c: TH.hex, sz: 22}) + r("  " + l.t, {sz: 21}), {ind: 680, hang: 260, after: 30});
@@ -122,13 +122,14 @@ function documentXml(e, withLogo){
 function footerXml(e){
   const rr = t => '<w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>';
   const fld = '<w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>';
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:jc w:val="center"/></w:pPr>' + rr("Mijn dag  ·  Dagbeschouwing " + shortDate(e.date) + "  ·  pagina ") + fld + '</w:p></w:ftr>';
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:jc w:val="center"/></w:pPr>' + rr(vt("Mijn dag  ·  Dagbeschouwing ", "My day  ·  Daily reflection ") + shortDate(e.date) + vt("  ·  pagina ", "  ·  page ")) + fld + '</w:p></w:ftr>';
 }
 const DOCX_PARTS = {
   "[Content_Types].xml": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>',
   "_rels/.rels": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
   "word/_rels/document.xml.rels": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/></Relationships>',
-  "word/styles.xml": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:lang w:val="nl-NL"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>'
+  // taal van het Word-document volgt de gekozen taal (getter: Object.assign neemt de waarde van dat moment over)
+  get "word/styles.xml"(){ return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri"/><w:sz w:val="22"/><w:lang w:val="' + locale() + '"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:line="264" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults></w:styles>'; }
 };
 window.__dagDocParts = (e, withLogo) => {
   const parts = Object.assign({}, DOCX_PARTS, {"word/document.xml": documentXml(e, withLogo), "word/footer1.xml": footerXml(e)});
@@ -143,7 +144,7 @@ $("saveDocx").onclick = async () => {
   const msg = $("docxMsg");
   if(!sumEntry) return;
   if(dirty){ clearTimeout(saveTimer); await flush(); }
-  msg.textContent = "Bestand maken…";
+  msg.textContent = vt("Bestand maken…", "Creating file…");
   try{
     if(!window.JSZip) throw {code:"nozip"};
     const zip = new JSZip();
@@ -152,13 +153,13 @@ $("saveDocx").onclick = async () => {
     Object.keys(parts).forEach(k=>zip.file(k, parts[k]));
     if(logo) zip.file("word/media/logo.png", logo);
     const blob = await zip.generateAsync({type:"blob", mimeType:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
-    await offerFile("Dagbeschouwing "+sumEntry.date+".docx", blob, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-    msg.textContent = ""; toast("Bestand gemaakt. Kies Mail om het te versturen.");
+    await offerFile(vt("Dagbeschouwing ", "Daily reflection ")+sumEntry.date+".docx", blob, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+    msg.textContent = ""; toast(vt("Bestand gemaakt. Kies Mail om het te versturen.", "File created. Choose Mail to send it."));
   }catch(err){
     const c = err && err.code;
-    if(c==="declined") msg.textContent = "Niet opgeslagen.";
-    else if(c==="rate_limited") msg.textContent = "Even wachten en dan opnieuw proberen.";
-    else if(c==="nozip") msg.textContent = "Het bestand kon niet worden gemaakt. Gebruik Kopieer tekst.";
-    else msg.textContent = "Opslaan lukte niet hier. Gebruik Kopieer tekst en plak het in je mail.";
+    if(c==="declined") msg.textContent = vt("Niet opgeslagen.", "Not saved.");
+    else if(c==="rate_limited") msg.textContent = vt("Even wachten en dan opnieuw proberen.", "Wait a moment and try again.");
+    else if(c==="nozip") msg.textContent = vt("Het bestand kon niet worden gemaakt. Gebruik Kopieer tekst.", "The file could not be created. Use Copy text.");
+    else msg.textContent = vt("Opslaan lukte niet hier. Gebruik Kopieer tekst en plak het in je mail.", "Saving did not work here. Use Copy text and paste it into your email.");
   }
 };

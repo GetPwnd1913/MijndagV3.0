@@ -21,10 +21,10 @@ function icon(name, size, filled){
 let toastTimer = null;
 function showOpenQuestions(open){
   const nums = open.map(o => o.i + 1);
-  const lijst = nums.length === 1 ? "vraag " + nums[0] : "vraag " + nums.slice(0, -1).join(", ") + " en " + nums[nums.length - 1];
+  const lijst = nums.length === 1 ? vt("vraag ", "question ") + nums[0] : vt("vraag ", "questions ") + nums.slice(0, -1).join(", ") + vt(" en ", " and ") + nums[nums.length - 1];
   const q1 = open.length === 1 && open[0].q.type === "free" && ((entry.answers[open[0].q.id] || {}).text || "").trim();
-  toast(q1 ? "Bijna klaar! Vink vraag 1 nog af, dan kun je afronden."
-           : "Vul eerst alle vragen in voordat je afrondt. " + (nums.length > 5 ? "Er staan nog " + nums.length + " vragen open." : "Nog open: " + lijst + "."), true);
+  toast(q1 ? vt("Bijna klaar! Vink vraag 1 nog af, dan kun je afronden.", "Almost done! Tick off question 1 and then you can finish.")
+           : vt("Vul eerst alle vragen in voordat je afrondt. ", "Answer all the questions before you finish. ") + (nums.length > 5 ? vt("Er staan nog " + nums.length + " vragen open.", nums.length + " questions are still open.") : vt("Nog open: ", "Still open: ") + lijst + "."), true);
   open.forEach(o => {
     const c = document.querySelector('[data-q="' + o.q.id + '"]'); if(!c) return;
     setFold(c, o.q, false);
@@ -49,8 +49,8 @@ function confirmDialog(title, text, okLabel, calm){
     d.appendChild(el("h3", null, title));
     if(text) d.appendChild(el("p", null, text));
     const row = el("div", "row");
-    const no = el("button", "ghost", "Annuleren"); no.type = "button";
-    const yes = el("button", calm ? "primary" : "danger", okLabel || "Wissen"); yes.type = "button";
+    const no = el("button", "ghost", vt("Annuleren", "Cancel")); no.type = "button";
+    const yes = el("button", calm ? "primary" : "danger", okLabel || vt("Wissen", "Delete")); yes.type = "button";
     const done = v => { back.classList.remove("show"); setTimeout(() => back.remove(), 200); document.removeEventListener("keydown", onKey); resolve(v); };
     const onKey = e => { if(e.key === "Escape") done(false); };
     no.onclick = () => done(false); yes.onclick = () => done(true);
@@ -89,7 +89,7 @@ function showSplash(){
   mk(bk, "path", {d: "M90 250h96a70 70 0 0 1 70 70v130a44 44 0 0 0-44-44H90z"});
   mk(bk, "path", {d: "M422 250h-96a70 70 0 0 0-70 70v130a44 44 0 0 1 44-44h122z"});
   sp.appendChild(sv);
-  sp.appendChild(el("div", "nm", "Mijn dag"));
+  sp.appendChild(el("div", "nm", vt("Mijn dag", "My day")));
   const close = () => { if(sp.classList.contains("out")) return; sp.classList.add("out"); setTimeout(() => sp.remove(), 600); };
   sp.onclick = close;
   document.body.appendChild(sp);

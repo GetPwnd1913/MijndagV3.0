@@ -83,7 +83,7 @@ async function readPdf(file){
   const pdf = await window.pdfjsLib.getDocument({data: new Uint8Array(buf), isEvalSupported: false}).promise;
   const lines = [];
   for(let p=1; p<=pdf.numPages; p++){
-    if(p % 10 === 0) $("jftMsg").textContent = "Bestand lezen… pagina " + p + " van " + pdf.numPages;
+    if(p % 10 === 0) $("jftMsg").textContent = vt("Bestand lezen… pagina ", "Reading file… page ") + p + vt(" van ", " of ") + pdf.numPages;
     const page = await pdf.getPage(p);
     const tc = await page.getTextContent();
     itemsToLines(tc.items, p).forEach(l => lines.push(l));
@@ -102,12 +102,12 @@ function renderJft(){
   const key = pad(d.getMonth()+1)+"-"+pad(d.getDate());
   const e = jft.entries[key];
   const DAGEN = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
-  $("jftDate").textContent = DAGEN[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()];
-  $("jftRel").textContent = jftShift === 0 ? "vandaag" : jftShift === -1 ? "gisteren" : (-jftShift) + " dagen geleden";
+  $("jftDate").textContent = isEn() ? d.toLocaleDateString("en-GB", {weekday:"long", day:"numeric", month:"long"}) : DAGEN[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()];
+  $("jftRel").textContent = jftShift === 0 ? vt("vandaag", "today") : jftShift === -1 ? vt("gisteren", "yesterday") : (-jftShift) + vt(" dagen geleden", " days ago");
   $("jftNext").disabled = jftShift >= 0;
   $("jftToday").classList.toggle("hidden", jftShift === 0);
   $("jftPickDate").max = curKey; $("jftPickDate").value = keyOf(d);
-  $("jftTitle").textContent = e ? e.title : "Geen tekst gevonden voor deze datum";
+  $("jftTitle").textContent = e ? e.title : vt("Geen tekst gevonden voor deze datum", "No text found for this date");
   const body = $("jftBody"); body.innerHTML = "";
   if(e) e.paras.forEach((t,i) => {
     const p = document.createElement("p"); p.textContent = t;
@@ -117,7 +117,7 @@ function renderJft(){
   });
   body.classList.toggle("hidden", !jftOpen || !e);
   $("jftToggle").classList.toggle("hidden", !e);
-  $("jftToggle").textContent = jftOpen ? "Tekst inklappen" : "Lees de tekst";
+  $("jftToggle").textContent = jftOpen ? vt("Tekst inklappen", "Collapse text") : vt("Lees de tekst", "Read the text");
 }
 $("jftToggle").onclick = () => { jftOpen = !jftOpen; renderJft(); };
 const jftGo = n => { jftShift = Math.min(0, n); renderJft(); };
@@ -136,17 +136,17 @@ $("jftFile").onchange = async ev => {
   ev.target.value = "";
   if(!f) return;
   const msg = $("jftMsg");
-  msg.textContent = "Bestand lezen… dit kan even duren.";
+  msg.textContent = vt("Bestand lezen… dit kan even duren.", "Reading file… this may take a moment.");
   try{
     const entries = await readPdf(f);
-    if(!entries){ msg.textContent = "In dit bestand kon ik de dagen niet vinden. Is het de PDF van ‘Alleen voor vandaag’?"; return; }
+    if(!entries){ msg.textContent = vt("In dit bestand kon ik de dagen niet vinden. Is het de PDF van ‘Alleen voor vandaag’?", "I could not find the days in this file. Is it the Dutch ‘Alleen voor vandaag’ PDF?"); return; }
     jft = {entries: entries, count: Object.keys(entries).length, loaded: Date.now()};
     let stored = true;
     try{ localStorage.setItem(JFT_KEY, JSON.stringify(jft)); }catch(e){ stored = false; }
-    msg.textContent = jft.count + " dagen gevonden." + (stored ? "" : " Let op: opslaan op dit toestel lukte niet, dus je moet het bestand de volgende keer opnieuw kiezen.");
+    msg.textContent = jft.count + vt(" dagen gevonden.", " days found.") + (stored ? "" : vt(" Let op: opslaan op dit toestel lukte niet, dus je moet het bestand de volgende keer opnieuw kiezen.", " Note: saving on this device did not work, so you will have to choose the file again next time."));
     jftOpen = false;
     renderJft();
   }catch(e){
-    msg.textContent = "Het bestand lezen lukte niet. Probeer het nog eens of kies het bestand opnieuw.";
+    msg.textContent = vt("Het bestand lezen lukte niet. Probeer het nog eens of kies het bestand opnieuw.", "Reading the file did not work. Try again or choose the file again.");
   }
 };

@@ -1,10 +1,10 @@
 // ---------- exporteren ----------
 function wfExportCard(wk, f){
-  const c = wfCard("Versturen", "Maak een Word- of PDF-bestand en voeg het toe aan je mail.");
+  const c = wfCard(vt("Versturen", "Send"), vt("Maak een Word- of PDF-bestand en voeg het toe aan je mail.", "Make a Word or PDF file and attach it to your email."));
   const row = el("div", "row"); row.style.cssText = "margin-top:10px;justify-content:flex-start;gap:8px";
   const msg = note("");
   const go = async kind => {
-    msg.textContent = "Bestand maken…";
+    msg.textContent = vt("Bestand maken…", "Creating file…");
     try{
       const name = wfFileName(wk, f) + (kind === "pdf" ? ".pdf" : ".docx");
       if(kind === "pdf") await offerFile(name, wfPdf(wk, f.id), "application/pdf");
@@ -19,18 +19,18 @@ function wfExportCard(wk, f){
         await offerFile(name, blob, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
       }
       const d = wfData(wk); d.sent = Object.assign({}, d.sent || {}); d.sent[f.id] = todayKey(); wfStore(wk, d); await saveSettingsNow();
-      msg.textContent = ""; toast("Bestand gemaakt. Kies Mail om het te versturen.");
+      msg.textContent = ""; toast(vt("Bestand gemaakt. Kies Mail om het te versturen.", "File created. Choose Mail to send it."));
       renderGreetingWf(); flyPlane();
     }catch(err){
       const cd = err && err.code;
-      msg.textContent = cd === "declined" ? "Niet opgeslagen." : cd === "nozip" ? "Het Word-bestand kon niet worden gemaakt. Probeer PDF." : "Opslaan lukte niet. Probeer het nog een keer.";
+      msg.textContent = cd === "declined" ? vt("Niet opgeslagen.", "Not saved.") : cd === "nozip" ? vt("Het Word-bestand kon niet worden gemaakt. Probeer PDF.", "The Word file could not be created. Try PDF.") : vt("Opslaan lukte niet. Probeer het nog een keer.", "Saving did not work. Please try again.");
     }
   };
   const w = el("button", "primary", "Word"); w.type = "button"; w.onclick = () => go("docx");
   const p = el("button", "ghost", "PDF"); p.type = "button"; p.onclick = () => go("pdf");
   row.appendChild(w); row.appendChild(p); c.appendChild(row); c.appendChild(msg);
   const s = (wfData(wk).sent || {})[f.id];
-  if(s){ const t = note("✓ Al eens verstuurd op " + dayMonth(s) + "."); t.style.color = "var(--accent)"; c.appendChild(t); }
+  if(s){ const t = note(vt("✓ Al eens verstuurd op ", "✓ Already sent on ") + dayMonth(s) + "."); t.style.color = "var(--accent)"; c.appendChild(t); }
   return c;
 }
 function wfFileName(wk, f){
@@ -44,42 +44,43 @@ function wfDateText(wk, id){
 }
 // gestructureerde inhoud voor Word en PDF
 function wfRows(wk, id){
-  const u = wfGet(wk, id), yn = v => v === "ja" ? "Ja" : v === "nee" ? "Nee" : "Ja / Nee";
+  const u = wfGet(wk, id), yn = v => v === "ja" ? vt("Ja", "Yes") : v === "nee" ? vt("Nee", "No") : vt("Ja / Nee", "Yes / No");
   if(id === "wv"){
     return [
-      {cells: [{t: "Wat doe je vrijdag na het programma?"}, {t: u.vr || "", span: 3}], h: 70},
-      {cells: [{t: "Wat is je planning zaterdag?"}, {t: u.za || "", span: 3}], h: 70},
-      {cells: [{t: "Wat is je planning zondag?"}, {t: u.zo || "", span: 3}], h: 70},
-      {cells: [{t: "Welke avond eet je mee in het safehouse?", i: 1}, {t: "Vrijdag: " + yn(u.eet_vr), i: 1, c: 1}, {t: "Zaterdag: " + yn(u.eet_za), i: 1, c: 1}, {t: "Zondag: " + yn(u.eet_zo), i: 1, c: 1}]},
-      {cells: [{t: "Is dit afgestemd met je huisgenoten?", i: 1}, {t: yn(u.afg_yn), i: 1, c: 1}, {t: "Zijn je afwas-/afdroogtaken hierop afgestemd: " + yn(u.afwas_yn), i: 1, span: 2}]},
-      {cells: [{t: "Welke triggers verwacht je?"}, {t: u.trig || "", span: 3}]},
-      {cells: [{t: "Hoe ga je met triggers om?"}, {t: u.omgaan || "", span: 3}]},
-      {cells: [{t: "Wie ga je bellen dit weekend?"}, {t: u.bellen || "", span: 3}]},
-      {cells: [{t: "Welke meetings bezoek je dit weekend?"}, {t: u.meet || "", span: 3}]},
-      {cells: [{t: "Welke dagen ben je komende week bij het programma aanwezig?"}, {t: u.aanw || "", span: 3}]},
-      {cells: [{t: "Welke dagen ben je niet bij het programma aanwezig en wat is de reden hiervan?"}, {t: u.afw || "", span: 3}]},
+      {cells: [{t: vt("Wat doe je vrijdag na het programma?", "What are you doing on Friday after the programme?")}, {t: u.vr || "", span: 3}], h: 70},
+      {cells: [{t: vt("Wat is je planning zaterdag?", "What is your plan for Saturday?")}, {t: u.za || "", span: 3}], h: 70},
+      {cells: [{t: vt("Wat is je planning zondag?", "What is your plan for Sunday?")}, {t: u.zo || "", span: 3}], h: 70},
+      {cells: [{t: vt("Welke avond eet je mee in het safehouse?", "Which evenings will you eat at the safehouse?"), i: 1}, {t: vt("Vrijdag: ", "Friday: ") + yn(u.eet_vr), i: 1, c: 1}, {t: vt("Zaterdag: ", "Saturday: ") + yn(u.eet_za), i: 1, c: 1}, {t: vt("Zondag: ", "Sunday: ") + yn(u.eet_zo), i: 1, c: 1}]},
+      {cells: [{t: vt("Is dit afgestemd met je huisgenoten?", "Have you agreed this with your housemates?"), i: 1}, {t: yn(u.afg_yn), i: 1, c: 1}, {t: vt("Zijn je afwas-/afdroogtaken hierop afgestemd: ", "Have your washing-up/drying tasks been arranged around this: ") + yn(u.afwas_yn), i: 1, span: 2}]},
+      {cells: [{t: vt("Welke triggers verwacht je?", "What triggers do you expect?")}, {t: u.trig || "", span: 3}]},
+      {cells: [{t: vt("Hoe ga je met triggers om?", "How will you deal with triggers?")}, {t: u.omgaan || "", span: 3}]},
+      {cells: [{t: vt("Wie ga je bellen dit weekend?", "Who will you call this weekend?")}, {t: u.bellen || "", span: 3}]},
+      {cells: [{t: vt("Welke meetings bezoek je dit weekend?", "Which meetings will you attend this weekend?")}, {t: u.meet || "", span: 3}]},
+      {cells: [{t: vt("Welke dagen ben je komende week bij het programma aanwezig?", "Which days will you attend the programme next week?")}, {t: u.aanw || "", span: 3}]},
+      {cells: [{t: vt("Welke dagen ben je niet bij het programma aanwezig en wat is de reden hiervan?", "Which days will you not attend the programme, and why?")}, {t: u.afw || "", span: 3}]},
       {cells: [{t: "Reminders"}, {list: WV_REMIND[0], small: 1}, {list: WV_REMIND[1], small: 1, span: 2}]}
     ];
   }
   const hulp = u.hulp || {};
-  const hl = HULP.map(h => h + ": " + (hulp[h] ? "ja" : "nee"));
+  // u.hulp heeft Nederlandse sleutels; in het bestand staat de naam in de gekozen taal
+  const hl = HULP.map(h => hulpNaam(h) + ": " + (hulp[h] ? vt("ja", "yes") : vt("nee", "no")));
   return [
-    {cells: [{t: ""}, {t: "Aantal", c: 1}, {t: "", span: 2}], head: 1},
-    {cells: [{t: "Hoeveel meetings heb je bijgewoond?"}, {t: u.meet_n || "", c: 1}, {t: "Waar en wanneer?", sub: u.meet_txt, span: 2}]},
-    {cells: [{t: "Hoe vaak heb je afgelopen week gesport, buiten het programma om"}, {t: u.sport_n || "", c: 1}, {t: "Wat heb je qua sport gedaan en wanneer?", sub: u.sport_txt, span: 2}]},
-    {cells: [{t: "Heb je een servicepositie?"}, {t: u.serv_n || "", c: 1}, {t: "Zo ja, hoeveel, welke, waar en wanneer?", sub: u.serv_txt, span: 2}]},
-    {cells: [{t: "Heb je een sponsor"}, {t: yn(u.sp_yn), c: 1}, {lines: [["Hoe vaak heb je contact met je sponsor", ""], ["Telefonisch: ", u.sp_tel], ["Afgesproken: ", u.sp_afg], ["Overige contactmomenten of afspraken: ", u.sp_ov], ["Zo nee, waarom niet: ", u.sp_nee]], span: 2}]},
-    {cells: [{t: "Bij welke stap ben je"}, {t: u.step_n || "", c: 1}, {t: "Hoe vaak, hoeveel en wanneer werk je aan je stappenwerk?", sub: u.step_txt, span: 2}]},
-    {cells: [{t: "Hoe vaak heb je contact met\n(licht contact toe)"}, {t: "", c: 1}, {lines: [["Familie: ", u.c_fam], ["Vrienden: ", u.c_vri], ["Partner: ", u.c_par], ["Medebewoners: ", u.c_mede], ["Fellowship: ", u.c_fellow]], span: 2}]},
-    {cells: [{t: "Heb je alle programma onderdelen bijgewoond?"}, {t: yn(u.prog_yn), c: 1}, {t: "Zo nee, welke niet en reden afwezigheid:", sub: u.prog_txt, span: 2}]},
-    {cells: [{t: "Ben je binnen eigen budget gebleven?"}, {t: yn(u.budget_yn), c: 1}, {t: "Zo nee, licht toe:", sub: u.budget_txt, span: 2}]},
-    {cells: [{t: "Heb je vrijwilligerswerk?"}, {t: yn(u.vrijw_yn), c: 1}, {t: "Zo ja, waar, hoeveel uur en welke dagen. Zo nee, licht toe:", sub: u.vrijw_txt, span: 2}]},
-    {cells: [{t: "Heb je verder dagbesteding?"}, {t: yn(u.dagb_yn), c: 1}, {t: "Welke:", sub: u.dagb_txt, span: 2}]},
-    {cells: [{t: "Wat is je doel deze week?", i: 1}, {t: u.doel || "", span: 3}]},
-    {cells: [{t: "Werk je aan dit doel?", i: 1}, {t: yn(u.doel_yn), c: 1}, {t: "Zo ja, hoe?", sub: u.doel_ja, i: 1}, {t: "Zo nee, waarom niet", sub: u.doel_nee, i: 1}]},
-    {cells: [{t: "Heb je jouw huishoudelijke taken (Safehouse) uitgevoerd?", i: 1}, {t: yn(u.huis_yn), c: 1}, {t: "Ja:", sub: u.huis_ja, i: 1}, {t: "Zo nee, waarom niet", sub: u.huis_nee, i: 1}]},
-    {cells: [{t: "Heb je ergens extra hulp bij nodig aankomende week?"}, {t: "", c: 1}, {list: hl.slice(0, 6), small: 1, plain: 1, hl: hulp}, {list: hl.slice(6).concat(["Anders: " + (u.hulp_anders || "")]), small: 1, plain: 1, hl: hulp}]},
-    {cells: [{t: "Heb je een verzoek aan het team?"}, {t: u.verzoek || "", span: 3}], h: 40}
+    {cells: [{t: ""}, {t: vt("Aantal", "Number"), c: 1}, {t: "", span: 2}], head: 1},
+    {cells: [{t: vt("Hoeveel meetings heb je bijgewoond?", "How many meetings did you attend?")}, {t: u.meet_n || "", c: 1}, {t: vt("Waar en wanneer?", "Where and when?"), sub: u.meet_txt, span: 2}]},
+    {cells: [{t: vt("Hoe vaak heb je afgelopen week gesport, buiten het programma om", "How often did you exercise last week, outside the programme")}, {t: u.sport_n || "", c: 1}, {t: vt("Wat heb je qua sport gedaan en wanneer?", "What exercise did you do and when?"), sub: u.sport_txt, span: 2}]},
+    {cells: [{t: vt("Heb je een servicepositie?", "Do you have a service position?")}, {t: u.serv_n || "", c: 1}, {t: vt("Zo ja, hoeveel, welke, waar en wanneer?", "If so, how many, which, where and when?"), sub: u.serv_txt, span: 2}]},
+    {cells: [{t: vt("Heb je een sponsor", "Do you have a sponsor")}, {t: yn(u.sp_yn), c: 1}, {lines: [[vt("Hoe vaak heb je contact met je sponsor", "How often are you in contact with your sponsor"), ""], [vt("Telefonisch: ", "By phone: "), u.sp_tel], [vt("Afgesproken: ", "In person: "), u.sp_afg], [vt("Overige contactmomenten of afspraken: ", "Other contact or appointments: "), u.sp_ov], [vt("Zo nee, waarom niet: ", "If not, why not: "), u.sp_nee]], span: 2}]},
+    {cells: [{t: vt("Bij welke stap ben je", "Which step are you on")}, {t: u.step_n || "", c: 1}, {t: vt("Hoe vaak, hoeveel en wanneer werk je aan je stappenwerk?", "How often, how much and when do you work on your step work?"), sub: u.step_txt, span: 2}]},
+    {cells: [{t: vt("Hoe vaak heb je contact met\n(licht contact toe)", "How often are you in contact with\n(explain the contact)")}, {t: "", c: 1}, {lines: [[vt("Familie: ", "Family: "), u.c_fam], [vt("Vrienden: ", "Friends: "), u.c_vri], ["Partner: ", u.c_par], [vt("Medebewoners: ", "Housemates: "), u.c_mede], ["Fellowship: ", u.c_fellow]], span: 2}]},
+    {cells: [{t: vt("Heb je alle programma onderdelen bijgewoond?", "Did you attend all parts of the programme?")}, {t: yn(u.prog_yn), c: 1}, {t: vt("Zo nee, welke niet en reden afwezigheid:", "If not, which not and reason for absence:"), sub: u.prog_txt, span: 2}]},
+    {cells: [{t: vt("Ben je binnen eigen budget gebleven?", "Did you stay within your own budget?")}, {t: yn(u.budget_yn), c: 1}, {t: vt("Zo nee, licht toe:", "If not, explain:"), sub: u.budget_txt, span: 2}]},
+    {cells: [{t: vt("Heb je vrijwilligerswerk?", "Do you do volunteer work?")}, {t: yn(u.vrijw_yn), c: 1}, {t: vt("Zo ja, waar, hoeveel uur en welke dagen. Zo nee, licht toe:", "If so, where, how many hours and which days. If not, explain:"), sub: u.vrijw_txt, span: 2}]},
+    {cells: [{t: vt("Heb je verder dagbesteding?", "Do you have any other day activities?")}, {t: yn(u.dagb_yn), c: 1}, {t: vt("Welke:", "Which:"), sub: u.dagb_txt, span: 2}]},
+    {cells: [{t: vt("Wat is je doel deze week?", "What is your goal this week?"), i: 1}, {t: u.doel || "", span: 3}]},
+    {cells: [{t: vt("Werk je aan dit doel?", "Are you working on this goal?"), i: 1}, {t: yn(u.doel_yn), c: 1}, {t: vt("Zo ja, hoe?", "If so, how?"), sub: u.doel_ja, i: 1}, {t: vt("Zo nee, waarom niet", "If not, why not"), sub: u.doel_nee, i: 1}]},
+    {cells: [{t: vt("Heb je jouw huishoudelijke taken (Safehouse) uitgevoerd?", "Did you do your household chores (Safehouse)?"), i: 1}, {t: yn(u.huis_yn), c: 1}, {t: vt("Ja:", "Yes:"), sub: u.huis_ja, i: 1}, {t: vt("Zo nee, waarom niet", "If not, why not"), sub: u.huis_nee, i: 1}]},
+    {cells: [{t: vt("Heb je ergens extra hulp bij nodig aankomende week?", "Do you need extra help with anything in the coming week?")}, {t: "", c: 1}, {list: hl.slice(0, 6), small: 1, plain: 1, hl: hulp}, {list: hl.slice(6).concat([vt("Anders: ", "Other: ") + (u.hulp_anders || "")]), small: 1, plain: 1, hl: hulp}]},
+    {cells: [{t: vt("Heb je een verzoek aan het team?", "Do you have a request for the team?")}, {t: u.verzoek || "", span: 3}], h: 40}
   ];
 }
 
@@ -93,7 +94,7 @@ function wfDocParts(wk, id, withLogo){
   const rr = t => '<w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>';
   const fld = c => '<w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> ' + c + ' </w:instrText></w:r><w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>';
   const pw = id === "plan" ? 15838 : 9906;
-  parts["word/footer1.xml"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="D5D9D7"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="' + pw + '"/></w:tabs><w:spacing w:before="0" w:after="0"/></w:pPr>' + rr(wfFooterText(wk, id) + "  \u00b7  " + (settings.naam || "")) + '<w:r><w:tab/></w:r>' + rr("Pagina ") + fld("PAGE") + rr(" van ") + fld("NUMPAGES") + '</w:p></w:ftr>';
+  parts["word/footer1.xml"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="D5D9D7"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="' + pw + '"/></w:tabs><w:spacing w:before="0" w:after="0"/></w:pPr>' + rr(wfFooterText(wk, id) + "  \u00b7  " + (settings.naam || "")) + '<w:r><w:tab/></w:r>' + rr(vt("Pagina ", "Page ")) + fld("PAGE") + rr(vt(" van ", " of ")) + fld("NUMPAGES") + '</w:p></w:ftr>';
   parts["word/document.xml"] = id === "plan" ? wfPlanXml(wk) : wfStyledXml(wk, id, withLogo);
   return parts;
 }
@@ -116,7 +117,7 @@ function wfPlanXml(wk){
     }
     rows += r + '</w:tr>';
   });
-  const head = WX.p(WX.r("Naam:  ", {sz: 22, b: 1}) + WX.r(name, {sz: 22}) + WX.r("\u00a0".repeat(14), {sz: 22}) + WX.r("Datum:  ", {sz: 22, b: 1}) + WX.r(wfDateText(wk, "plan"), {sz: 22}), {after: 120});
+  const head = WX.p(WX.r(vt("Naam:  ", "Name:  "), {sz: 22, b: 1}) + WX.r(name, {sz: 22}) + WX.r("\u00a0".repeat(14), {sz: 22}) + WX.r(vt("Datum:  ", "Date:  "), {sz: 22, b: 1}) + WX.r(wfDateText(wk, "plan"), {sz: 22}), {after: 120});
   const brd = '<w:tblBorders>' + ["top","left","bottom","right","insideH","insideV"].map(x => '<w:' + x + ' w:val="single" w:sz="4" w:space="0" w:color="7F8C9D"/>').join("") + '</w:tblBorders>';
   const tbl = '<w:tbl><w:tblPr><w:tblW w:w="' + (tw + 7 * dw) + '" w:type="dxa"/>' + brd + '<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="50" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + grid.map(g => '<w:gridCol w:w="' + g + '"/>').join("") + '</w:tblGrid>' + rows + '</w:tbl>';
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>' + head + tbl +
@@ -163,8 +164,8 @@ function wfPdf(wk, id){
 function wfPlanPdf(wk){
   const W = 841.89, H = 595.28, M = 24, k = pdfKit(); k.page();
   const plan = planOf(wk);
-  k.txt(cp1252("Naam:"), M, H - 30, 11, "F2"); k.txt(cp1252(settings.naam || ""), M + 38, H - 30, 11, "F1");
-  k.txt(cp1252("Datum:"), M + 300, H - 30, 11, "F2"); k.txt(cp1252(wfDateText(wk, "plan")), M + 343, H - 30, 11, "F1");
+  k.txt(cp1252(vt("Naam:", "Name:")), M, H - 30, 11, "F2"); k.txt(cp1252(settings.naam || ""), M + 38, H - 30, 11, "F1");
+  k.txt(cp1252(vt("Datum:", "Date:")), M + 300, H - 30, 11, "F2"); k.txt(cp1252(wfDateText(wk, "plan")), M + 343, H - 30, 11, "F1");
   const tw = 38, dw = (W - 2 * M - tw) / 7, top = H - 42, hh = 18, rh = (top - hh - 34) / WF_SLOTS.length;
   const ops = k.ops, white = s => ops.push("1 1 1 rg BT /F2 9.5 Tf " + s + " Tj ET");
   k.fill(M, top - hh, W - 2 * M, hh, "00B050");
@@ -195,7 +196,7 @@ function pdfFooter(k, W, M, text){
   k.pages.forEach((p, i) => {
     k.ops = p;
     k.ops.push("0.835 0.851 0.843 RG 0.5 w " + M.toFixed(2) + " 24 m " + (W - M).toFixed(2) + " 24 l S");
-    const l = cp1252(text + (settings.naam ? "  \u00b7  " + settings.naam : "")), r = cp1252("Pagina " + (i + 1) + " van " + n);
+    const l = cp1252(text + (settings.naam ? "  \u00b7  " + settings.naam : "")), r = cp1252(vt("Pagina ", "Page ") + (i + 1) + vt(" van ", " of ") + n);
     k.ops.push("0.42 0.45 0.44 rg BT /F1 8 Tf " + M.toFixed(2) + " 13 Td (" + pesc(l) + ") Tj ET");
     k.ops.push("0.42 0.45 0.44 rg BT /F1 8 Tf " + (W - M - textW(r, 8, false)).toFixed(2) + " 13 Td (" + pesc(r) + ") Tj ET");
   });
@@ -203,14 +204,14 @@ function pdfFooter(k, W, M, text){
 // ---- Wekelijkse Update en Weekendvoorbespreking in de huisstijl van de dagbeschouwing ----
 // Zelfde tabel en inhoud als wfRows(wk, id); alleen de opmaak is anders.
 const WFS = {
-  wv: {title: "Weekendvoorbespreking", sub: "weekend van", cols: [0.2986, 0.2338, 0.2338, 0.2338]},
-  upd: {title: "Wekelijkse Update", sub: "week van", cols: [0.2978, 0.0924, 0.31, 0.2998]}
+  wv: {get title(){ return vt("Weekendvoorbespreking", "Weekend plan"); }, get sub(){ return vt("weekend van", "weekend of"); }, cols: [0.2986, 0.2338, 0.2338, 0.2338]},
+  upd: {get title(){ return vt("Wekelijkse Update", "Weekly update"); }, get sub(){ return vt("week van", "week of"); }, cols: [0.2978, 0.0924, 0.31, 0.2998]}
 };
 const wfsSubtitle = (wk, id) => { const w = wfWeekInfo(wk, id); return "Week " + w.week + "  ·  " + WFS[id].sub + " " + w.range; };
 // Ja/nee-cellen: "Vrijdag: Ja" → label gewoon, antwoord vet in de themakleur (of grijs als nog niet gekozen)
 const wfsYn = cell => {
   if(!(cell.c || cell.i) || cell.list || cell.lines || cell.t == null || "sub" in cell) return null;
-  const m = String(cell.t).match(/^(.*?:\s*)?(Ja \/ Nee|Ja|Nee)$/);
+  const m = String(cell.t).match(/^(.*?:\s*)?(Ja \/ Nee|Ja|Nee|Yes \/ No|Yes|No)$/);
   return m ? [m[1] || "", m[2]] : null;
 };
 // "Voedingsbegeleiding: ja" → ["Voedingsbegeleiding: ", "ja"]
@@ -218,7 +219,9 @@ const wfsKv = t => { const i = String(t).indexOf(": "); return i < 0 ? [String(t
 // getal of los Ja/Nee in een smalle kolom: horizontaal centreren
 const wfsMid = cell => !!cell.c && !cell.list && !cell.lines && !String(cell.t == null ? "" : cell.t).includes(":");
 // rijen met de vaste kop van het formulier ervoor (alleen de weekendvoorbespreking heeft naam en datum in de tabel)
-const wfsRows = (wk, id) => (id === "wv" ? [{who: 1, cells: [{t: ["Weekendvoorbespreking van:  ", settings.naam || ""], span: 3}, {t: ["Datum:  ", wfDateText(wk, id)]}]}] : []).concat(wfRows(wk, id));
+const wfsRows = (wk, id) => (id === "wv" ? [{who: 1, cells: [{t: [vt("Weekendvoorbespreking van:  ", "Weekend plan of:  "), settings.naam || ""], span: 3}, {t: [vt("Datum:  ", "Date:  "), wfDateText(wk, id)]}]}] : []).concat(wfRows(wk, id));
+const wfsNiet = v => v === "Ja / Nee" || v === "Yes / No";
+const wfsJa = v => v === "ja" || v === "yes", wfsNee = v => v === "nee" || v === "no";
 
 function wfStyledXml(wk, id, withLogo){
   const TH = exportTheme(), GRAY = "6B7370", INK = "1F2A28", LINE = "DDD8CF", S = WFS[id];
@@ -241,14 +244,14 @@ function wfStyledXml(wk, id, withLogo){
     const tile = (label, value) => '<w:tc><w:tcPr><w:tcW w:w="3172" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="' + TH.softHex + '"/><w:tcMar><w:top w:w="140" w:type="dxa"/><w:bottom w:w="140" w:type="dxa"/><w:left w:w="180" w:type="dxa"/><w:right w:w="180" w:type="dxa"/></w:tcMar></w:tcPr>' +
       p(r(label, {sz: 15, c: GRAY, caps: 1, sp: 10}), {after: 40}) + p(r(value || "–", {b: 1, sz: 24})) + '</w:tc>';
     body += '<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/><w:tblCellSpacing w:w="60" w:type="dxa"/>' + nb + '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="3212"/><w:gridCol w:w="3213"/><w:gridCol w:w="3213"/></w:tblGrid><w:tr>' +
-      tile("Naam", settings.naam || "") + tile("Week", String(wfWeekInfo(wk, id).week)) + tile("Datum", wfDateText(wk, id)) + '</w:tr></w:tbl>' + p("", {after: 160});
+      tile(vt("Naam", "Name"), settings.naam || "") + tile("Week", String(wfWeekInfo(wk, id).week)) + tile(vt("Datum", "Date"), wfDateText(wk, id)) + '</w:tr></w:tbl>' + p("", {after: 160});
   }
   // tabel
   const W = S.cols.map(x => Math.round(x * 9638)); W[3] = 9638 - W[0] - W[1] - W[2];
   const tc = (w, inner, o) => { const side = w < 1200 ? 70 : 140; return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>' + (o.span > 1 ? '<w:gridSpan w:val="' + o.span + '"/>' : '') + (o.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>' : '') +
     '<w:tcMar><w:top w:w="90" w:type="dxa"/><w:bottom w:w="90" w:type="dxa"/><w:left w:w="' + side + '" w:type="dxa"/><w:right w:w="' + side + '" w:type="dxa"/></w:tcMar>' + (o.va ? '<w:vAlign w:val="' + o.va + '"/>' : '') + '</w:tcPr>' + (inner || p("")) + '</w:tc>'; };
   const lines = (t, o, po) => String(t == null ? "" : t).split("\n").map(l => p(l ? r(l, o) : "", po)).join("");
-  const kvColor = v => v === "ja" ? TH.hex : v === "nee" ? GRAY : INK;
+  const kvColor = v => wfsJa(v) ? TH.hex : wfsNee(v) ? GRAY : INK;
   const cellXml = (cell, first, row, w) => {
     const jc = wfsMid(cell) ? {jc: "center"} : null;
     if(row.who) return w < 3000 ? p(r(cell.t[0].trim(), {sz: 17, c: "FFFFFF"})) + p(r(cell.t[1], {sz: 21, b: 1, c: "FFFFFF"})) : p(r(cell.t[0], {sz: 19, c: "FFFFFF"}) + r(cell.t[1], {sz: 22, b: 1, c: "FFFFFF"}));
@@ -260,7 +263,7 @@ function wfStyledXml(wk, id, withLogo){
     }).join("");
     if(cell.lines) return cell.lines.map(([l, v]) => p(r(l, {sz: 18, c: GRAY}) + (v ? r(v, {sz: 20}) : ""), {after: 30})).join("");
     const yn = wfsYn(cell);
-    if(yn) return p((yn[0] ? r(yn[0], {sz: 19}) : "") + r(yn[1], {b: 1, sz: w < 1200 ? 18 : 20, c: yn[1] === "Ja / Nee" ? GRAY : TH.hex}), jc);
+    if(yn) return p((yn[0] ? r(yn[0], {sz: 19}) : "") + r(yn[1], {b: 1, sz: w < 1200 ? 18 : 20, c: wfsNiet(yn[1]) ? GRAY : TH.hex}), jc);
     if("sub" in cell) return lines(cell.t, {sz: 18, c: GRAY, i: cell.i}, {after: 30}) + lines(cell.sub, {sz: 21});
     return lines(cell.t, {sz: 21, i: cell.i}, jc);
   };
@@ -300,7 +303,7 @@ function wfStyledPdf(wk, id){
   // wekelijkse update: naam, week en datum als vakjes (zoals bij de dagbeschouwing)
   if(id === "upd"){
     const gap = 10, bw = (CW - 2 * gap) / 3, bh = 44;
-    [["NAAM", settings.naam || "–"], ["WEEK", String(wfWeekInfo(wk, id).week)], ["DATUM", wfDateText(wk, id)]].forEach(([lb, v], i) => {
+    [[vt("NAAM", "NAME"), settings.naam || "–"], ["WEEK", String(wfWeekInfo(wk, id).week)], [vt("DATUM", "DATE"), wfDateText(wk, id)]].forEach(([lb, v], i) => {
       const x = M + i * (bw + gap);
       sh.rrect(x, y - bh, bw, bh, 8, TH.soft);
       txt(cp1252(lb), x + 12, y - 15, 7.5, "F2", MUT);
@@ -322,7 +325,7 @@ function wfStyledPdf(wk, id){
     else plain(value, vs, vf, vc, w, lh).forEach(x => out.push(x));
     return out;
   };
-  const kvColor = v => v === "ja" ? TH.rgb : v === "nee" ? MUT : INK;
+  const kvColor = v => wfsJa(v) ? TH.rgb : wfsNee(v) ? MUT : INK;
   const layout = (cell, iw, first, row) => {
     if(row.who) return mixed(cell.t[0], "F1", 9.5, WHITE, cell.t[1], "F2", 10.5, WHITE, iw, 13);
     if(row.head) return plain(cell.t, 9.5, "F2", WHITE, iw, 12);
@@ -337,7 +340,7 @@ function wfStyledPdf(wk, id){
     }
     if(cell.lines){ const out = []; cell.lines.forEach(([l, v]) => mixed(l, "F1", 9, MUT, v, "F1", 10, INK, iw, 12.5).forEach(x => out.push(x))); return out; }
     const yn = wfsYn(cell);
-    if(yn) return mixed(yn[0], "F1", 9.5, INK, yn[1], "F2", 9.5, yn[1] === "Ja / Nee" ? MUT : TH.rgb, iw, 13);
+    if(yn) return mixed(yn[0], "F1", 9.5, INK, yn[1], "F2", 9.5, wfsNiet(yn[1]) ? MUT : TH.rgb, iw, 13);
     if("sub" in cell){ const out = plain(cell.t, 9, cell.i ? "F3" : "F1", MUT, iw, 12); if(cell.sub) plain(cell.sub, 10, "F1", INK, iw, 13).forEach(x => out.push(x)); return out; }
     const out = plain(cell.t, 10, cell.i ? "F3" : "F1", INK, iw, 13);
     return out.length === 1 && out[0].segs[0].t === "" ? [] : out;
@@ -377,7 +380,7 @@ function wfStyledPdf(wk, id){
   // voettekst
   k.pages.forEach((pg, i) => {
     k.ops = pg;
-    const l = cp1252(wfFooterText(wk, id) + (settings.naam ? "  ·  " + settings.naam : "")), rt = cp1252("Pagina " + (i + 1) + " van " + k.pages.length);
+    const l = cp1252(wfFooterText(wk, id) + (settings.naam ? "  ·  " + settings.naam : "")), rt = cp1252(vt("Pagina ", "Page ") + (i + 1) + vt(" van ", " of ") + k.pages.length);
     txt(l, M, 30, 8, "F1", MUT);
     txt(rt, M + CW - textW(rt, 8, false), 30, 8, "F1", MUT);
   });
@@ -392,13 +395,13 @@ function renderGreetingWf(){
   const now = new Date(), dow = now.getDay(), tk = todayKey(), wk = mondayOf(tk);
   const sent = (wfData(wk).sent) || {};
   let txt = "", forms = [];
-  if(dow === 0){ forms = ["plan", "upd"].filter(x => !sent[x]); if(forms.length) txt = forms.length === 2 ? "Vandaag: weekplanning en wekelijkse update" : "Vandaag nog: " + (forms[0] === "plan" ? "weekplanning" : "wekelijkse update"); }
-  else if(dow === 3 && now.getHours() >= 17 && !sent.wv){ forms = ["wv"]; txt = "Vanavond: weekendvoorbespreking"; }
+  if(dow === 0){ forms = ["plan", "upd"].filter(x => !sent[x]); if(forms.length) txt = forms.length === 2 ? vt("Vandaag: weekplanning en wekelijkse update", "Today: weekly planning and weekly update") : vt("Vandaag nog: ", "Still to do today: ") + (forms[0] === "plan" ? vt("weekplanning", "weekly planning") : vt("wekelijkse update", "weekly update")); }
+  else if(dow === 3 && now.getHours() >= 17 && !sent.wv){ forms = ["wv"]; txt = vt("Vanavond: weekendvoorbespreking", "Tonight: weekend plan"); }
   const show = !!txt && curKey === tk;
   card.classList.toggle("hidden", !show);
   if(!show) return;
   card.appendChild(el("div", "qtitle", txt));
-  const b = el("button", "linkbtn more", "Naar weekformulieren"); b.type = "button"; b.style.cssText = "margin-top:6px;font-weight:600";
+  const b = el("button", "linkbtn more", vt("Naar weekformulieren", "Go to weekly forms")); b.type = "button"; b.style.cssText = "margin-top:6px;font-weight:600";
   b.onclick = () => { wfWeek = wk; wfOpen = forms.length === 1 ? forms[0] : ""; showView("wf"); window.scrollTo(0, 0); };
   card.appendChild(b);
 }

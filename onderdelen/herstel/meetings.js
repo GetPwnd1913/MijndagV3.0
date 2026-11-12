@@ -54,9 +54,11 @@ const MEETINGS = [
   {id:"ca-elst-za", f:"CA", d:6, t:"10:00", city:"Elst (Gld)", loc:"", addr:"Sint Maartenstraat 32B, Elst"},
   {id:"ca-arn-za", f:"CA", d:6, t:"19:30", city:"Arnhem", loc:"", addr:"Van Verschuerplein 16A, Arnhem"}
 ];
-const MEET_GROUPS = [["NA","NA meetings"],["AA","AA meetings"],["CA","CA meetings"],["Anders","Overige meetings"]];
+const MEET_GROUPS = [["NA","NA meetings","NA meetings"],["AA","AA meetings","AA meetings"],["CA","CA meetings","CA meetings"],["Anders","Overige meetings","Other meetings"]];
 const MEET_LINKS = [["NA","https://www.nanederland.nl/meetings/"],["AA","https://aa-nederland.nl/vind-een-meeting/"],["CA","https://ca-holland.nl/meetings/"]];
 const DAYNAMES = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
+const DAYNAMES_EN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const dayName = d => vt(DAYNAMES[d], DAYNAMES_EN[d]);
 const DAY_ORDER = [1,2,3,4,5,6,0];
 let meetOpen = {}, meetForm = false;
 
@@ -88,11 +90,11 @@ function meetRow(m, showGroup){
   if(meetWhere(m)) tx.appendChild(el("div", "ad", meetWhere(m)));
   if(m.nt) tx.appendChild(el("div", "nt", m.nt));
   const links = el("div", "links");
-  if(m.addr){ const a = el("a", "linkbtn more", "Route"); a.href = routeUrl(m); a.target = "_blank"; a.rel = "noopener"; links.appendChild(a); }
+  if(m.addr){ const a = el("a", "linkbtn more", vt("Route", "Directions")); a.href = routeUrl(m); a.target = "_blank"; a.rel = "noopener"; links.appendChild(a); }
   if(m.own){
-    const del = el("button", "linkbtn", "Weghalen"); del.type = "button"; del.style.color = "var(--muted)";
+    const del = el("button", "linkbtn", vt("Weghalen", "Remove")); del.type = "button"; del.style.color = "var(--muted)";
     del.onclick = async () => {
-      if(!(await confirmDialog("Meeting weghalen?", m.f + " " + m.city + " (" + DAYNAMES[m.d] + ") verdwijnt uit je lijst.", "Weghalen"))) return;
+      if(!(await confirmDialog(vt("Meeting weghalen?", "Remove meeting?"), m.f + " " + m.city + " (" + dayName(m.d) + ")" + vt(" verdwijnt uit je lijst.", " will be removed from your list."), vt("Weghalen", "Remove")))) return;
       settings.customMeetings = (settings.customMeetings || []).filter(x => x.id !== m.id);
       settings.meetStars = meetStars().filter(x => x !== m.id);
       renderMeetings(); renderMeetToday(); await saveSettingsNow();
@@ -102,7 +104,7 @@ function meetRow(m, showGroup){
   if(links.childNodes.length) tx.appendChild(links);
   r.appendChild(tx);
   const st = el("button", "star" + (isStar(m) ? " on" : "")); st.appendChild(icon("star", 24, isStar(m)));
-  st.type = "button"; st.setAttribute("aria-label", isStar(m) ? "Niet meer vast" : "Maak vast");
+  st.type = "button"; st.setAttribute("aria-label", isStar(m) ? vt("Niet meer vast", "Remove from regular") : vt("Maak vast", "Make regular"));
   st.onclick = () => toggleStar(m);
   r.appendChild(st);
   return r;
@@ -112,7 +114,7 @@ function meetListByDay(list, showGroup){
   const box = el("div");
   let last = null;
   list.slice().sort(meetSort).forEach(m => {
-    if(m.d !== last){ box.appendChild(el("div", "mday", DAYNAMES[m.d])); last = m.d; }
+    if(m.d !== last){ box.appendChild(el("div", "mday", dayName(m.d))); last = m.d; }
     box.appendChild(meetRow(m, showGroup));
   });
   return box;
@@ -120,27 +122,27 @@ function meetListByDay(list, showGroup){
 
 function meetFormCard(){
   const c = el("div", "card mform");
-  c.appendChild(el("div", "qtitle", "Eigen meeting toevoegen"));
+  c.appendChild(el("div", "qtitle", vt("Eigen meeting toevoegen", "Add your own meeting")));
   const field = (label, input) => { const f = el("div", "field"); const l = el("label", null, label); f.appendChild(l); f.appendChild(input); return f; };
-  const grp = el("select"); [["NA","NA"],["AA","AA"],["CA","CA"],["Anders","Anders"]].forEach(([v, l]) => { const o = el("option", null, l); o.value = v; grp.appendChild(o); });
-  const day = el("select"); DAY_ORDER.forEach(d => { const o = el("option", null, cap(DAYNAMES[d])); o.value = String(d); day.appendChild(o); });
+  const grp = el("select"); [["NA","NA"],["AA","AA"],["CA","CA"],["Anders",vt("Anders", "Other")]].forEach(([v, l]) => { const o = el("option", null, l); o.value = v; grp.appendChild(o); });
+  const day = el("select"); DAY_ORDER.forEach(d => { const o = el("option", null, cap(dayName(d))); o.value = String(d); day.appendChild(o); });
   const time = el("input"); time.type = "time"; time.value = "19:30";
-  const two = el("div", "two"); two.appendChild(field("Groep", grp)); two.appendChild(field("Dag", day));
+  const two = el("div", "two"); two.appendChild(field(vt("Groep", "Group"), grp)); two.appendChild(field(vt("Dag", "Day"), day));
   c.appendChild(two);
-  c.appendChild(field("Tijd", time));
-  const city = el("input"); city.placeholder = "Bijv. Rhenen";
-  c.appendChild(field("Plaats", city));
-  const loc = el("input"); loc.placeholder = "Bijv. Buurthuis De Kolk (mag leeg)";
-  c.appendChild(field("Naam van de locatie", loc));
-  const addr = el("input"); addr.placeholder = "Straat en huisnummer";
-  c.appendChild(field("Adres", addr));
+  c.appendChild(field(vt("Tijd", "Time"), time));
+  const city = el("input"); city.placeholder = vt("Bijv. Rhenen", "E.g. Rhenen");
+  c.appendChild(field(vt("Plaats", "Town"), city));
+  const loc = el("input"); loc.placeholder = vt("Bijv. Buurthuis De Kolk (mag leeg)", "E.g. Buurthuis De Kolk (optional)");
+  c.appendChild(field(vt("Naam van de locatie", "Name of the venue"), loc));
+  const addr = el("input"); addr.placeholder = vt("Straat en huisnummer", "Street and house number");
+  c.appendChild(field(vt("Adres", "Address"), addr));
   const msg = note(""); c.appendChild(msg);
   const row = el("div", "row"); row.style.marginTop = "12px";
-  const cancel = el("button", "ghost", "Annuleren"); cancel.type = "button"; cancel.onclick = () => { meetForm = false; renderMeetings(); };
-  const save = el("button", "primary", "Opslaan"); save.type = "button";
+  const cancel = el("button", "ghost", vt("Annuleren", "Cancel")); cancel.type = "button"; cancel.onclick = () => { meetForm = false; renderMeetings(); };
+  const save = el("button", "primary", vt("Opslaan", "Save")); save.type = "button";
   save.onclick = async () => {
     const cv = city.value.trim().replace(/[,:]/g, " ").replace(/\s+/g, " ");
-    if(!cv){ msg.textContent = "Vul in elk geval de plaats in."; city.focus(); return; }
+    if(!cv){ msg.textContent = vt("Vul in elk geval de plaats in.", "Please fill in at least the town."); city.focus(); return; }
     const street = addr.value.trim();
     const m = {id: "own-" + newId(), f: grp.value, d: Number(day.value), t: time.value || "", city: cv, loc: loc.value.trim(), addr: street ? street + ", " + cv : ""};
     settings.customMeetings = (settings.customMeetings || []).concat([m]);
@@ -156,19 +158,20 @@ function renderMeetings(){
   box.innerHTML = "";
   const all = allMeetings();
   const intro = el("div", "card"); intro.style.cssText = "background:var(--accent-soft);border-color:transparent";
-  const it = note("Meetings binnen ongeveer 30 km van Rhenen. Tik op NA, AA of CA om de meetings te zien. Met de ster ☆ maak je een meeting vast. Die zie je dan op de dag zelf bij Invullen.");
+  const it = note(vt("Meetings binnen ongeveer 30 km van Rhenen. Tik op NA, AA of CA om de meetings te zien. Met de ster ☆ maak je een meeting vast. Die zie je dan op de dag zelf bij Invullen.", "Meetings within about 30 km of Rhenen. Tap NA, AA or CA to see the meetings. With the star ☆ you make a meeting one of your regulars. You will then see it on that day under Fill in."));
   it.style.cssText = "margin:0;font-size:15px;color:var(--ink)"; intro.appendChild(it);
   box.appendChild(intro);
 
   const stars = all.filter(isStar);
   if(stars.length){
     const c = el("div", "card");
-    const sth = el("div", "qtitle withic"); sth.appendChild(icon("star", 20, true)); sth.appendChild(document.createTextNode("Mijn vaste meetings")); sth.firstChild.style.color = "#e0a020"; c.appendChild(sth);
+    const sth = el("div", "qtitle withic"); sth.appendChild(icon("star", 20, true)); sth.appendChild(document.createTextNode(vt("Mijn vaste meetings", "My regular meetings"))); sth.firstChild.style.color = "#e0a020"; c.appendChild(sth);
     c.appendChild(meetListByDay(stars, true));
     box.appendChild(c);
   }
 
-  MEET_GROUPS.forEach(([g, label]) => {
+  MEET_GROUPS.forEach(([g, labelNl, labelEn]) => {
+    const label = vt(labelNl, labelEn);
     const list = all.filter(m => m.f === g);
     if(!list.length) return;
     const c = el("div", "card");
@@ -184,16 +187,16 @@ function renderMeetings(){
 
   if(meetForm) box.appendChild(meetFormCard());
   else {
-    const b = el("button", "chip start", "+ Eigen meeting toevoegen"); b.type = "button"; b.style.margin = "0 2px 12px";
+    const b = el("button", "chip start", vt("+ Eigen meeting toevoegen", "+ Add your own meeting")); b.type = "button"; b.style.margin = "0 2px 12px";
     b.onclick = () => { meetForm = true; renderMeetings(); };
     box.appendChild(b);
   }
 
   const f = el("div", "card");
-  const ft = note("Gecontroleerd op 8 november 2026. Tijden en adressen kunnen veranderen. Kijk bij twijfel op de site van NA, AA of CA.");
+  const ft = note(vt("Gecontroleerd op 8 november 2026. Tijden en adressen kunnen veranderen. Kijk bij twijfel op de site van NA, AA of CA.", "Checked on 8 November 2026. Times and addresses can change. If in doubt, check the NA, AA or CA website."));
   ft.style.marginTop = "0"; f.appendChild(ft);
   const lr = el("div", "links"); lr.style.cssText = "display:flex;gap:16px;margin-top:8px;flex-wrap:wrap";
-  MEET_LINKS.forEach(([n, u]) => { const a = el("a", "linkbtn", n + "-meetinglijst ›"); a.href = u; a.target = "_blank"; a.rel = "noopener"; lr.appendChild(a); });
+  MEET_LINKS.forEach(([n, u]) => { const a = el("a", "linkbtn", n + vt("-meetinglijst ›", " meeting list ›")); a.href = u; a.target = "_blank"; a.rel = "noopener"; lr.appendChild(a); });
   f.appendChild(lr);
   box.appendChild(f);
 }
@@ -201,25 +204,26 @@ function renderMeetings(){
 // vraag 4: "een meeting bezocht" + plaats aanvinken
 function logMeetingVisit(m){
   const q = QUESTIONS.find(x => x.id === "q4"); if(!q) return "";
-  const row = q.rows[0], mb = bullet(row.sub.item);
+  const row = q.rows[0], si = row.sub.item;
   const a = answer(q.id);
   const lines = a.text ? a.text.split("\n") : [];
-  let k = findItemLine(lines, mb);
+  let k = findItemLineOf(lines, si);
+  const mb = k >= 0 ? bulletIn(lines[k], si) : bullet(si);
   if(k < 0){
-    const known = itemsOf(q, row).map(bullet);
+    const known = [].concat(...itemsOf(q, row).map(bulletVariants));
     let at = -1; lines.forEach((l, n) => { if(known.some(kb => lineIs(l, kb))) at = n; });
     k = at >= 0 ? at + 1 : lines.length;
     lines.splice(k, 0, mb);
   }
   const i = lines[k].indexOf(": ");
   const places = i < 0 ? [] : lines[k].slice(i + 2).replace(/\.$/, "").split(/,\s*/).filter(Boolean);
-  if(places.indexOf(m.city) >= 0) return "Stond al genoteerd bij vraag 4.";
+  if(places.indexOf(m.city) >= 0) return vt("Stond al genoteerd bij vraag 4.", "Already noted under question 4.");
   places.push(m.city);
   lines[k] = mb + ": " + places.join(", ");
   a.text = lines.join("\n").replace(/^\n+/, "");
   if(!(settings.meetingPlaces || []).includes(m.city)){ settings.meetingPlaces = (settings.meetingPlaces || []).concat([m.city]); saveSettingsNow(); }
   scheduleSave();
-  return "Genoteerd bij vraag 4.";
+  return vt("Genoteerd bij vraag 4.", "Noted under question 4.");
 }
 
 function renderMeetToday(){
@@ -229,15 +233,15 @@ function renderMeetToday(){
   card.classList.toggle("hidden", !list.length);
   card.innerHTML = "";
   if(!list.length) return;
-  card.appendChild(el("div", "qtitle", curKey === todayKey() ? "Meeting vandaag" : "Meeting op deze dag"));
+  card.appendChild(el("div", "qtitle", curKey === todayKey() ? vt("Meeting vandaag", "Meeting today") : vt("Meeting op deze dag", "Meeting on this day")));
   const q4 = (entry.answers && entry.answers.q4 && entry.answers.q4.text) || "";
   list.forEach(m => {
     const r = el("div", "mrow"); r.style.borderTop = "0";
     const tx = el("div", "tx");
     const tt = el("div", "tt"); tt.appendChild(el("span", "badge", m.f)); tt.appendChild(document.createTextNode((m.t || "?") + " · " + m.city)); tx.appendChild(tt);
     if(meetWhere(m)) tx.appendChild(el("div", "ad", meetWhere(m)));
-    const done = q4.split("\n").some(l => /^- een meeting bezocht/i.test(l.trim()) && l.indexOf(": ") >= 0 && l.slice(l.indexOf(": ") + 2).split(/,\s*/).indexOf(m.city) >= 0);
-    const b = el("button", done ? "ghost" : "primary", done ? "Geweest ✓" : "Ik ben geweest ✓"); b.type = "button"; b.style.marginTop = "8px";
+    const done = q4.split("\n").some(l => /^- (een meeting bezocht|attended a meeting)/i.test(l.trim()) && l.indexOf(": ") >= 0 && l.slice(l.indexOf(": ") + 2).split(/,\s*/).indexOf(m.city) >= 0);
+    const b = el("button", done ? "ghost" : "primary", done ? vt("Geweest ✓", "Went ✓") : vt("Ik ben geweest ✓", "I went ✓")); b.type = "button"; b.style.marginTop = "8px";
     const msg = note(""); msg.style.marginTop = "6px";
     b.disabled = done;
     msg.dataset.mid = m.id;
@@ -273,15 +277,15 @@ function nextMeetingCard(){
   }
   if(!found) return null;
   off--;
-  const when = off === 0 ? "vandaag" : off === 1 ? "morgen" : DAYNAMES[found.d];
+  const when = off === 0 ? vt("vandaag", "today") : off === 1 ? vt("morgen", "tomorrow") : dayName(found.d);
   const c = el("div", "card");
-  c.appendChild(el("div", "qtitle", "Naar een meeting"));
-  const t = note("Eerstvolgende meeting: " + when + " " + found.t + ", " + found.f + " " + found.city);
+  c.appendChild(el("div", "qtitle", vt("Naar een meeting", "Go to a meeting")));
+  const t = note(vt("Eerstvolgende meeting: ", "Next meeting: ") + when + " " + found.t + ", " + found.f + " " + found.city);
   t.style.cssText = "margin-top:6px;font-size:16px;color:var(--ink);font-weight:600"; c.appendChild(t);
   if(meetWhere(found)){ const a = note(meetWhere(found)); a.style.marginTop = "2px"; c.appendChild(a); }
   const lr = el("div"); lr.style.cssText = "display:flex;gap:16px;margin-top:8px;flex-wrap:wrap";
-  if(found.addr){ const a = el("a", "linkbtn more", "Route"); a.href = routeUrl(found); a.target = "_blank"; a.rel = "noopener"; lr.appendChild(a); }
-  const all2 = el("button", "linkbtn more", "Alle meetings"); all2.type = "button"; all2.onclick = () => showView("meetings"); lr.appendChild(all2);
+  if(found.addr){ const a = el("a", "linkbtn more", vt("Route", "Directions")); a.href = routeUrl(found); a.target = "_blank"; a.rel = "noopener"; lr.appendChild(a); }
+  const all2 = el("button", "linkbtn more", vt("Alle meetings", "All meetings")); all2.type = "button"; all2.onclick = () => showView("meetings"); lr.appendChild(all2);
   c.appendChild(lr);
   return c;
 }

@@ -7,7 +7,7 @@ function scheduleSave(){
   dirty = true;
   entry.updated = Date.now();
   local.set("day:"+entry.date, entry);
-  setStatus("Opslaan…");
+  setStatus(vt("Opslaan…", "Saving…"));
   clearTimeout(saveTimer);
   saveTimer = setTimeout(flush, 900);
   updateProgress();
@@ -23,7 +23,7 @@ function flush(){
       }
     }
     dirty = false;
-    setStatus("Opgeslagen ✓");
+    setStatus(vt("Opgeslagen ✓", "Saved ✓"));
     setTimeout(()=>{ if(!dirty) setStatus(baseStatus()); }, 1500);
   });
   return saving;

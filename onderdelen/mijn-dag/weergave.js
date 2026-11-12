@@ -48,11 +48,15 @@ function setFold(card, q, on){
 }
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
-const bullet = item => "- " + cap(item);
-const headerOf = row => /[?:]$/.test(row.label) ? row.label : row.label + ":";
+// Nieuwe regels en kopjes in de gekozen taal; herkennen in beide talen (een oude Nederlandse dag werkt ook in het Engels).
+const bullet = item => "- " + cap(vItem(item));
+const bulletVariants = item => itemVariants(item).map(x => "- " + cap(x));
+const hdr = l => /[?:]$/.test(l) ? l : l + ":";
+const headerOf = row => hdr(rowLabel(row));
+const headersOf = row => [hdr(row.label)].concat(row.labelEn ? [hdr(row.labelEn)] : []);
 const useHeader = q => (q.rows||[]).length > 1;
 function blockRange(lines, row){
-  const i = lines.indexOf(headerOf(row)); if(i < 0) return null;
+  const hs = headersOf(row), i = lines.findIndex(l => hs.indexOf(l) >= 0); if(i < 0) return null;
   let j = i + 1; while(j < lines.length && lines[j].indexOf("- ") === 0) j++;
   return [i, j];
 }
@@ -69,6 +73,10 @@ async function saveCustom(q, row, list){
 }
 const lineIs = (l, b) => l === b || l.indexOf(b + ": ") === 0;
 const findItemLine = (lines, b) => lines.findIndex(l => lineIs(l, b));
+const lineIsItem = (l, item) => bulletVariants(item).some(b => lineIs(l, b));
+const findItemLineOf = (lines, item) => lines.findIndex(l => lineIsItem(l, item));
+// het opsommingsteken zoals het in die regel staat (nl of en), anders in de gekozen taal
+const bulletIn = (line, item) => bulletVariants(item).find(b => lineIs(line || "", b)) || bullet(item);
 function rowSelected(text, q, row){
   const lines = (text||"").split("\n");
   if(useHeader(q)){ const r = blockRange(lines, row); return r ? lines.slice(r[0]+1, r[1]) : []; }
@@ -77,24 +85,26 @@ function rowSelected(text, q, row){
 function toggleRowItem(ta, q, row, item, refresh){
   const a = answer(q.id);
   const lines = ta.value ? ta.value.split("\n") : [];
-  const b = bullet(item);
+  const b = bullet(item), bv = bulletVariants(item);
   if(useHeader(q)){
     const r = blockRange(lines, row);
     if(r){
       let items = lines.slice(r[0]+1, r[1]);
-      if(row.single) items = items.indexOf(b) >= 0 ? [] : [b];
-      else items = items.indexOf(b) >= 0 ? items.filter(x => x !== b) : items.concat([b]);
-      lines.splice(r[0], r[1]-r[0], ...(items.length ? [headerOf(row)].concat(items) : []));
+      const has = items.some(x => bv.indexOf(x) >= 0);
+      if(row.single) items = has ? [] : [b];
+      else items = has ? items.filter(x => bv.indexOf(x) < 0) : items.concat([b]);
+      // het bestaande kopje (nl of en) blijft staan
+      lines.splice(r[0], r[1]-r[0], ...(items.length ? [lines[r[0]]].concat(items) : []));
     } else {
       let at = lines.length;
       for(let n = q.rows.indexOf(row) + 1; n < q.rows.length; n++){ const nr = blockRange(lines, q.rows[n]); if(nr){ at = nr[0]; break; } }
       lines.splice(at, 0, headerOf(row), b);
     }
   } else {
-    const k = findItemLine(lines, b);
+    const k = findItemLineOf(lines, item);
     if(k >= 0) lines.splice(k, 1);
     else {
-      const known = itemsOf(q, row).map(bullet);
+      const known = [].concat(...itemsOf(q, row).map(bulletVariants));
       let at = -1; lines.forEach((l, n) => { if(known.some(kb => lineIs(l, kb))) at = n; });
       lines.splice(at >= 0 ? at + 1 : lines.length, 0, b);
     }
@@ -105,38 +115,39 @@ function toggleRowItem(ta, q, row, item, refresh){
   if(ta._update) ta._update();
 }
 function buildSub(q, ta, row, refresh, subs){
-  const mb = bullet(row.sub.item);
+  const si = row.sub.item;
   const sb = document.createElement("div");
   sb.style.cssText = "margin:10px 0 0 10px;padding-left:10px;border-left:3px solid var(--accent)";
   const getPlaces = line => { const i = line.indexOf(": "); return i < 0 ? [] : line.slice(i+2).replace(/\.$/,"").split(/,\s*/).filter(Boolean); };
   const setLine = places => {
     const lines = ta.value ? ta.value.split("\n") : [];
-    const k = findItemLine(lines, mb);
+    const k = findItemLineOf(lines, si);
     if(k < 0) return;
+    const mb = bulletIn(lines[k], si);
     lines[k] = places.length ? mb + ": " + places.join(", ") : mb;
     ta.value = lines.join("\n"); answer(q.id).text = ta.value;
     scheduleSave(); markCard(q); refresh(); if(ta._update) ta._update();
   };
   const draw = () => {
     const lines = (ta.value||"").split("\n");
-    const k = findItemLine(lines, mb);
+    const k = findItemLineOf(lines, si);
     sb.classList.toggle("hidden", k < 0);
     if(k < 0) return;
     const chosen = getPlaces(lines[k]);
     sb.innerHTML = "";
-    const l = document.createElement("div"); l.className = "label"; l.style.marginTop = "0"; l.textContent = row.sub.label; sb.appendChild(l);
+    const l = document.createElement("div"); l.className = "label"; l.style.marginTop = "0"; l.textContent = vt(row.sub.label, row.sub.labelEn); sb.appendChild(l);
     const wrapEl = document.createElement("div"); wrapEl.className = "chips";
     const places = (settings.meetingPlaces||[]);
     places.forEach(p => {
       const b = document.createElement("button"); b.type = "button"; b.className = "chip" + (chosen.indexOf(p) >= 0 ? " on" : ""); b.textContent = p;
-      b.onclick = () => { const cur = getPlaces((ta.value.split("\n"))[findItemLine(ta.value.split("\n"), mb)] || ""); setLine(cur.indexOf(p) >= 0 ? cur.filter(x => x !== p) : cur.concat([p])); };
+      b.onclick = () => { const cur = getPlaces((ta.value.split("\n"))[findItemLineOf(ta.value.split("\n"), si)] || ""); setLine(cur.indexOf(p) >= 0 ? cur.filter(x => x !== p) : cur.concat([p])); };
       wrapEl.appendChild(b);
     });
     sb.appendChild(wrapEl);
     const add = document.createElement("div"); add.style.cssText = "display:flex;gap:6px;margin-top:8px";
-    const inp = document.createElement("input"); inp.placeholder = places.length ? "Andere plaats toevoegen…" : "Typ een plaats, bijv. Utrecht of online…";
+    const inp = document.createElement("input"); inp.placeholder = places.length ? vt("Andere plaats toevoegen…", "Add another place…") : vt("Typ een plaats, bijv. Utrecht of online…", "Type a place, e.g. Utrecht or online…");
     inp.style.cssText = "flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:16px;background:var(--card);color:var(--ink)";
-    const btn = document.createElement("button"); btn.type = "button"; btn.className = "ghost"; btn.textContent = "Toevoegen"; btn.style.padding = "8px 12px"; btn.style.flex = "none";
+    const btn = document.createElement("button"); btn.type = "button"; btn.className = "ghost"; btn.textContent = vt("Toevoegen", "Add"); btn.style.padding = "8px 12px"; btn.style.flex = "none";
     const doAdd = async () => {
       const p = inp.value.trim().replace(/[,:]/g, " ").replace(/\s+/g, " ");
       if(!p) return;
@@ -145,7 +156,7 @@ function buildSub(q, ta, row, refresh, subs){
         local.set("settings", settings);
         if(setDoc){ try{ await setDoc.set(Object.assign({}, settings)); }catch(e){} }
       }
-      const cur = getPlaces((ta.value.split("\n"))[findItemLine(ta.value.split("\n"), mb)] || "");
+      const cur = getPlaces((ta.value.split("\n"))[findItemLineOf(ta.value.split("\n"), si)] || "");
       setLine(cur.includes(p) ? cur : cur.concat([p]));
     };
     btn.onclick = doAdd;
@@ -160,11 +171,11 @@ function buildRows(q, ta){
   const chips = [];
   const subs = [];
   const refresh = () => {
-    chips.forEach(c => c.el.classList.toggle("on", rowSelected(ta.value, q, c.row).some(l => lineIs(l, bullet(c.item)))));
+    chips.forEach(c => c.el.classList.toggle("on", rowSelected(ta.value, q, c.row).some(l => lineIsItem(l, c.item))));
     subs.forEach(f => f());
   };
   (q.rows||[]).forEach(row => {
-    const l = document.createElement("div"); l.className = "label"; l.textContent = row.label; box.appendChild(l);
+    const l = document.createElement("div"); l.className = "label"; l.textContent = rowLabel(row); box.appendChild(l);
     const wrapEl = document.createElement("div"); wrapEl.className = "chips";
     const addBox = document.createElement("div"); addBox.className = "hidden"; addBox.style.marginTop = "8px";
     let editing = false;
@@ -173,7 +184,7 @@ function buildRows(q, ta){
       wrapEl.innerHTML = "";
       const custom = customOf(q, row);
       itemsOf(q, row).forEach(item => {
-        const b = document.createElement("button"); b.type = "button"; b.className = "chip " + (row.cls||""); b.textContent = item;
+        const b = document.createElement("button"); b.type = "button"; b.className = "chip " + (row.cls||""); b.textContent = vItem(item);
         const mine = custom.indexOf(item) >= 0;
         if(dynItems(q).indexOf(item) >= 0) b.classList.add("cleanchip");
         if(editing && mine){
@@ -186,14 +197,14 @@ function buildRows(q, ta){
         wrapEl.appendChild(b);
       });
       const plus = document.createElement("button"); plus.type = "button"; plus.className = "chip start";
-      plus.textContent = editing ? "Klaar" : "+ Eigen";
+      plus.textContent = editing ? vt("Klaar", "Done") : vt("+ Eigen", "+ Own");
       plus.onclick = () => { editing = !editing; addBox.classList.toggle("hidden", !editing); drawRow(); refresh(); if(editing) inp.focus(); };
       wrapEl.appendChild(plus);
     };
     const inp = document.createElement("input");
-    inp.placeholder = "Eigen knopje, bijv. " + (row.single ? "iets anders" : "mijn rust gepakt");
+    inp.placeholder = vt("Eigen knopje, bijv. ", "Your own button, e.g. ") + (row.single ? vt("iets anders", "something else") : vt("mijn rust gepakt", "took time to rest"));
     inp.style.cssText = "flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font:inherit;font-size:16px;background:var(--card);color:var(--ink)";
-    const addBtn = document.createElement("button"); addBtn.type = "button"; addBtn.className = "ghost"; addBtn.textContent = "Toevoegen";
+    const addBtn = document.createElement("button"); addBtn.type = "button"; addBtn.className = "ghost"; addBtn.textContent = vt("Toevoegen", "Add");
     addBtn.style.cssText = "padding:8px 12px;flex:none";
     const doAdd = async () => {
       const v = inp.value.trim().replace(/[,:]/g, " ").replace(/\s+/g, " ");
@@ -207,7 +218,7 @@ function buildRows(q, ta){
     const addRow = document.createElement("div"); addRow.style.cssText = "display:flex;gap:6px";
     addRow.appendChild(inp); addRow.appendChild(addBtn); addBox.appendChild(addRow);
     const hint = document.createElement("div"); hint.className = "note"; hint.style.marginTop = "6px";
-    hint.textContent = "Tik op ✕ bij een eigen knopje om het weg te halen. Tik op Klaar als je klaar bent.";
+    hint.textContent = vt("Tik op ✕ bij een eigen knopje om het weg te halen. Tik op Klaar als je klaar bent.", "Tap ✕ on one of your own buttons to remove it. Tap Done when you are finished.");
     addBox.appendChild(hint);
     drawRow();
     box.appendChild(wrapEl);
@@ -233,7 +244,7 @@ function attachView(q, ta, parent){
       node.textContent = line; view.appendChild(node);
       if(n < arr.length - 1) view.appendChild(document.createTextNode("\n"));
     });
-    const h = document.createElement("span"); h.className = "hint"; h.textContent = "Tik om te bewerken"; view.appendChild(h);
+    const h = document.createElement("span"); h.className = "hint"; h.textContent = vt("Tik om te bewerken", "Tap to edit"); view.appendChild(h);
   };
   view.onclick = () => { view.classList.add("hidden"); ta.classList.remove("hidden"); ta.focus(); try{ ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} };
   ta.addEventListener("blur", update);
@@ -247,28 +258,29 @@ function buildQuestion(q, i){
   card.className = "card"; card.dataset.q = q.id;
 
   const head = document.createElement("div"); head.className="qhead";
-  head.innerHTML = '<div class="num">'+(i+1)+'</div><div style="flex:1;min-width:0"><div class="qtitle"></div><div class="fsum"></div><button class="tipbtn" type="button">Hulp bij deze vraag</button><div class="tip hidden"></div></div><div class="fchev"></div>';
-  head.querySelector(".qtitle").textContent = q.title;
-  const tip = head.querySelector(".tip"); tip.textContent = q.tip;
+  head.innerHTML = '<div class="num">'+(i+1)+'</div><div style="flex:1;min-width:0"><div class="qtitle"></div><div class="fsum"></div><button class="tipbtn" type="button"></button><div class="tip hidden"></div></div><div class="fchev"></div>';
+  head.querySelector(".qtitle").textContent = qTitle(q);
+  head.querySelector(".tipbtn").textContent = vt("Hulp bij deze vraag", "Help with this question");
+  const tip = head.querySelector(".tip"); tip.textContent = qTip(q);
   if(q.id === "q9"){
-    tip.appendChild(document.createTextNode(" Wil je het bespreken met je begeleider? Zet het dan als bespreekpunt bij ‘Voor mijn 1-op-1’ in het menu."));
-    const tl = el("button", "linkbtn more", "Naar Voor mijn 1-op-1"); tl.type = "button"; tl.style.cssText = "display:block;margin-top:6px;font-weight:600";
+    tip.appendChild(document.createTextNode(vt(" Wil je het bespreken met je begeleider? Zet het dan als bespreekpunt bij ‘Voor mijn 1-op-1’ in het menu.", " Want to discuss it with your support worker? Add it as a talking point under ‘For my 1-to-1’ in the menu.")));
+    const tl = el("button", "linkbtn more", vt("Naar Voor mijn 1-op-1", "Go to For my 1-to-1")); tl.type = "button"; tl.style.cssText = "display:block;margin-top:6px;font-weight:600";
     tl.onclick = () => showView("talk"); tip.appendChild(tl);
   }
-  head.querySelector(".tipbtn").onclick = e => { tip.classList.toggle("hidden"); e.target.textContent = tip.classList.contains("hidden") ? "Hulp bij deze vraag" : "Verberg hulp"; };
+  head.querySelector(".tipbtn").onclick = e => { tip.classList.toggle("hidden"); e.target.textContent = tip.classList.contains("hidden") ? vt("Hulp bij deze vraag", "Help with this question") : vt("Verberg hulp", "Hide help"); };
   card.appendChild(head);
 
   const ta = document.createElement("textarea");
   ta.value = a.text || "";
   ta.oninput = () => { a.text = ta.value; scheduleSave(); markCard(q); };
-  ta.placeholder = "Eigen tekst toevoegen…";
+  ta.placeholder = vt("Eigen tekst toevoegen…", "Add your own text…");
 
   if(q.type==="free"){
     ta.className = "big";
-    ta.placeholder = "Schrijf hier over je dag…";
+    ta.placeholder = vt("Schrijf hier over je dag…", "Write about your day here…");
     card.appendChild(ta);
     // groot schrijfscherm: openen bij aantikken, kruisje om terug te gaan
-    const fsx = document.createElement("button"); fsx.type = "button"; fsx.className = "fsclose"; fsx.setAttribute("aria-label", "Kleiner maken");
+    const fsx = document.createElement("button"); fsx.type = "button"; fsx.className = "fsclose"; fsx.setAttribute("aria-label", vt("Kleiner maken", "Make smaller"));
     fsx.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
     head.appendChild(fsx);
     // zelf afvinken
@@ -278,8 +290,8 @@ function buildQuestion(q, i){
       kb.classList.toggle("on", !!a.klaar && has);
       kb.disabled = !has;
       kb.innerHTML = '<span class="kc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span></span>';
-      kb.lastChild.textContent = !has ? "Schrijf eerst iets, dan kun je vraag 1 afvinken"
-        : a.klaar ? "Vraag 1 is afgevinkt (tik om weer open te zetten)" : "Klaar met schrijven? Vink vraag 1 af";
+      kb.lastChild.textContent = !has ? vt("Schrijf eerst iets, dan kun je vraag 1 afvinken", "Write something first, then you can tick off question 1")
+        : a.klaar ? vt("Vraag 1 is afgevinkt (tik om weer open te zetten)", "Question 1 is ticked off (tap to open it again)") : vt("Klaar met schrijven? Vink vraag 1 af", "Done writing? Tick off question 1");
     };
     kb.onclick = () => {
       if(!(a.text || "").trim()) return;
@@ -314,8 +326,8 @@ function buildQuestion(q, i){
     const sc = document.createElement("div"); sc.className="scale";
     const detail = document.createElement("div");
     const showDetail = () => detail.classList.toggle("hidden", q.detailOn.indexOf(a.level)<0);
-    q.opts.forEach(([val,lab])=>{
-      const b=document.createElement("button"); b.type="button"; b.textContent=lab;
+    q.opts.forEach(([val,lab,labEn])=>{
+      const b=document.createElement("button"); b.type="button"; b.textContent=vt(lab, labEn || lab);
       b._paint = ()=>{ b.classList.toggle("on", a.level===val); b.classList.toggle("warn", q.detailOn.indexOf(val)>=0); };
       b._paint();
       b.onclick=()=>{
@@ -329,7 +341,7 @@ function buildQuestion(q, i){
     card.appendChild(sc);
     showDetail();
     if(q.id === "q5" || q.id === "q6"){
-      const s = el("button", "linkbtn more", "Is het zwaar? Open mijn noodplan"); s.type = "button";
+      const s = el("button", "linkbtn more", vt("Is het zwaar? Open mijn noodplan", "Is it hard? Open my emergency plan")); s.type = "button";
       s.style.cssText = "margin-top:12px;color:var(--warm);font-weight:600";
       s.onclick = () => showView("sos");
       detail.appendChild(s);
@@ -341,7 +353,7 @@ function buildQuestion(q, i){
   }
   else if(q.type==="score"){
     const sc = document.createElement("div"); sc.className="score";
-    const scoreRx = /^Ik geef deze dag een \d+\.?/;
+    const scoreRx = SCORE_RX;
     for(let n=1;n<=10;n++){
       const b=document.createElement("button"); b.type="button"; b.textContent=n; if(n<=5) b.dataset.low="1"; if(n===6) b.dataset.mid="1";
       if(String(n)===entry.cijfer) b.classList.add("on");
@@ -350,7 +362,7 @@ function buildQuestion(q, i){
         sc.querySelectorAll("button").forEach(x=>x.classList.toggle("on", x.textContent===entry.cijfer));
         const lines = ta.value ? ta.value.split("\n") : [];
         const j = lines.findIndex(l => scoreRx.test(l));
-        if(entry.cijfer){ const s = "Ik geef deze dag een " + entry.cijfer + "."; if(j>=0) lines[j] = s; else lines.unshift(s); }
+        if(entry.cijfer){ const s = vt("Ik geef deze dag een ", "I give this day a ") + entry.cijfer + "."; if(j>=0) lines[j] = s; else lines.unshift(s); }
         else if(j>=0) lines.splice(j,1);
         ta.value = lines.join("\n"); a.text = ta.value;
         scheduleSave(); markCard(q); };
@@ -383,13 +395,17 @@ function addMonthsKey(k, n){
 }
 function addDaysKey(k, n){ const d = parseKey(k); d.setDate(d.getDate() + n); return keyOf(d); }
 function milestones(since){
-  const list = [
+  const list = isEn() ? [
+    [1,"24 hours (1 day)","24 hours"],[30,"30 days (1 month)","30 days"],[60,"60 days (2 months)","60 days"],
+    [90,"90 days (3 months)","90 days"],[120,"120 days (4 months)","120 days"],[150,"150 days (5 months)","150 days"],
+    [180,"180 days (6 months)","180 days"],[270,"270 days (9 months)","270 days"]
+  ].map(([n,l,sh]) => ({label: l, short: sh, key: addDaysKey(since, n)})) : [
     [1,"24 uur (1 dag)","24 uur"],[30,"30 dagen (1 maand)","30 dagen"],[60,"60 dagen (2 maanden)","60 dagen"],
     [90,"90 dagen (3 maanden)","90 dagen"],[120,"120 dagen (4 maanden)","120 dagen"],[150,"150 dagen (5 maanden)","150 dagen"],
     [180,"180 dagen (6 maanden)","180 dagen"],[270,"270 dagen (9 maanden)","270 dagen"]
   ].map(([n,l,sh]) => ({label: l, short: sh, key: addDaysKey(since, n)}));
-  list.push({label: "18 maanden (1,5 jaar)", short: "18 maanden", key: addMonthsKey(since, 18)});
-  for(let y=1; y<=60; y++){ const l = y===1 ? "1 jaar" : y+" jaar"; list.push({label: l, short: l, key: addMonthsKey(since, 12*y)}); }
+  list.push({label: vt("18 maanden (1,5 jaar)", "18 months (1.5 years)"), short: vt("18 maanden", "18 months"), key: addMonthsKey(since, 18)});
+  for(let y=1; y<=60; y++){ const l = y===1 ? vt("1 jaar", "1 year") : y + vt(" jaar", " years"); list.push({label: l, short: l, key: addMonthsKey(since, 12*y)}); }
   return list.sort((a,b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
 }
 let msOpen = false;
@@ -398,7 +414,7 @@ function renderMilestones(){
   const box = $("msBox"), cel = $("msCelebrate");
   if(!settings.since || curKey < settings.since){
     cel.classList.add("hidden"); box.classList.remove("hidden");
-    $("msNext").textContent = settings.since ? "Mijlpalen beginnen vanaf je cleandatum." : "Mijlpalen: vul bij ‘Gegevens’ je cleandatum in, dan zie je hier je mijlpalen.";
+    $("msNext").textContent = settings.since ? vt("Mijlpalen beginnen vanaf je cleandatum.", "Milestones start from your clean date.") : vt("Mijlpalen: vul bij ‘Instellingen’ je cleandatum in, dan zie je hier je mijlpalen.", "Milestones: enter your clean date under ‘Settings’ and your milestones will appear here.");
     $("msBar").parentNode.classList.add("hidden"); $("msDone").classList.add("hidden"); $("msDoneBtn").classList.add("hidden");
     return;
   }
@@ -407,8 +423,10 @@ function renderMilestones(){
   const today = list.find(m => m.key === curKey);
   cel.classList.toggle("hidden", !today);
   if(today){
-    $("msCelTitle").textContent = today.label + " clean / nuchter!";
-    $("msCelText").textContent = (curKey === todayKey() ? "Vandaag" : "Op deze dag") + " ben je " + today.label + " nuchter/clean. Gefeliciteerd, wees trots op jezelf.";
+    $("msCelTitle").textContent = today.label + vt(" clean / nuchter!", " clean / sober!");
+    $("msCelText").textContent = isEn()
+      ? (curKey === todayKey() ? "Today" : "On this day") + " you are " + today.label + " sober/clean. Congratulations, be proud of yourself."
+      : (curKey === todayKey() ? "Vandaag" : "Op deze dag") + " ben je " + today.label + " nuchter/clean. Gefeliciteerd, wees trots op jezelf.";
   }
   const done = list.filter(m => m.key <= curKey);
   const next = list.find(m => m.key > curKey);
@@ -417,12 +435,14 @@ function renderMilestones(){
     const prevKey = done.length ? done[done.length-1].key : settings.since;
     const left = Math.round((parseKey(next.key) - parseKey(curKey)) / 864e5);
     const span = Math.round((parseKey(next.key) - parseKey(prevKey)) / 864e5) || 1;
-    $("msNext").textContent = "Volgende mijlpaal: " + next.label + " — nog " + left + (left===1 ? " dag" : " dagen") + " (" + shortDate(next.key) + ")";
+    $("msNext").textContent = isEn()
+      ? "Next milestone: " + next.label + " — " + left + (left===1 ? " day" : " days") + " to go (" + shortDate(next.key) + ")"
+      : "Volgende mijlpaal: " + next.label + " — nog " + left + (left===1 ? " dag" : " dagen") + " (" + shortDate(next.key) + ")";
     $("msBar").style.width = Math.max(2, Math.min(100, (1 - left/span) * 100)) + "%";
   }
   const btn = $("msDoneBtn"), listEl = $("msDone");
   btn.classList.toggle("hidden", !done.length);
-  btn.textContent = (msOpen ? "▾ " : "▸ ") + "Behaald (" + done.length + ")";
+  btn.textContent = (msOpen ? "▾ " : "▸ ") + vt("Behaald (", "Achieved (") + done.length + ")";
   listEl.classList.toggle("hidden", !msOpen || !done.length);
   listEl.innerHTML = "";
   done.forEach(m => {
@@ -440,22 +460,22 @@ function renderInfo(){
   renderKeytags();
   $("infoNaam").textContent = settings.naam || "–";
   const d = daysClean(curKey);
-  $("infoDagen").textContent = d===null ? "–" : d + (d===1?" dag":" dagen");
+  $("infoDagen").textContent = d===null ? "–" : aantal(d, "dag", "dagen", "day", "days");
   if(d !== null && d > 1 && !countedUp && curKey === todayKey()){ countedUp = true; countUp($("infoDagen"), d); }
   $("infoDatum").textContent = shortDate(curKey);
-  $("openSettings").textContent = (settings.naam||settings.since) ? "Gegevens wijzigen" : "Gegevens instellen (eenmalig)";
+  $("openSettings").textContent = (settings.naam||settings.since) ? vt("Gegevens wijzigen", "Change details") : vt("Gegevens instellen (eenmalig)", "Set up your details (one time)");
 }
 
 let countedUp = false;
 function countUp(elx, to){
   if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const fmt = n => n + (n === 1 ? " dag" : " dagen");
+  const fmt = n => aantal(n, "dag", "dagen", "day", "days");
   elx.textContent = fmt(0);
   const go = () => {
     if(document.getElementById("splash")){ setTimeout(go, 200); return; }
     const t0 = performance.now(), dur = Math.min(1600, 600 + to * 2);
     const f = now => { const p = Math.min(1, (now - t0) / dur), k = 1 - Math.pow(1 - p, 3);
-      if(elx.textContent.indexOf("dag") < 0) return;
+      if(elx.textContent.indexOf(vt("dag", "day")) < 0) return;
       elx.textContent = fmt(Math.round(to * k)); if(p < 1) requestAnimationFrame(f); };
     requestAnimationFrame(f);
   };
@@ -465,7 +485,8 @@ function renderGreeting(){
   const g = $("greet"); if(!g) return;
   g.innerHTML = "";
   const h = new Date().getHours();
-  const word = h < 6 ? "Goedenacht" : h < 12 ? "Goedemorgen" : h < 18 ? "Goedemiddag" : "Goedenavond";
+  const word = isEn() ? (h < 6 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening")
+    : (h < 6 ? "Goedenacht" : h < 12 ? "Goedemorgen" : h < 18 ? "Goedemiddag" : "Goedenavond");
   const night = h < 6 || h >= 18;
   const NS = "http://www.w3.org/2000/svg";
   const sv = document.createElementNS(NS, "svg"); sv.setAttribute("viewBox", "0 0 32 32"); sv.setAttribute("aria-hidden", "true");
@@ -483,6 +504,7 @@ function renderGreeting(){
   g.appendChild(document.createTextNode(word + (first ? ", " + first : "")));
 }
 function render(){
+  pasTaalToe();
   renderGreeting();
   $("dateLabel").textContent = niceDate(curKey);
   $("nextDay").disabled = curKey >= todayKey();
@@ -500,7 +522,7 @@ function render(){
 function updateProgress(){
   const n = QUESTIONS.filter(isDone).length;
   $("summaryBtn").classList.toggle("notyet", n < QUESTIONS.length);
-  $("progText").textContent = n+" van "+QUESTIONS.length+" vragen";
+  $("progText").textContent = n + vt(" van ", " of ") + QUESTIONS.length + vt(" vragen", " questions");
   $("progBar").style.width = (n/QUESTIONS.length*100)+"%";
   const T = QUESTIONS.length;
   $("progArc").setAttribute("stroke-dashoffset", (113.1 * (1 - n / T)).toFixed(1));

@@ -72,7 +72,7 @@ function buildPdf(e){
   const newPage = first => {
     ops = []; pages.push(ops);
     if(first){ y = H - M; return; }
-    txt(cp1252("Dagbeschouwing · " + shortDate(e.date)), M, H - 34, 8.5, "F1", MUT);
+    txt(cp1252(vt("Dagbeschouwing · ", "Daily reflection · ") + shortDate(e.date)), M, H - 34, 8.5, "F1", MUT);
     hline(M, M + CW, H - 42, LINE);
     y = H - 64;
   };
@@ -81,31 +81,31 @@ function buildPdf(e){
   // kop
   const bandH = 76;
   rrect(M, y - bandH, CW, bandH, 12, TH.rgb);
-  txt("Dagbeschouwing", M + 22, y - 34, 22, "F2", WHITE);
+  txt(vt("Dagbeschouwing", "Daily reflection"), M + 22, y - 34, 22, "F2", WHITE);
   txt(cp1252(cap(longDate2(e.date))), M + 22, y - 55, 11, "F1", WHITE);
   const LS = 50, lx = M + CW - 16 - LS, ltop = y - (bandH - LS) / 2;
   pdfLogo(ops, lx, ltop, LS, rrect, circle);
   if(d !== null){
-    const big = cp1252(String(d)), small = cp1252(d === 1 ? "dag clean" : "dagen clean"), rx = lx - 14;
+    const big = cp1252(String(d)), small = cp1252(d === 1 ? vt("dag clean", "day clean") : vt("dagen clean", "days clean")), rx = lx - 14;
     txt(big, rx - textW(big, 24, true), y - 38, 24, "F2", WHITE);
     txt(small, rx - textW(small, 9.5, false), y - 54, 9.5, "F1", WHITE);
   }
   y -= bandH + 14;
   // gegevens
   const gap = 10, bw = (CW - 2*gap) / 3, bh = 44;
-  [["NAAM", settings.naam || "–"], ["DAGEN NUCHTER/CLEAN", d === null ? "–" : String(d)], ["DATUM", shortDate(e.date)]].forEach(([k, v], i) => {
+  [[vt("NAAM", "NAME"), settings.naam || "–"], [vt("DAGEN NUCHTER/CLEAN", "DAYS SOBER/CLEAN"), d === null ? "–" : String(d)], [vt("DATUM", "DATE"), shortDate(e.date)]].forEach(([k, v], i) => {
     const x = M + i * (bw + gap);
     rrect(x, y - bh, bw, bh, 8, TH.soft);
     txt(cp1252(k), x + 12, y - 15, 7.5, "F2", MUT);
     txt(cp1252(v), x + 12, y - 33, 12, "F2", INK);
   });
   y -= bh + 16;
-  wrap("Bij een dagbeschouwing doe je zelfonderzoek. Je gaat na wat er op de dag goed verlopen is en wat voor verbetering vatbaar is. Wees open en eerlijk.", 9.5, false, CW).forEach(l => { txt(l, M, y - 9.5, 9.5, "F3", MUT); y -= 13; });
+  wrap(vt("Bij een dagbeschouwing doe je zelfonderzoek. Je gaat na wat er op de dag goed verlopen is en wat voor verbetering vatbaar is. Wees open en eerlijk.", "In a daily reflection you take a personal inventory. You look at what went well during the day and what could be better. Be open and honest."), 9.5, false, CW).forEach(l => { txt(l, M, y - 9.5, 9.5, "F3", MUT); y -= 13; });
   y -= 10;
   hline(M, M + CW, y, LINE); y -= 18;
   // vragen
   QUESTIONS.forEach((q, i) => {
-    const ql = wrap(q.title, 11, true, CW - IND);
+    const ql = wrap(qTitle(q), 11, true, CW - IND);
     const rows = [];
     answerLines(q, e).forEach(l => {
       if(l.k === "bullet") wrap(l.t, 10.5, false, CW - IND - 14).forEach((t, j) => rows.push({t, x: IND + 14, font: "F1", size: 10.5, c: INK, bullet: j === 0}));
@@ -136,8 +136,8 @@ function buildPdf(e){
   // voettekst
   pages.forEach((p, i) => {
     ops = p;
-    txt(cp1252("Mijn dag"), M, 30, 8, "F1", MUT);
-    const pg = cp1252("Pagina " + (i + 1) + " van " + pages.length);
+    txt(cp1252(vt("Mijn dag", "My day")), M, 30, 8, "F1", MUT);
+    const pg = cp1252(vt("Pagina ", "Page ") + (i + 1) + vt(" van ", " of ") + pages.length);
     txt(pg, M + CW - textW(pg, 8, false), 30, 8, "F1", MUT);
   });
   // assemble
@@ -172,12 +172,12 @@ $("savePdf").onclick = async () => {
   if(dirty){ clearTimeout(saveTimer); await flush(); }
   try{
     const bytes = buildPdf(sumEntry);
-    await offerFile("Dagbeschouwing "+sumEntry.date+".pdf", bytes, "application/pdf");
-    msg.textContent = ""; toast("Bestand gemaakt. Kies Mail om het te versturen.");
+    await offerFile(vt("Dagbeschouwing ", "Daily reflection ")+sumEntry.date+".pdf", bytes, "application/pdf");
+    msg.textContent = ""; toast(vt("Bestand gemaakt. Kies Mail om het te versturen.", "File created. Choose Mail to send it."));
   }catch(err){
     const c = err && err.code;
-    if(c==="declined") msg.textContent = "Niet opgeslagen.";
-    else if(c==="rate_limited") msg.textContent = "Even wachten en dan opnieuw proberen.";
-    else msg.textContent = "Opslaan lukte niet hier. Gebruik Kopieer tekst en plak het in je mail.";
+    if(c==="declined") msg.textContent = vt("Niet opgeslagen.", "Not saved.");
+    else if(c==="rate_limited") msg.textContent = vt("Even wachten en dan opnieuw proberen.", "Wait a moment and try again.");
+    else msg.textContent = vt("Opslaan lukte niet hier. Gebruik Kopieer tekst en plak het in je mail.", "Saving did not work here. Use Copy text and paste it into your email.");
   }
 };

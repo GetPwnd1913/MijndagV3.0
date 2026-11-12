@@ -11,9 +11,9 @@ let settings = local.get("settings") || {naam:"", since:"", mail:"", updated:0};
 
 function setStatus(txt){ $("status").textContent = txt; }
 function baseStatus(){
-  if(dbState==="on") return "Bewaard in je account · alleen jij ziet dit";
-  if(dbState==="off") return "Bewaard op dit toestel";
-  return "Verbinden…";
+  if(dbState==="on") return vt("Bewaard in je account · alleen jij ziet dit", "Saved in your account · only you can see this");
+  if(dbState==="off") return vt("Bewaard op dit toestel", "Saved on this device");
+  return vt("Verbinden…", "Connecting…");
 }
 
 async function initDb(){

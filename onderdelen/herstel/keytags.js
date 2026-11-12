@@ -8,6 +8,17 @@ const SVGNS = "http://www.w3.org/2000/svg";
 function keytagList(since){
   const yrs = (() => { let n = 0; while(addMonthsKey(since, 12 * (n + 1)) <= curKey) n++; return n; })();
   const multi = Math.max(2, yrs);
+  if(isEn()) return [
+    {c:"#ffffff", tc:"#3d3d3a", big:"Welcome", small:"", name:"White", nx:"white keytag", label:"Welcome", key: since},
+    {c:"#FF5A2E", tc:"#ffffff", big:"30", small:"days", name:"Orange", nx:"orange keytag", label:"30 days", key: addDaysKey(since, 30)},
+    {c:"#2FC94A", tc:"#ffffff", big:"60", small:"days", name:"Green", nx:"green keytag", label:"60 days", key: addDaysKey(since, 60)},
+    {c:"#9E1B22", tc:"#ffffff", big:"90", small:"days", name:"Red", nx:"red keytag", label:"90 days", key: addDaysKey(since, 90)},
+    {c:"#1F3FA8", tc:"#ffffff", big:"180", small:"days", name:"Blue", nx:"blue keytag", label:"180 days", key: addDaysKey(since, 180)},
+    {c:"#F7D51D", tc:"#5a4a00", big:"270", small:"days", name:"Yellow", nx:"yellow keytag", label:"270 days", key: addDaysKey(since, 270)},
+    {c:"#EEF2E6", tc:"#4a5a40", big:"1", small:"year", name:"Moonglow", nx:"Moonglow keytag", label:"1 year", key: addMonthsKey(since, 12), glow: true},
+    {c:"#7A7A78", tc:"#ffffff", big:"18", small:"months", name:"Grey", nx:"grey keytag", label:"18 months", key: addMonthsKey(since, 18)},
+    {c:"#1B1B1B", tc:"#ffffff", big:String(multi), small:"years", name:"Black", nx:"black keytag", label: multi + " years", key: addMonthsKey(since, 12 * multi), years: yrs}
+  ];
   return [
     {c:"#ffffff", tc:"#3d3d3a", big:"Welkom", small:"", name:"Wit", nx:"witte keytag", label:"Welkom", key: since},
     {c:"#FF5A2E", tc:"#ffffff", big:"30", small:"dagen", name:"Oranje", nx:"oranje keytag", label:"30 dagen", key: addDaysKey(since, 30)},
@@ -27,7 +38,7 @@ function keytagSvg(t, on, w){
   const fill = on ? t.c : "none", stroke = on ? (light ? "#B4B2A9" : "rgba(0,0,0,.25)") : "var(--muted)";
   const txt = on ? t.tc : "var(--muted)";
   const dash = on ? {} : {"stroke-dasharray": "3 3"};
-  const s = svgEl("svg", {width: w, height: Math.round(w * 104 / 60), viewBox: "0 0 60 104", role: "img", "aria-label": t.label + (on ? ", behaald" : ", nog niet behaald")});
+  const s = svgEl("svg", {width: w, height: Math.round(w * 104 / 60), viewBox: "0 0 60 104", role: "img", "aria-label": t.label + (on ? vt(", behaald", ", achieved") : vt(", nog niet behaald", ", not yet achieved"))});
   s.appendChild(svgEl("circle", {cx: 30, cy: 11, r: 9, fill: "none", stroke: "#9a9a96", "stroke-width": 2.5}));
   s.appendChild(svgEl("rect", Object.assign({class: "ktb", x: 23, y: 18, width: 14, height: 20, rx: 4, fill, stroke}, dash)));
   s.appendChild(svgEl("circle", {cx: 30, cy: 24, r: 2.4, fill: "#b8a46a"}));
@@ -79,10 +90,10 @@ function renderKeytags(){
   const d = daysClean(curKey);
 
   const head = el("div"); head.style.cssText = "display:flex;justify-content:space-between;align-items:baseline;gap:8px";
-  const h = el("div", "qtitle ktti", "Mijn keytags"); head.appendChild(h);
-  head.appendChild(el("div", "note", d + (d === 1 ? " dag" : " dagen") + " clean")).style.margin = "0";
+  const h = el("div", "qtitle ktti", vt("Mijn keytags", "My keytags")); head.appendChild(h);
+  head.appendChild(el("div", "note", aantal(d, "dag", "dagen", "day", "days") + " clean")).style.margin = "0";
   card.appendChild(head);
-  const sub = note(done.length + " van " + list.length + " behaald" + (last ? " · laatst: " + last.label : "")); sub.style.marginTop = "2px"; card.appendChild(sub);
+  const sub = note(done.length + vt(" van ", " of ") + list.length + vt(" behaald", " achieved") + (last ? vt(" · laatst: ", " · latest: ") + last.label : "")); sub.style.marginTop = "2px"; card.appendChild(sub);
 
   const row = el("div", "ktrow");
   const info = note(""); info.style.cssText = "margin-top:8px;text-align:center;min-height:18px";
@@ -93,8 +104,8 @@ function renderKeytags(){
     const w = el("div", "kt"); w.tabIndex = 0;
     w.appendChild(keytagSvg(t, on, 48));
     w.onclick = () => {
-      info.textContent = on ? t.name + " · " + t.label + " · behaald op " + shortDate(t.key)
-        : t.name + " · " + t.label + " · nog " + Math.round((parseKey(t.key) - parseKey(curKey)) / 864e5) + " dagen (" + shortDate(t.key) + ")";
+      info.textContent = on ? t.name + " · " + t.label + vt(" · behaald op ", " · achieved on ") + shortDate(t.key)
+        : t.name + " · " + t.label + (isEn() ? " · " + Math.round((parseKey(t.key) - parseKey(curKey)) / 864e5) + " days to go (" : " · nog " + Math.round((parseKey(t.key) - parseKey(curKey)) / 864e5) + " dagen (") + shortDate(t.key) + ")";
     };
     if(on && t.glow){
       glowEl = w;
@@ -111,12 +122,12 @@ function renderKeytags(){
   card.appendChild(row);
   card.appendChild(info);
 
-  const next = list.find(t => t.key > curKey) || (last && last.years >= 2 ? {name: "Zwart", nx: "zwarte keytag", label: (last.years + 1) + " jaar", key: addMonthsKey(since, 12 * (last.years + 1))} : null);
+  const next = list.find(t => t.key > curKey) || (last && last.years >= 2 ? {name: vt("Zwart", "Black"), nx: vt("zwarte keytag", "black keytag"), label: (last.years + 1) + vt(" jaar", " years"), key: addMonthsKey(since, 12 * (last.years + 1))} : null);
   if(next){
     const left = Math.round((parseKey(next.key) - parseKey(curKey)) / 864e5);
     const prevKey = last ? last.key : since;
     const span = Math.round((parseKey(next.key) - parseKey(prevKey)) / 864e5) || 1;
-    const nt = note("Volgende: " + next.nx + " · " + next.label + ", nog " + left + (left === 1 ? " dag" : " dagen"));
+    const nt = note(isEn() ? "Next: " + next.nx + " · " + next.label + ", " + aantal(left, "", "", "day", "days") + " to go" : "Volgende: " + next.nx + " · " + next.label + ", nog " + left + (left === 1 ? " dag" : " dagen"));
     nt.style.cssText = "margin-top:10px;font-size:14px;color:var(--ink)"; nt.classList.add("ktnext");
     card.appendChild(nt);
     const bar = el("div", "bar"); const bi = el("i"); bi.style.width = Math.max(2, Math.min(100, (1 - left / span) * 100)) + "%"; bar.appendChild(bi); card.appendChild(bar);

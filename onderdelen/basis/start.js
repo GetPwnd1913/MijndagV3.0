@@ -1,5 +1,6 @@
 // ---------- start ----------
 render();
+$("pageTitle").textContent = vt("Mijn dag", "My day");
 showSplash();
 setInterval(() => { renderGreeting(); renderGreetingWf(); }, 60000);
 document.addEventListener("visibilitychange", () => { if(!document.hidden){ renderGreeting(); renderGreetingWf(); } });
