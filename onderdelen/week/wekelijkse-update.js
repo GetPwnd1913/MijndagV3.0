@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- wekelijkse update ----------
 async function prefillUpd(wk){
   const map = await allDays(), dk = [0,1,2,3,4,5,6].map(i => addDaysKey(wk, i));

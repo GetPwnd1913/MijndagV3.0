@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- Alleen voor vandaag (own PDF, read on the device) ----------
 const MONTHS = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
 const MDAYS = [31,29,31,30,31,30,31,31,30,31,30,31];

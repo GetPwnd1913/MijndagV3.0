@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- helpers ----------
 const $ = id => document.getElementById(id);
 const pad = n => String(n).padStart(2,"0");

@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- state ----------
 let curKey = todayKey();
 let entry = local.get("day:"+curKey) || emptyEntry(curKey);

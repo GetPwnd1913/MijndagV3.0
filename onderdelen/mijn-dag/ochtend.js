@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- ochtendmoment ----------
 // 's Ochtends: één regel op Mijn dag ("☀ Begin je dag ›") → scherm over de hele pagina met 3 vragen.
 // 's Avonds: alleen als er een voornemen is, een kaart boven de vragen: "Is dat gelukt?".

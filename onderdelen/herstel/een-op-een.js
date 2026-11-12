@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- voor mijn 1-op-1 ----------
 let talkShowDone = false;
 const dayMonth = k => parseKey(k).toLocaleDateString(locale(), {day:"numeric", month:"long"});

@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- weekendvoorbespreking ----------
 // Wat je kunt doen bij een trigger (vooruitkijkend; COPING in vragen.js is de verleden tijd voor de dagbeschouwing)
 const WV_COPING = ["mijn sponsor bellen","iemand anders bellen","erover praten","naar een meeting gaan","naar buiten gaan","afleiding zoeken","de situatie verlaten","bidden of mediteren","de film doorspoelen tot het eind","iets eten of drinken","wachten tot het overgaat","literatuur lezen"];

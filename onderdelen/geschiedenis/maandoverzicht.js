@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- maandoverzicht ----------
 let histMap = {};
 let mKey = todayKey().slice(0,7);

@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- mijlpaal-overzicht ----------
 // Tik op de felicitatiekaart (of "Bekijk overzicht" bij een behaalde keytag) → overzicht over de hele pagina:
 // keytag, eigen bericht per mijlpaal, wat je sindsdien hebt gedaan (tot de mijlpaaldatum) en de volgende mijlpaal.

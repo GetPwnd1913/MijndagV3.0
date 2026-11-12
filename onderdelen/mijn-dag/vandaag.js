@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- startpagina Vandaag ----------
 // Rustige startpagina: begroeting + dagen clean, mijlpaal, ochtendmoment, knop naar de dagbeschouwing,
 // wat er vandaag is, meldingen in één regel en snelknoppen. Alleen tonen, er wordt niets anders opgeslagen.

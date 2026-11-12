@@ -1,4 +1,9 @@
 <!DOCTYPE html>
+<!--
+  Mijn dag
+  © 2026 Roy van Dalem. Alle rechten voorbehouden. All rights reserved.
+  Onderdelen van anderen (JSZip, PDF.js, Figtree): zie "Over deze app" en THIRD-PARTY-NOTICES.txt.
+-->
 <html lang="nl">
 <head>
 <meta charset="utf-8">
@@ -261,7 +266,12 @@
       <button class="ghost" id="setCancel" data-en="Cancel">Annuleren</button>
       <button class="primary" id="setSave" data-en="Save">Opslaan</button>
     </div>
+    <button type="button" class="linkbtn overlink" id="openOver" data-en="About this app">Over deze app</button>
   </div>
+</div>
+
+<div class="overlay" id="overOverlay" role="dialog" aria-modal="true" aria-label="Over deze app" data-en-aria="About this app">
+  <div class="sheet" id="overSheet"></div>
 </div>
 
 <script src="externe-bibliotheken/jszip.min.js"></script>
@@ -275,6 +285,7 @@
 <script src="onderdelen/mijn-dag/ochtend.js"></script>
 <script src="onderdelen/mijn-dag/vandaag.js"></script>
 <script src="onderdelen/basis/instellingen.js"></script>
+<script src="onderdelen/basis/over.js"></script>
 <script src="onderdelen/mijn-dag/samenvatting.js"></script>
 <script src="onderdelen/mijn-dag/dag-word.js"></script>
 <script src="onderdelen/mijn-dag/dag-pdf.js"></script>

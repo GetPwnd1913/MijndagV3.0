@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- meetings ----------
 // d: 0 = zondag … 6 = zaterdag
 const MEETINGS = [

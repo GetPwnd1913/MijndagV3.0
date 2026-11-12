@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- taal: Nederlands / English ----------
 // Teksten staan als paar in de code: vt("Nederlands", "English"). De keuze staat in settings.taal ("nl" = standaard).
 // Opgeslagen antwoorden worden NIET vertaald. Kopjes en knopjes in antwoorden worden in beide talen herkend

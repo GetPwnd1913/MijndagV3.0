@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- weekformulieren ----------
 // WF_DAYS, PLAN_CHIPS en WV_REMIND volgen de gekozen taal: het zijn getters op window (geen const),
 // zodat alle bestaande plekken die ze gebruiken vanzelf de juiste taal krijgen.

@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- stappenwerk ----------
 const STEPS = [
   "Toegeven dat ik machteloos ben",

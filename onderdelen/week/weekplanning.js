@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- weekplanning ----------
 function planOf(wk){ return wfGet(wk, "plan"); }
 function setPlanSlots(wk, day, from, to, text){

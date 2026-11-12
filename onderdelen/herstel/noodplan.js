@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- noodplan ----------
 const SOS_DEFAULT = ["Even stoppen en rustig ademhalen","Mijn sponsor of iemand uit het programma bellen","Weggaan van de plek of de mensen","Naar buiten gaan en een stuk lopen","Naar een meeting gaan (of online)","De film doorspoelen tot het eind","Wachten: de zucht gaat weer voorbij"];
 const SOS_DEFAULT_EN = ["Stop for a moment and breathe calmly","Call my sponsor or someone from the programme","Leave the place or the people","Go outside and take a walk","Go to a meeting (or online)","Play the tape through to the end","Wait: the craving will pass"];

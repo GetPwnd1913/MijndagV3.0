@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- summary ----------
 function answerText(q, e){
   const a = e.answers && e.answers[q.id];

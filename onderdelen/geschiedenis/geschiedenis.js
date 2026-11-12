@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- history ----------
 async function allDays(){
   if(dirty){ clearTimeout(saveTimer); await flush(); }

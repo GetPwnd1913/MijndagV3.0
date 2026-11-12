@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- weekterugblik ----------
 let reviewWeek = null;
 const RV_SEEN = "dagbeschouwing:reviewSeen";

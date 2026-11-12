@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- storage ----------
 const LS = "dagbeschouwing:";
 const local = {

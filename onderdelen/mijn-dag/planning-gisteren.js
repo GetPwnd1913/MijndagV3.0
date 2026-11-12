@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- planning van gisteren ----------
 const PLAN_Q = QUESTIONS.find(q => q.id === "q11");
 function planFrom(e){

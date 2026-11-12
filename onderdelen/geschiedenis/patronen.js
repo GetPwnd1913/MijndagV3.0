@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- mijn patronen ----------
 // Wat er over een langere periode uit de dagbeschouwingen naar voren komt. Alleen lezen: er wordt niets opgeslagen.
 // Hergebruikt picked() / tally() / barList() / hadIt() / tile() / note() uit maandoverzicht.js.

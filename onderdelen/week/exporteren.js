@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- exporteren ----------
 function wfExportCard(wk, f){
   const c = wfCard(vt("Versturen", "Send"), vt("Maak een Word- of PDF-bestand en voeg het toe aan je mail.", "Make a Word or PDF file and attach it to your email."));

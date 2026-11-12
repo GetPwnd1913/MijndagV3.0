@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- rendering ----------
 function answer(id){ return entry.answers[id] || (entry.answers[id] = {level:"", text:""}); }
 function isDoneIn(e, q){

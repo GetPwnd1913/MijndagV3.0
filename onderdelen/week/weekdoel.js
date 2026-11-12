@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- weekdoel ----------
 let goalWeek = null, goalTimer = null;
 const mondayOf = k => addDaysKey(k, -((parseKey(k).getDay() + 6) % 7));

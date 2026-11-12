@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- Word file ----------
 async function offerFile(filename, data, mime){
   const dl = (window.claude && window.claude.use) ? await window.claude.use("downloads") : null;

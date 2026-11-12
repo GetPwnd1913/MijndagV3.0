@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- kleur ----------
 const THEMES = [["groen","Groen","#2f6f62","Green"],["blauw","Blauw","#2f5f9e","Blue"],["paars","Paars","#6a4c9c","Purple"],["petrol","Petrol","#1f6f80","Teal"],["roze","Roze","#a8437a","Pink"],["antraciet","Antraciet","#3d4a52","Charcoal"]];
 let pickTheme = null;

@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- vragen van de dagbeschouwing ----------
 // Elke tekst heeft een Engelse tegenhanger: titleEn, tipEn, yesTextEn/noTextEn, opts [waarde, nl, en],
 // en per rij labelEn + itemsEn (zelfde volgorde als items). De Nederlandse items blijven de sleutel.

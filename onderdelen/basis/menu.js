@@ -1,3 +1,4 @@
+// © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- menu & pagina's ----------
 const VIEWS = {home:["Vandaag","Today"], today:["Dagbeschouwing","Daily reflection"], jft:["Alleen voor vandaag","Just for Today"], hist:["Eerdere dagen","Earlier days"], month:["Maandoverzicht","Month overview"], patterns:["Mijn patronen","My patterns"], review:["Weekterugblik","Week in review"], talk:["1-op-1 & weekdoel","1-to-1 & weekly goal"], wf:["Weekformulieren","Weekly forms"], meetings:["Meetings","Meetings"], steps:["Stappenwerk","Step work"], sos:["Noodplan","Emergency plan"], backup:["Back-up","Backup"]};
 function openMenu(){ const d = daysClean(todayKey()); $("drawerSub").textContent = d === null ? vt("Dagbeschouwing", "Daily reflection") : aantal(d, "dag", "dagen", "day", "days") + " clean"; $("drawer").classList.add("open"); $("drawerBg").classList.add("show"); }
