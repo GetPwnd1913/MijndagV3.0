@@ -2,7 +2,7 @@
 // Strategie: eerst netwerk, cache als terugval. Tijdens ontwikkelen zie je zo altijd je laatste wijziging,
 // en zonder internet werkt de app toch met de laatst geladen versie.
 // Verhoog CACHE als je de lijst met bestanden hieronder verandert.
-const CACHE = "mijn-dag-v5";
+const CACHE = "mijn-dag-v6";
 const SHELL = [
   "./",
   "index.html",
@@ -71,7 +71,8 @@ self.addEventListener("fetch", (e) => {
   e.respondWith(
     fetch(req)
       .then((res) => {
-        if (res.ok || res.type === "opaque") {
+        // niet bewaren als we zijn doorgestuurd (bijv. naar de inlogpagina van Cloudflare Access)
+        if ((res.ok || res.type === "opaque") && !res.redirected) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy));
         }
