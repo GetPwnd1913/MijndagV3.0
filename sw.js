@@ -2,7 +2,7 @@
 // Strategie: eerst netwerk, cache als terugval. Tijdens ontwikkelen zie je zo altijd je laatste wijziging,
 // en zonder internet werkt de app toch met de laatst geladen versie.
 // Verhoog CACHE als je de lijst met bestanden hieronder verandert.
-const CACHE = "mijn-dag-v6";
+const CACHE = "mijn-dag-v7";
 const SHELL = [
   "./",
   "index.html",
@@ -68,8 +68,10 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
+  // "no-cache": altijd bij de server navragen of er een nieuwere versie is.
+  // GitHub Pages zegt max-age=600, waardoor de iPhone anders tot 10 minuten een oude versie houdt.
   e.respondWith(
-    fetch(req)
+    fetch(new Request(req.url, { cache: "no-cache", credentials: "same-origin" }))
       .then((res) => {
         // niet bewaren als we zijn doorgestuurd (bijv. naar de inlogpagina van Cloudflare Access)
         if ((res.ok || res.type === "opaque") && !res.redirected) {
