@@ -1,4 +1,6 @@
 // ---------- weekendvoorbespreking ----------
+// Wat je kunt doen bij een trigger (vooruitkijkend; COPING in vragen.js is de verleden tijd voor de dagbeschouwing)
+const WV_COPING = ["mijn sponsor bellen","iemand anders bellen","erover praten","naar een meeting gaan","naar buiten gaan","afleiding zoeken","de situatie verlaten","bidden of mediteren","de film doorspoelen tot het eind","iets eten of drinken","wachten tot het overgaat","literatuur lezen"];
 function renderWv(box, wk){
   const Q = (title, sub) => { const c = wfCard(title, sub); box.appendChild(c); return c; };
   const plan = planOf(addDaysKey(wk, -7)); // planning die vorige zondag is gemaakt, voor deze week
@@ -23,7 +25,7 @@ function renderWv(box, wk){
     if(items.length) c2.appendChild(wfChips(f._ta, items, () => wfSet(wk, "wv", key, f._ta.value)));
   };
   withChips("trig", "Welke triggers verwacht je?", TRIGGERS);
-  withChips("omgaan", "Hoe ga je met triggers om?", COPING.map(x => x === "mijn sponsor gebeld" ? "mijn sponsor bellen" : x));
+  withChips("omgaan", "Hoe ga je met triggers om?", WV_COPING);
   const sos = settings.sos || {};
   const names = [].concat((sos.contacts || []).map(p => p.name).filter(Boolean)).concat(["mijn sponsor","een fellow","mijn ouders","mijn broer","mijn zus","mijn dochter","mijn zoon"]);
   const seenN = new Set(), uniq = names.filter(n => { const k = n.trim().toLowerCase(); if(seenN.has(k)) return false; seenN.add(k); return true; });
