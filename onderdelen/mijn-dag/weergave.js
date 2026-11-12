@@ -459,20 +459,22 @@ function renderMilestones(){
 function renderInfo(){
   applyTheme(settings.theme);
   renderMilestones();
-  if(settings.since && curKey >= settings.since){ $("msBar").parentNode.classList.add("hidden"); $("msDoneBtn").classList.add("hidden"); $("msDone").classList.add("hidden"); }
+  if(settings.since && curKey >= settings.since){ $("msDoneBtn").classList.add("hidden"); $("msDone").classList.add("hidden"); }  // behaalde mijlpalen: zie keytags / mijlpaal-overzicht
   renderKeytags();
-  $("infoNaam").textContent = settings.naam || "–";
-  const d = daysClean(curKey);
-  $("infoDagen").textContent = d===null ? "–" : aantal(d, "dag", "dagen", "day", "days");
-  if(d !== null && d > 1 && !countedUp && curKey === todayKey()){ countedUp = true; countUp($("infoDagen"), d); }
-  $("infoDatum").textContent = shortDate(curKey);
-  $("openSettings").textContent = (settings.naam||settings.since) ? vt("Gegevens wijzigen", "Change details") : vt("Gegevens instellen (eenmalig)", "Set up your details (one time)");
+  // dagen clean op de startpagina (die gaat altijd over vandaag)
+  const d = daysClean(todayKey());
+  $("homeDagen").textContent = d===null ? "" : aantal(d, "dag", "dagen", "day", "days") + " clean";
+  $("homeDagen").classList.toggle("hidden", d===null);
+  if(d !== null && d > 1 && !countedUp && curKey === todayKey()){ countedUp = true; countUp($("homeDagen"), d); }
+  const ingesteld = !!(settings.naam || settings.since);
+  $("openSettings").textContent = ingesteld ? vt("Gegevens wijzigen", "Change details") : vt("Gegevens instellen (eenmalig)", "Set up your details (one time)");
+  $("openSettings").classList.toggle("hidden", ingesteld);
 }
 
 let countedUp = false;
 function countUp(elx, to){
   if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const fmt = n => aantal(n, "dag", "dagen", "day", "days");
+  const fmt = n => aantal(n, "dag", "dagen", "day", "days") + " clean";
   elx.textContent = fmt(0);
   const go = () => {
     if(document.getElementById("splash")){ setTimeout(go, 200); return; }
@@ -487,7 +489,7 @@ function countUp(elx, to){
 function renderGreeting(){
   const g = $("greet"); if(!g) return;
   g.innerHTML = "";
-  const h = new Date().getHours();
+  const h = (typeof ochKlok === "function" ? ochKlok() : new Date()).getHours();
   const word = isEn() ? (h < 6 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening")
     : (h < 6 ? "Goedenacht" : h < 12 ? "Goedemorgen" : h < 18 ? "Goedemiddag" : "Goedenavond");
   const night = h < 6 || h >= 18;
@@ -523,6 +525,7 @@ function render(){
   const ochKaart = buildOchtendKaart(); if(ochKaart) qs.appendChild(ochKaart);   // alleen op dagen met een ochtendvoornemen
   QUESTIONS.forEach((q,i)=>qs.appendChild(buildQuestion(q,i)));
   updateProgress();
+  if(typeof renderHome === "function") renderHome();
 }
 function updateProgress(){
   const n = QUESTIONS.filter(isDone).length;
@@ -533,6 +536,7 @@ function updateProgress(){
   $("progArc").setAttribute("stroke-dashoffset", (113.1 * (1 - n / T)).toFixed(1));
   $("progNum").textContent = n;
   $("progRing").classList.toggle("full", n === T);
+  if(typeof renderDbKnop === "function") renderDbKnop();
 }
 
 $("prevDay").onclick = () => { const d=parseKey(curKey); d.setDate(d.getDate()-1); loadDay(keyOf(d)); window.scrollTo(0,0); };

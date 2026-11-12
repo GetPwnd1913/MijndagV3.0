@@ -1,5 +1,5 @@
 // ---------- menu & pagina's ----------
-const VIEWS = {today:["Mijn dag","My day"], jft:["Alleen voor vandaag","Just for Today"], hist:["Eerdere dagen","Earlier days"], month:["Maandoverzicht","Month overview"], patterns:["Mijn patronen","My patterns"], review:["Weekterugblik","Week in review"], talk:["Voor mijn 1-op-1","For my 1-to-1"], wf:["Weekformulieren","Weekly forms"], meetings:["Meetings","Meetings"], steps:["Stappenwerk","Step work"], sos:["Noodplan","Emergency plan"], backup:["Back-up","Backup"]};
+const VIEWS = {home:["Vandaag","Today"], today:["Dagbeschouwing","Daily reflection"], jft:["Alleen voor vandaag","Just for Today"], hist:["Eerdere dagen","Earlier days"], month:["Maandoverzicht","Month overview"], patterns:["Mijn patronen","My patterns"], review:["Weekterugblik","Week in review"], talk:["1-op-1 & weekdoel","1-to-1 & weekly goal"], wf:["Weekformulieren","Weekly forms"], meetings:["Meetings","Meetings"], steps:["Stappenwerk","Step work"], sos:["Noodplan","Emergency plan"], backup:["Back-up","Backup"]};
 function openMenu(){ const d = daysClean(todayKey()); $("drawerSub").textContent = d === null ? vt("Dagbeschouwing", "Daily reflection") : aantal(d, "dag", "dagen", "day", "days") + " clean"; $("drawer").classList.add("open"); $("drawerBg").classList.add("show"); }
 function closeMenu(){ $("drawer").classList.remove("open"); $("drawerBg").classList.remove("show"); }
 function showView(v){
@@ -18,13 +18,17 @@ function showView(v){
   if(v === "steps") renderSteps();
   if(v === "meetings") renderMeetings();
   if(v === "wf") renderWf();
-  if(v === "today"){ renderGoalsMini(); renderReviewBanner(); renderMeetToday(); }
-  if(v === "backup" || v === "today") renderBackupReminder();
+  if(v === "home"){
+    if(curKey !== todayKey()) loadDay(todayKey());   // de startpagina gaat altijd over vandaag
+    else { renderGoalsMini(); renderReviewBanner(); renderMeetToday(); renderGreetingWf(); }
+  }
+  if(v === "backup" || v === "home") renderBackupReminder();
+  if(v === "home" || v === "today") renderHome();
   if(v === "review"){ reviewWeek = null; renderReview(); }
 }
 // na het wisselen van taal: het scherm dat open staat opnieuw tekenen
 function hertekenAlles(){
-  const v = Object.keys(VIEWS).find(k => !$("view-" + k).classList.contains("hidden")) || "today";
+  const v = Object.keys(VIEWS).find(k => !$("view-" + k).classList.contains("hidden")) || "home";
   ["jftMsg", "backupMsg", "docxMsg", "copyMsg"].forEach(id => { const n = $(id); if(n) n.textContent = ""; });  // oude meldingen in de vorige taal
   pasTaalToe(); showView(v); setStatus(baseStatus());
 }
