@@ -104,8 +104,16 @@ function renderKeytags(){
     const w = el("div", "kt"); w.tabIndex = 0;
     w.appendChild(keytagSvg(t, on, 48));
     w.onclick = () => {
-      info.textContent = on ? t.name + " · " + t.label + vt(" · behaald op ", " · achieved on ") + shortDate(t.key)
-        : t.name + " · " + t.label + (isEn() ? " · " + Math.round((parseKey(t.key) - parseKey(curKey)) / 864e5) + " days to go (" : " · nog " + Math.round((parseKey(t.key) - parseKey(curKey)) / 864e5) + " dagen (") + shortDate(t.key) + ")";
+      if(on){
+        // behaalde tag: info + linkje naar het mijlpaal-overzicht (geteld tot die datum)
+        info.textContent = t.name + " · " + t.label + vt(" · behaald op ", " · achieved on ") + shortDate(t.key) + " ";
+        const lk = el("button", "linkbtn more", vt("Bekijk overzicht", "See overview")); lk.type = "button"; lk.style.cssText = "display:block;margin:4px auto 0";
+        const mk = t.years !== undefined ? addMonthsKey(since, 12 * t.years) : t.key;
+        lk.onclick = ev => { ev.stopPropagation(); openMijlpaal(mk); };
+        info.appendChild(lk);
+        return;
+      }
+      info.textContent = on ? "" : t.name + " · " + t.label + (isEn() ? " · " + Math.round((parseKey(t.key) - parseKey(curKey)) / 864e5) + " days to go (" : " · nog " + Math.round((parseKey(t.key) - parseKey(curKey)) / 864e5) + " dagen (") + shortDate(t.key) + ")";
     };
     if(on && t.glow){
       glowEl = w;

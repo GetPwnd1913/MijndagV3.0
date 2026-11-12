@@ -422,6 +422,9 @@ function renderMilestones(){
   const list = milestones(settings.since);
   const today = list.find(m => m.key === curKey);
   cel.classList.toggle("hidden", !today);
+  // tik op de felicitatiekaart → mijlpaal-overzicht (mijlpaal.js)
+  cel.onclick = today ? () => openMijlpaal(today.key) : null;
+  cel.onkeydown = today ? e => { if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openMijlpaal(today.key); } } : null;
   if(today){
     $("msCelTitle").textContent = today.label + vt(" clean / nuchter!", " clean / sober!");
     $("msCelText").textContent = isEn()
