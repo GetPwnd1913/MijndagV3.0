@@ -12,7 +12,7 @@ function wfExportCard(wk, f){
       else {
         if(!window.JSZip) throw {code: "nozip"};
         let logo = null;
-        if(f.id !== "plan"){ try{ logo = await logoPng(240); }catch(err){ logo = null; } }
+        try{ logo = await logoPng(240); }catch(err){ logo = null; }
         const zip = new JSZip(), parts = wfDocParts(wk, f.id, !!logo);
         Object.keys(parts).forEach(k => zip.file(k, parts[k]));
         if(logo) zip.file("word/media/logo.png", logo);
@@ -88,7 +88,7 @@ function wfRows(wk, id){
 // ---- Word ----
 function wfDocParts(wk, id, withLogo){
   const parts = Object.assign({}, DOCX_PARTS);
-  if(id !== "plan" && withLogo){
+  if(withLogo){
     parts["[Content_Types].xml"] = parts["[Content_Types].xml"].replace('<Default Extension="xml"', '<Default Extension="png" ContentType="image/png"/><Default Extension="xml"');
     parts["word/_rels/document.xml.rels"] = parts["word/_rels/document.xml.rels"].replace('</Relationships>', '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/></Relationships>');
   }
@@ -96,7 +96,7 @@ function wfDocParts(wk, id, withLogo){
   const fld = c => '<w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> ' + c + ' </w:instrText></w:r><w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:color w:val="6B7370"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>';
   const pw = id === "plan" ? 15838 : 9906;
   parts["word/footer1.xml"] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="D5D9D7"/></w:pBdr><w:tabs><w:tab w:val="right" w:pos="' + pw + '"/></w:tabs><w:spacing w:before="0" w:after="0"/></w:pPr>' + rr(wfFooterText(wk, id) + "  \u00b7  " + (settings.naam || "")) + '<w:r><w:tab/></w:r>' + rr(vt("Pagina ", "Page ")) + fld("PAGE") + rr(vt(" van ", " of ")) + fld("NUMPAGES") + '</w:p></w:ftr>';
-  parts["word/document.xml"] = id === "plan" ? wfPlanXml(wk) : wfStyledXml(wk, id, withLogo);
+  parts["word/document.xml"] = id === "plan" ? wfPlanXml(wk, withLogo) : wfStyledXml(wk, id, withLogo);
   return parts;
 }
 const WX = {
@@ -104,27 +104,6 @@ const WX = {
   p: (runs, o) => { o = o || {}; return '<w:p><w:pPr><w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after == null ? 0 : o.after) + '" w:line="240" w:lineRule="auto"/>' + (o.ind ? '<w:ind w:left="' + o.ind + '" w:hanging="200"/>' : '') + (o.jc ? '<w:jc w:val="' + o.jc + '"/>' : '') + '</w:pPr>' + runs + '</w:p>'; },
   tc: (w, inner, o) => { o = o || {}; return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>' + (o.span > 1 ? '<w:gridSpan w:val="' + o.span + '"/>' : '') + (o.vm ? '<w:vMerge' + (o.vm === "restart" ? ' w:val="restart"' : '') + '/>' : '') + (o.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>' : '') + '<w:tcMar><w:top w:w="' + (o.mt == null ? 50 : o.mt) + '" w:type="dxa"/><w:bottom w:w="' + (o.mt == null ? 50 : o.mt) + '" w:type="dxa"/><w:left w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tcMar>' + (o.va ? '<w:vAlign w:val="' + o.va + '"/>' : '') + '</w:tcPr>' + (inner || WX.p("")) + '</w:tc>'; }
 };
-function wfPlanXml(wk){
-  const plan = planOf(wk), name = settings.naam || "";
-  const tw = 700, dw = 2160, grid = [tw].concat(Array(7).fill(dw));
-  const hdr = t => WX.p('<w:r><w:rPr><w:b/><w:color w:val="FFFFFF"/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>', {jc: "center"});
-  let rows = '<w:tr><w:trPr><w:trHeight w:val="340" w:hRule="exact"/><w:tblHeader/></w:trPr>' + WX.tc(tw, hdr(""), {fill: "00B050", va: "center", mt: 0}) + WF_DAYS.map(d => WX.tc(dw, hdr(d), {fill: "00B050", va: "center", mt: 0})).join("") + '</w:tr>';
-  WF_SLOTS.forEach((t, si) => {
-    let r = '<w:tr><w:trPr><w:trHeight w:val="322" w:hRule="exact"/></w:trPr>' + WX.tc(tw, WX.p(WX.r(t, {sz: 17, b: 1}), {jc: "center"}), {fill: WF_BAND_T(si), mt: 0, va: "center"});
-    for(let d = 0; d < 7; d++){
-      let v = ((plan[d] || {})[t]) || "";
-      if(v.length > 24) v = v.slice(0, 22).trim() + "…";
-      r += WX.tc(dw, WX.p(v ? WX.r(v, {sz: 17}) : ""), {fill: WF_BAND(si), mt: 0, va: "center"});
-    }
-    rows += r + '</w:tr>';
-  });
-  const head = WX.p(WX.r(vt("Naam:  ", "Name:  "), {sz: 22, b: 1}) + WX.r(name, {sz: 22}) + WX.r("\u00a0".repeat(14), {sz: 22}) + WX.r(vt("Datum:  ", "Date:  "), {sz: 22, b: 1}) + WX.r(wfDateText(wk, "plan"), {sz: 22}), {after: 120});
-  const brd = '<w:tblBorders>' + ["top","left","bottom","right","insideH","insideV"].map(x => '<w:' + x + ' w:val="single" w:sz="4" w:space="0" w:color="7F8C9D"/>').join("") + '</w:tblBorders>';
-  const tbl = '<w:tbl><w:tblPr><w:tblW w:w="' + (tw + 7 * dw) + '" w:type="dxa"/>' + brd + '<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="70" w:type="dxa"/><w:right w:w="50" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + grid.map(g => '<w:gridCol w:w="' + g + '"/>').join("") + '</w:tblGrid>' + rows + '</w:tbl>';
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>' + head + tbl +
-    '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p>' +
-    '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="500" w:right="500" w:bottom="620" w:left="500" w:header="200" w:footer="220" w:gutter="0"/></w:sectPr></w:body></w:document>';
-}
 // ---- PDF ----
 function pdfAssemble(pages, W, H){
   const objs = [];
@@ -162,33 +141,190 @@ function pdfKit(){
 function wfPdf(wk, id){
   return id === "plan" ? wfPlanPdf(wk) : wfStyledPdf(wk, id);
 }
-function wfPlanPdf(wk){
-  const W = 841.89, H = 595.28, M = 24, k = pdfKit(); k.page();
-  const plan = planOf(wk);
-  k.txt(cp1252(vt("Naam:", "Name:")), M, H - 30, 11, "F2"); k.txt(cp1252(settings.naam || ""), M + 38, H - 30, 11, "F1");
-  k.txt(cp1252(vt("Datum:", "Date:")), M + 300, H - 30, 11, "F2"); k.txt(cp1252(wfDateText(wk, "plan")), M + 343, H - 30, 11, "F1");
-  const tw = 38, dw = (W - 2 * M - tw) / 7, top = H - 42, hh = 18, rh = (top - hh - 34) / WF_SLOTS.length;
-  const ops = k.ops, white = s => ops.push("1 1 1 rg BT /F2 9.5 Tf " + s + " Tj ET");
-  k.fill(M, top - hh, W - 2 * M, hh, "00B050");
-  WF_DAYS.forEach((d, i) => { const b = cp1252(d), x = M + tw + i * dw + (dw - textW(b, 9.5, true)) / 2; ops.push("1 1 1 rg BT /F2 9.5 Tf " + x.toFixed(2) + " " + (top - hh + 5.5).toFixed(2) + " Td (" + pesc(b) + ") Tj ET"); });
+// ---- weekplanning: blokken, soorten en kleuren (alleen voor de export) ----
+// Blokken: staat exact dezelfde tekst op opeenvolgende halve uren in dezelfde dag, dan is dat één blok (tekst één keer bovenin).
+// Een lege rij ertussen geeft twee losse blokken. De opgeslagen planning (per halfuur) verandert niet.
+function planBlokken(plan){
+  const out = [];
+  for(let d = 0; d < 7; d++){
+    const dag = plan[d] || {};
+    let cur = null;
+    WF_SLOTS.forEach((t, si) => {
+      const v = (dag[t] || "").trim();
+      if(cur && v && v === cur.tekst){ cur.s1 = si + 1; return; }
+      if(cur){ out.push(cur); cur = null; }
+      if(v) cur = {d, s0: si, s1: si + 1, tekst: v, soort: planSoort(v)};
+    });
+    if(cur) out.push(cur);
+  }
+  return out;
+}
+// Soort van een activiteit: de app kent geen soort per blok, dus we kijken naar trefwoorden (nl en en, kleine letters).
+// Volgorde telt: eerst reizen ("Rijden naar Nazorg" is reistijd), dan herstel ("Stappenwerk" is herstel, geen werk),
+// dan werk ("Sessie kantoor" is werk), dan vrije tijd. Niets gevonden = "overig". Losse afkortingen (NA, AA, CA) tellen
+// alleen als heel woord.
+const PLAN_SOORT_WOORDEN = [
+  ["reizen", ["rijden", "reizen", "reistijd", "onderweg", "fietsen naar", "trein", "bus naar", "drive", "driving", "travel", "commute", "on the way"]],
+  ["herstel", ["nazorg", "aftercare", "meeting", "1-op-1", "een-op-een", "1-to-1", "one-to-one", "sponsor", "stappenwerk", "step work", "steps", "programma", "programme", "program", "groep", "group", "therapie", "therapy", "begeleid", "counsel", "herstel", "recovery", "safehouse", "dagbeschouwing", "daily reflection", "just for today", "alleen voor vandaag", "na", "aa", "ca"]],
+  ["werk", ["werk", "kantoor", "dagbesteding", "school", "stage", "vergadering", "office", "work", "job", "daytime activity", "internship"]],
+  ["vrij", ["sport", "wandel", "walk", "fitness", "gym", "zwemmen", "swim", "voetbal", "football", "film", "movie", "gamen", "gaming", "lezen", "reading", "vrij", "free time", "rust", "relax", "hobby", "vrienden", "friends", "familie", "family", "ouders", "parents", "koffie", "coffee", "muziek", "music", "uit eten", "dinner out"]]
+];
+function planSoort(tekst){
+  const t = " " + String(tekst || "").toLowerCase() + " ";
+  for(const [soort, woorden] of PLAN_SOORT_WOORDEN) if(woorden.some(w => w.length <= 3 ? t.indexOf(" " + w.trim() + " ") >= 0 : t.indexOf(w) >= 0)) return soort;
+  return "overig";
+}
+// zachte tinten (zwarte tekst blijft goed leesbaar) + een randje links dat ook in zwart-wit verschilt
+function planSoortStijl(){
+  const TH = exportTheme(), mix = (c, w) => c.map(v => v + (1 - v) * w), hx = c => c.map(v => Math.round(v * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
+  const hexRgb = h => [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255);
+  const herstel = mix(TH.rgb, 0.80), herstelRand = TH.rgb.map(v => v * 0.8);
+  const S = {
+    herstel: {fill: herstel, rand: herstelRand, lijn: "dik", naam: [vt("Herstel", "Recovery")]},
+    werk: {fill: hexRgb("F3E4CF"), rand: hexRgb("A87A4C"), lijn: "dubbel", naam: [vt("Werk", "Work")]},
+    // vrije tijd: lila, behalve bij een paars, blauw of roze thema (dan zou het op herstel lijken): zacht mintgroen
+    vrij: ["paars", "blauw", "roze"].indexOf(settings.theme) >= 0
+      ? {fill: hexRgb("DFF0E4"), rand: hexRgb("4E8E64"), lijn: "streep", naam: [vt("Vrije tijd", "Free time")]}
+      : {fill: hexRgb("ECE6F5"), rand: hexRgb("7D6AA6"), lijn: "streep", naam: [vt("Vrije tijd", "Free time")]},
+    reizen: {fill: hexRgb("EFEFED"), rand: hexRgb("8A8F8D"), lijn: "stip", naam: [vt("Reizen", "Travel")], cursief: 1},
+    overig: {fill: hexRgb("F6F3EE"), rand: null, lijn: "", naam: [vt("Overig", "Other")]}
+  };
+  Object.keys(S).forEach(k => { S[k].fillHex = hx(S[k].fill); S[k].randHex = S[k].rand ? hx(S[k].rand) : ""; });
+  return S;
+}
+const PLAN_SOORT_VOLGORDE = ["herstel", "werk", "vrij", "reizen", "overig"];
+function planDagKop(wk, d){
+  const start = planWeekStart(wk), k = addDaysKey(start, d);
+  return WF_DAYS[d].slice(0, 2) + " " + parseKey(k).getDate();
+}
+function planTitel(wk){ const f = WF_FORMS.find(x => x.id === "plan"); return f.title + " " + vt("week", "week") + " " + wfWeekInfo(wk, "plan").week; }
+function planOnderTitel(wk){ const n = (settings.naam || "").trim(); return (n ? n + "  ·  " : "") + wfWeekInfo(wk, "plan").range; }
+
+function wfPlanXml(wk, withLogo){
+  const plan = planOf(wk), TH = exportTheme(), ST = planSoortStijl(), INK = "1F2A28", GRAY = "6B7370";
+  const blokken = planBlokken(plan);
+  const blokOp = (d, si) => blokken.find(b => b.d === d && si >= b.s0 && si < b.s1);
+  const tw = 760, dw = Math.floor((15838 - tw) / 7), grid = [tw].concat(Array(7).fill(dw));
+  const RH = 296;
+  const mixHex = (c, w) => c.map(v => Math.round((v + (1 - v) * w) * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
+  const tijdFill = mixHex(TH.rgb, 0.95), kopFill = mixHex(TH.rgb, 0.86), wkndFill = "F6ECE2";
+  const run = (t, o) => { o = o || {}; return '<w:r><w:rPr>' + (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '') + '<w:color w:val="' + (o.c || INK) + '"/><w:sz w:val="' + (o.sz || 18) + '"/><w:szCs w:val="' + (o.sz || 18) + '"/></w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>'; };
+  const par = (runs, o) => { o = o || {}; return '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="' + (o.line || 220) + '" w:lineRule="auto"/>' + (o.jc ? '<w:jc w:val="' + o.jc + '"/>' : '') + '</w:pPr>' + runs + '</w:p>'; };
+  const randXml = st => {
+    if(!st || !st.lijn) return "";
+    const v = st.lijn === "dik" ? ' w:val="single" w:sz="24"' : st.lijn === "dubbel" ? ' w:val="double" w:sz="6"' : st.lijn === "streep" ? ' w:val="dashed" w:sz="12"' : ' w:val="dotted" w:sz="12"';
+    return '<w:left' + v + ' w:space="0" w:color="' + st.randHex + '"/>';
+  };
+  const cel = (w, inner, o) => '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>' + (o.vm ? '<w:vMerge' + (o.vm === "restart" ? ' w:val="restart"' : '') + '/>' : '') +
+    ((o.top || o.rand) ? '<w:tcBorders>' + (o.top ? '<w:top w:val="single" w:sz="' + (o.top === "uur" ? 6 : 2) + '" w:space="0" w:color="' + (o.top === "uur" ? "DAD5CC" : "EFEBE4") + '"/>' : '') + (o.rand || "") + '</w:tcBorders>' : '') +
+    (o.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>' : '') +
+    '<w:tcMar><w:top w:w="' + (o.mt == null ? 30 : o.mt) + '" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:left w:w="' + (o.ml == null ? 90 : o.ml) + '" w:type="dxa"/><w:right w:w="60" w:type="dxa"/></w:tcMar>' +
+    (o.va ? '<w:vAlign w:val="' + o.va + '"/>' : '') + '</w:tcPr>' + (inner || par("")) + '</w:tc>';
+  // kop: dagen met datum, weekend een iets andere tint
+  let rows = '<w:tr><w:trPr><w:trHeight w:val="380" w:hRule="exact"/><w:tblHeader/></w:trPr>' + cel(tw, par(""), {fill: kopFill, va: "center", mt: 0}) +
+    WF_DAYS.map((dn, d) => cel(dw, par(run(planDagKop(wk, d), {b: 1, sz: 20}), {jc: "center"}), {fill: d >= 5 ? wkndFill : kopFill, va: "center", mt: 0})).join("") + '</w:tr>';
   WF_SLOTS.forEach((t, si) => {
-    const y = top - hh - rh * (si + 1);
-    k.fill(M, y, tw, rh, WF_BAND_T(si));
-    k.fill(M + tw, y, W - 2 * M - tw, rh, WF_BAND(si));
-    k.txt(t, M + (tw - textW(t, 8.5, true)) / 2, y + (rh - 8.5) / 2 + 1.5, 8.5, "F2");
+    const heel = /\.00$/.test(t), lijn = heel ? "uur" : "half";
+    let r = '<w:tr><w:trPr><w:trHeight w:val="' + RH + '" w:hRule="exact"/></w:trPr>' +
+      cel(tw, par(heel ? run(t, {b: 1, sz: 17}) : run(t, {sz: 13, c: GRAY})), {fill: tijdFill, mt: 20, ml: 80, top: lijn});
     for(let d = 0; d < 7; d++){
-      const v = ((plan[d] || {})[t]) || ""; if(!v) continue;
-      let b = cp1252(v); const maxW = dw - 8;
-      if(textW(b, 8.5, false) > maxW){ while(b.length > 1 && textW(b + "\x85", 8.5, false) > maxW) b = b.slice(0, -1); b += "\x85"; }
-      k.txt(b, M + tw + d * dw + 4, y + (rh - 8.5) / 2 + 1.5, 8.5, "F1");
+      const b = blokOp(d, si);
+      if(!b){ r += cel(dw, par(""), {top: lijn}); continue; }
+      const st = ST[b.soort], rijen = b.s1 - b.s0;
+      if(si === b.s0){
+        // tekst één keer bovenin; lange tekst wordt ingekort zodat hij in het blok past
+        const max = Math.max(1, Math.floor(rijen * 1.3)) * 23;
+        const tx = b.tekst.length > max ? b.tekst.slice(0, max - 1).trim() + "…" : b.tekst;
+        r += cel(dw, par(run(tx, {sz: 18, i: st.cursief, c: st.cursief ? GRAY : INK})), {vm: rijen > 1 ? "restart" : "", fill: st.fillHex, rand: randXml(st), top: lijn});
+      } else r += cel(dw, par(""), {vm: "continue", fill: st.fillHex, rand: randXml(st)});
     }
+    rows += r + '</w:tr>';
   });
-  const bottom = top - hh - rh * WF_SLOTS.length;
-  ops.push("0.498 0.549 0.616 RG 0.5 w");
-  const L = (x1, y1, x2, y2) => ops.push(x1.toFixed(2) + " " + y1.toFixed(2) + " m " + x2.toFixed(2) + " " + y2.toFixed(2) + " l S");
-  for(let si = 0; si <= WF_SLOTS.length; si++){ const y = top - hh - rh * si; L(M, y, W - M, y); }
-  L(M, top, W - M, top);
-  for(let c = 0; c <= 8; c++){ const x = c === 0 ? M : M + tw + (c - 1) * dw; L(x, bottom, x, top); }
+  const brd = '<w:tblBorders><w:top w:val="single" w:sz="6" w:space="0" w:color="DAD5CC"/><w:left w:val="single" w:sz="6" w:space="0" w:color="DAD5CC"/><w:bottom w:val="single" w:sz="6" w:space="0" w:color="DAD5CC"/><w:right w:val="single" w:sz="6" w:space="0" w:color="DAD5CC"/><w:insideH w:val="nil"/><w:insideV w:val="single" w:sz="4" w:space="0" w:color="E6E1D8"/></w:tblBorders>';
+  const tbl = '<w:tbl><w:tblPr><w:tblW w:w="' + (tw + 7 * dw) + '" w:type="dxa"/>' + brd + '<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + grid.map(g => '<w:gridCol w:w="' + g + '"/>').join("") + '</w:tblGrid>' + rows + '</w:tbl>';
+  // titelbalk in de stijl van de dagbeschouwing: kleurbalk met titel, naam en datums, logo rechts
+  const nb = '<w:tblBorders>' + ["top","left","bottom","right","insideH","insideV"].map(x => '<w:' + x + ' w:val="nil"/>').join("") + '</w:tblBorders>';
+  const titel = par(run(planTitel(wk), {b: 1, sz: 32, c: "FFFFFF"}), {line: 240}) + par(run(planOnderTitel(wk), {sz: 19, c: "FFFFFF"}), {line: 240});
+  let band;
+  if(withLogo){
+    const EMU = 420000;
+    const pic = '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + EMU + '" cy="' + EMU + '"/><wp:docPr id="1" name="Logo Mijn dag"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + EMU + '" cy="' + EMU + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
+    band = '<w:tr><w:trPr><w:trHeight w:val="760" w:hRule="exact"/></w:trPr>' + cel(14838, titel, {fill: TH.hex, va: "center", mt: 0, ml: 240}) + cel(1000, par(pic, {jc: "right"}), {fill: TH.hex, va: "center", mt: 0, ml: 0}) + '</w:tr>';
+  } else band = '<w:tr><w:trPr><w:trHeight w:val="760" w:hRule="exact"/></w:trPr>' + cel(14838, titel, {fill: TH.hex, va: "center", mt: 0, ml: 240}) + cel(1000, par(""), {fill: TH.hex, mt: 0}) + '</w:tr>';
+  const bandTbl = '<w:tbl><w:tblPr><w:tblW w:w="15838" w:type="dxa"/>' + nb + '<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="120" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="14838"/><w:gridCol w:w="1000"/></w:tblGrid>' + band + '</w:tbl>';
+  // legenda (tweetalig), met hetzelfde randje als in de planning
+  const leg = '<w:tbl><w:tblPr><w:tblW w:w="9000" w:type="dxa"/>' + nb + '<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>' + PLAN_SOORT_VOLGORDE.map(() => '<w:gridCol w:w="360"/><w:gridCol w:w="1440"/>').join("") + '</w:tblGrid><w:tr><w:trPr><w:trHeight w:val="240" w:hRule="exact"/></w:trPr>' +
+    PLAN_SOORT_VOLGORDE.map(s => { const st = ST[s]; return cel(360, par(""), {fill: st.fillHex, rand: randXml(st), mt: 0}) + cel(1440, par(run(st.naam[0], {sz: 15, c: GRAY, i: st.cursief})), {mt: 0, ml: 80, va: "center"}); }).join("") + '</w:tr></w:tbl>';
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>' +
+    bandTbl + par("", {line: 140}) + tbl + par("", {line: 100}) + leg +
+    '<w:p><w:pPr><w:spacing w:before="0" w:after="0" w:line="20" w:lineRule="exact"/></w:pPr></w:p>' +
+    '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="460" w:right="500" w:bottom="600" w:left="500" w:header="200" w:footer="220" w:gutter="0"/></w:sectPr></w:body></w:document>';
+}
+function wfPlanPdf(wk){
+  const W = 841.89, H = 595.28, M = 22, k = pdfKit(); k.page();
+  const plan = planOf(wk), TH = exportTheme(), ST = planSoortStijl(), ops = k.ops, sh = pdfShapes(ops);
+  const INK = [0.12, 0.16, 0.16], MUT = [0.42, 0.45, 0.44], WHITE = [1, 1, 1];
+  const f = v => v.toFixed(2), col = c => c.map(v => v.toFixed(3)).join(" "), mix = (c, w) => c.map(v => v + (1 - v) * w);
+  const txt = (s, x, y, size, font, c) => ops.push(col(c || INK) + " rg BT /" + font + " " + size + " Tf " + f(x) + " " + f(y) + " Td (" + pesc(s) + ") Tj ET");
+  const fill = (x, y, w, h, c) => ops.push(col(c) + " rg " + f(x) + " " + f(y) + " " + f(w) + " " + f(h) + " re f");
+  const lijn = (x1, y1, x2, y2, c, w) => ops.push(col(c) + " RG " + w + " w [] 0 d " + f(x1) + " " + f(y1) + " m " + f(x2) + " " + f(y2) + " l S");
+  // randje links per soort (ook in zwart-wit te onderscheiden): dik, dubbel, gestreept, gestippeld
+  const rand = (st, x, yTop, h) => {
+    if(!st.rand) return;
+    const c = col(st.rand), y0 = f(yTop - h + 1.2), y1 = f(yTop - 1.2);
+    if(st.lijn === "dik") fill(x, yTop - h + 0.8, 2.8, h - 1.6, st.rand);
+    else if(st.lijn === "dubbel"){ fill(x, yTop - h + 0.8, 1, h - 1.6, st.rand); fill(x + 2, yTop - h + 0.8, 1, h - 1.6, st.rand); }
+    else if(st.lijn === "streep") ops.push(c + " RG 2.4 w 0 J [3 2] 0 d " + f(x + 1.3) + " " + y0 + " m " + f(x + 1.3) + " " + y1 + " l S [] 0 d");
+    else ops.push(c + " RG 2.2 w 1 J [0.1 3] 0 d " + f(x + 1.3) + " " + y0 + " m " + f(x + 1.3) + " " + y1 + " l S [] 0 d 0 J");
+  };
+  // titelbalk
+  const bandH = 40, top = H - M;
+  sh.rrect(M, top - bandH, W - 2 * M, bandH, 9, TH.rgb);
+  txt(cp1252(planTitel(wk)), M + 16, top - 18, 15, "F2", WHITE);
+  txt(cp1252(planOnderTitel(wk)), M + 16, top - 32, 9.5, "F1", WHITE);
+  const LS = 30; pdfLogo(ops, W - M - 8 - LS, top - (bandH - LS) / 2, LS, sh.rrect, sh.circle);
+  // raster
+  const tw = 40, dw = (W - 2 * M - tw) / 7, gTop = top - bandH - 8, hh = 20, rTop = gTop - hh, bottom = 46, rh = (rTop - bottom) / WF_SLOTS.length;
+  const LH = 10.4, FS = 9;
+  fill(M, rTop - rh * WF_SLOTS.length, tw, rh * WF_SLOTS.length, mix(TH.rgb, 0.95));
+  WF_DAYS.forEach((dn, d) => {
+    const x = M + tw + d * dw;
+    fill(x, rTop, dw, hh, d >= 5 ? [0.965, 0.925, 0.886] : mix(TH.rgb, 0.86));
+    const b = cp1252(planDagKop(wk, d)); txt(b, x + (dw - textW(b, 10, true)) / 2, rTop + 6.5, 10, "F2", INK);
+  });
+  fill(M, rTop, tw, hh, mix(TH.rgb, 0.86));
+  WF_SLOTS.forEach((t, si) => {
+    const y = rTop - rh * si, heel = /\.00$/.test(t);
+    lijn(heel ? M : M + tw, y, W - M, y, heel ? [0.855, 0.835, 0.8] : [0.937, 0.922, 0.894], heel ? 0.6 : 0.35);
+    if(heel) txt(t, M + 5, y - 10.2, 8.5, "F2", INK); else txt(t, M + 7, y - 9.6, 7, "F1", MUT);
+  });
+  for(let c = 0; c <= 8; c++){ const x = c === 0 ? M : M + tw + (c - 1) * dw; lijn(x, bottom, x, gTop, [0.88, 0.86, 0.82], c === 0 || c === 8 ? 0.6 : 0.4); }
+  lijn(M, gTop, W - M, gTop, [0.855, 0.835, 0.8], 0.6); lijn(M, bottom, W - M, bottom, [0.855, 0.835, 0.8], 0.6);
+  // blokken: één vlak per aaneengesloten activiteit, tekst links bovenin, netjes afgebroken of ingekort
+  planBlokken(plan).forEach(b => {
+    const st = ST[b.soort], x = M + tw + b.d * dw + 0.7, yTop = rTop - rh * b.s0 - 0.7, h = rh * (b.s1 - b.s0) - 1.4, w = dw - 1.4;
+    fill(x, yTop - h, w, h, st.fill); rand(st, x, yTop, h);
+    const font = st.cursief ? "F3" : "F1", c = st.cursief ? MUT : INK, maxW = w - 9 - 3;
+    const max = Math.max(1, Math.floor((h - 2) / LH));
+    let regels = wrap(cp1252(b.tekst), FS, false, maxW);
+    if(regels.length > max){
+      regels = regels.slice(0, max);
+      let last = regels[max - 1];
+      while(last.length > 1 && textW(last + "\x85", FS, false) > maxW) last = last.slice(0, -1);
+      regels[max - 1] = last.replace(/\s+$/, "") + "\x85";
+    }
+    regels.forEach((r, i) => {
+      let s = r; while(s.length > 1 && textW(s, FS, false) > maxW) s = s.slice(0, -1);
+      txt(s, x + 8, yTop - 10.3 - i * LH, FS, font, c);
+    });
+  });
+  // legenda
+  let lx = M;
+  PLAN_SOORT_VOLGORDE.forEach(s => {
+    const st = ST[s]; fill(lx, 30, 14, 9, st.fill); rand(st, lx, 39, 9);
+    const n = cp1252(st.naam[0]); txt(n, lx + 19, 31.5, 8, st.cursief ? "F3" : "F1", MUT);
+    lx += 19 + textW(n, 8, false) + 18;
+  });
   pdfFooter(k, W, M, wfFooterText(wk, "plan"));
   return pdfAssemble(k.pages, W, H);
 }
