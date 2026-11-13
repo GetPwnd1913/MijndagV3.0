@@ -64,7 +64,27 @@ function blockRange(lines, row){
 const rowKey = (q, row) => q.id + "|" + q.rows.indexOf(row);
 const customOf = (q, row) => ((settings.customItems||{})[rowKey(q, row)] || []);
 const dynItems = q => { if(q.id !== "trots") return []; const n = daysClean(curKey); return n === null ? [] : [n + (n === 1 ? " dag clean" : " dagen clean")]; };
-const itemsOf = (q, row) => { const base = dynItems(q).concat(row.items); return base.concat(customOf(q, row).filter(c => base.indexOf(c) < 0)); };
+// vaste knopjes (zonder de verborgen, zie eigen-lijsten.js) + eigen knopjes uit Instellingen + eigen knopjes van deze rij
+const itemsOf = (q, row) => {
+  const naam = typeof lijstVanRij === "function" ? lijstVanRij(row) : null;
+  const weg = naam ? lijstVerborgen(naam) : [];
+  const base = dynItems(q).concat(row.items.filter(it => weg.indexOf(it) < 0));
+  const extra = (naam ? lijstEigen(naam) : []).concat(customOf(q, row));
+  return base.concat(extra.filter((c, i, a) => base.indexOf(c) < 0 && a.indexOf(c) === i));
+};
+// knopjes die in deze dag gekozen zijn maar niet (meer) in de lijst staan (verborgen of verwijderd): toch tonen
+function gekozenBuitenLijst(text, q, row){
+  if(!(typeof lijstVanRij === "function" && lijstVanRij(row))) return [];
+  const zicht = itemsOf(q, row), uit = [];
+  rowSelected(text, q, row).forEach(l => {
+    if(l.indexOf("- ") !== 0 || zicht.some(it => lineIsItem(l, it))) return;
+    const vast = row.items.find(it => lineIsItem(l, it));
+    let s = l.slice(2); const i = s.indexOf(": "); if(i >= 0) s = s.slice(0, i);
+    const item = vast || (s.length > 1 && s.charAt(1) !== s.charAt(1).toUpperCase() ? s.charAt(0).toLowerCase() + s.slice(1) : s);
+    if(item && uit.indexOf(item) < 0) uit.push(item);
+  });
+  return uit;
+}
 async function saveCustom(q, row, list){
   settings.customItems = Object.assign({}, settings.customItems||{});
   if(list.length) settings.customItems[rowKey(q, row)] = list; else delete settings.customItems[rowKey(q, row)];
@@ -184,13 +204,18 @@ function buildRows(q, ta){
       for(let n = chips.length - 1; n >= 0; n--) if(chips[n].row === row) chips.splice(n, 1);
       wrapEl.innerHTML = "";
       const custom = customOf(q, row);
-      itemsOf(q, row).forEach(item => {
+      const buiten = gekozenBuitenLijst(ta.value, q, row);
+      itemsOf(q, row).concat(buiten).forEach(item => {
         const b = document.createElement("button"); b.type = "button"; b.className = "chip " + (row.cls||""); b.textContent = vItem(item);
         const mine = custom.indexOf(item) >= 0;
         if(dynItems(q).indexOf(item) >= 0) b.classList.add("cleanchip");
         if(editing && mine){
           b.textContent = item + " "; b.appendChild(icon("x", 14)); b.classList.add("start");
           b.onclick = async () => { await saveCustom(q, row, customOf(q, row).filter(x => x !== item)); drawRow(); refresh(); };
+        } else if(buiten.indexOf(item) >= 0){
+          // gekozen in deze dag, maar niet meer in de lijst: uitzetten haalt het knopje ook hier weg
+          b.onclick = () => { toggleRowItem(ta, q, row, item, refresh); drawRow(); refresh(); };
+          chips.push({el:b, row, item});
         } else {
           b.onclick = () => toggleRowItem(ta, q, row, item, refresh);
           chips.push({el:b, row, item});

@@ -65,7 +65,8 @@ let meetOpen = {}, meetForm = false;
 
 function allMeetings(){
   const own = (settings.customMeetings || []).filter(m => m && m.id && typeof m.d === "number").map(m => Object.assign({own: true}, m));
-  return MEETINGS.concat(own);
+  const weg = typeof meetingVerborgen === "function" ? meetingVerborgen() : [];
+  return MEETINGS.filter(m => weg.indexOf(m.id) < 0).concat(own);
 }
 const meetStars = () => Array.isArray(settings.meetStars) ? settings.meetStars : [];
 const isStar = m => meetStars().indexOf(m.id) >= 0;

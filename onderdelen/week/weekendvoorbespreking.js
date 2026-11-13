@@ -26,8 +26,8 @@ function renderWv(box, wk){
     const c2 = Q(title, sub); const f = wfField(wk, "wv", key, "", vt("Tik hieronder aan of typ zelf…", "Tap below or type yourself…"), true); c2.appendChild(f);
     if(items.length) c2.appendChild(wfChips(f._ta, items, () => wfSet(wk, "wv", key, f._ta.value)));
   };
-  withChips("trig", vt("Welke triggers verwacht je?", "What triggers do you expect?"), isEn() ? TRIGGERS_EN : TRIGGERS);
-  withChips("omgaan", vt("Hoe ga je met triggers om?", "How will you deal with triggers?"), isEn() ? WV_COPING_EN : WV_COPING);
+  withChips("trig", vt("Welke triggers verwacht je?", "What triggers do you expect?"), lijstVoorWeek("triggers"));
+  withChips("omgaan", vt("Hoe ga je met triggers om?", "How will you deal with triggers?"), lijstVoorWeek("vooruit"));
   const sos = settings.sos || {};
   const names = [].concat((sos.contacts || []).map(p => p.name).filter(Boolean)).concat(isEn() ? ["my sponsor","a fellow","my parents","my brother","my sister","my daughter","my son"] : ["mijn sponsor","een fellow","mijn ouders","mijn broer","mijn zus","mijn dochter","mijn zoon"]);
   const seenN = new Set(), uniq = names.filter(n => { const k = n.trim().toLowerCase(); if(seenN.has(k)) return false; seenN.add(k); return true; });

@@ -64,6 +64,8 @@ function privacyBlokken(){
        : ["li", "Geen externe diensten waaraan de app jouw ingevulde gegevens doorgeeft. Alle onderdelen van de app, inclusief het lettertype, staan in de app zelf.",
                 "No external services that the app passes your entered data to. All parts of the app, including the font, are inside the app itself."],
     ["li", "Geen verkoop of doorgifte van gegevens, want wij hebben ze niet.", "No selling or passing on of data, because we do not have it."],
+    ...(ca ? [] : [["li", "Open je de app via internet, dan kan de partij die de website host technische gegevens zien, zoals je IP-adres en welke bestanden je ophaalt. Dat geldt voor elke website. Wat je in de app invult, hoort daar niet bij en blijft op je apparaat.",
+                    "If you open the app over the internet, the party that hosts the website can see technical data, such as your IP address and which files you request. This applies to any website. What you enter in the app is not part of that and stays on your device."]]),
     ["k", "Back-ups en exporten", "Backups and exports"],
     ["p", "Als je een back-up of een export (Word, PDF) maakt, wordt dat bestand op jouw apparaat opgeslagen. Wat je daarna met dat bestand doet, bepaal jij. Let op: een back-up bevat je persoonlijke gegevens, dus bewaar hem op een veilige plek.",
           "When you create a backup or an export (Word, PDF), that file is saved on your own device. What you do with it afterwards is up to you. Please note that a backup contains your personal data, so keep it somewhere safe."],
