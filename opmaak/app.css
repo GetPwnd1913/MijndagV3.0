@@ -872,3 +872,5 @@
   .overtekstvak .overtekst{font-size:15px;margin:0 0 6px}
   .overtekstvak .overlijst{margin:0 0 6px}
   .overtekstvak .note{margin-top:12px}
+  /* inschuiven zonder "blijvende" animatie: anders wordt het scherm de referentie voor het grote schrijfscherm (vraag 1) */
+  .fadein{animation:schermIn var(--t) var(--ease)}

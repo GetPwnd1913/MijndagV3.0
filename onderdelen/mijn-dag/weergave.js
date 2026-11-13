@@ -322,6 +322,7 @@ function buildQuestion(q, i){
     ta.addEventListener("focus", openFs);
     fsx.addEventListener("pointerdown", e => e.preventDefault());
     fsx.onclick = e => { e.stopPropagation(); closeFs(); };
+    card.addEventListener("keydown", e => { if(e.key === "Escape" && card.classList.contains("fs")){ e.preventDefault(); closeFs(); } });
   }
   else if(q.type==="scale"){
     const sc = document.createElement("div"); sc.className="scale";
@@ -526,6 +527,8 @@ function render(){
   const qs = $("questions"); qs.innerHTML="";
   const ochKaart = buildOchtendKaart(); if(ochKaart) qs.appendChild(ochKaart);   // alleen op dagen met een ochtendvoornemen
   QUESTIONS.forEach((q,i)=>qs.appendChild(buildQuestion(q,i)));
+  // het grote schrijfscherm (vraag 1) bestaat na opnieuw tekenen niet meer: pagina niet laten vastzitten
+  if(!document.querySelector(".card.fs")) document.body.classList.remove("fsopen");
   updateProgress();
   if(typeof renderHome === "function") renderHome();
 }
