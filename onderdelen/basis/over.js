@@ -33,6 +33,31 @@ const LICENTIES = [
  }
 ];
 
+// privacy: de tekst hangt af van waar de app draait, zodat hij altijd klopt.
+// Op claude.ai worden je dagen ook in je eigen claude.ai-account bewaard (window.claude "db"); elders alleen in de browser.
+function privacyRegels(){
+  const claudeAi = !!(window.claude && window.claude.use);
+  return [
+    claudeAi
+      ? vt("Wat je invult wordt bewaard in de browser en in je eigen claude.ai-account, zodat je het op al je apparaten ziet. claude.ai (Anthropic) bewaart het voor je, net als je andere claude.ai-gegevens. Er is geen andere server die je dagen bewaart.",
+           "What you enter is stored in the browser and in your own claude.ai account, so you can see it on all your devices. claude.ai (Anthropic) keeps it for you, like your other claude.ai data. There is no other server that stores your days.")
+      : vt("Wat je invult blijft op je eigen telefoon, in de browser. Er is geen account en geen server die je dagen bewaart.",
+           "What you enter stays on your own phone, in the browser. There is no account and no server that stores your days."),
+    claudeAi
+      ? vt("Deze versie van de app is privé: alleen wie toegang heeft tot jouw claude.ai-app kan hem openen.",
+           "This version of the app is private: only people with access to your claude.ai app can open it.")
+      : vt("Niemand, ook de maker van de app niet, kan je gegevens zien.", "Nobody, not even the maker of the app, can see your data."),
+    vt("De app stuurt niets naar adverteerders of analysebedrijven.", "The app sends nothing to advertisers or analytics companies."),
+    vt("Een back-up of export (Word/PDF) is een bestand dat jij zelf bewaart en deelt. Mailen gaat via je eigen mailapp: jij verstuurt het zelf.",
+       "A backup or export (Word/PDF) is a file that you keep and share yourself. Emailing goes through your own email app: you send it yourself."),
+    claudeAi
+      ? vt("Wis je je browsergegevens, dan blijven je dagen in je claude.ai-account staan. Maak toch regelmatig een back-up.",
+           "If you clear your browser data, your days stay in your claude.ai account. Still, make a backup regularly.")
+      : vt("Wis je je browsergegevens of de app, dan zijn je gegevens weg. Maak daarom regelmatig een back-up.",
+           "If you clear your browser data or delete the app, your data is gone. So make a backup regularly."),
+    vt("Alleen voor vandaag laad je zelf in; die tekst blijft op je telefoon.", "You load Just for Today yourself; that text stays on your phone.")
+  ];
+}
 function openOver(){
   const sh = $("overSheet"); sh.innerHTML = "";
   sh.appendChild(el("h2", null, vt("Over deze app", "About this app")));
@@ -42,6 +67,10 @@ function openOver(){
   sh.appendChild(kop);
   sh.appendChild(el("p", "overtekst", vt("Deze app is voor persoonlijk gebruik. Niets hieruit mag zonder schriftelijke toestemming worden gekopieerd of verspreid.",
     "This app is for personal use. Nothing in it may be copied or distributed without written permission.")));
+  sh.appendChild(el("h3", "overkopje", "Privacy"));
+  const priv = el("ul", "overlijst");
+  privacyRegels().forEach(r => priv.appendChild(el("li", null, r)));
+  sh.appendChild(priv);
   sh.appendChild(el("p", "overtekst", vt("Narcotics Anonymous, NA en Just for Today / Alleen voor vandaag zijn namen van NA World Services. Deze app is niet van NA en niet door NA goedgekeurd. De stappen staan hier kort in eigen woorden. De teksten van Alleen voor vandaag laad je zelf in uit je eigen exemplaar. De keytags zijn eigen tekeningen in de kleuren van de NA-keytags. Alles wordt alleen gebruikt voor persoonlijk herstel.",
     "Narcotics Anonymous, NA and Just for Today are names of NA World Services. This app is not made or approved by NA. The steps are summarised briefly in my own words. You load the Just for Today texts yourself from your own copy. The keytags are my own drawings in the colours of the NA keytags. Everything is used for personal recovery only.")));
   const alles = el("details", "overlic");
