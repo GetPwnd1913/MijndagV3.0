@@ -51,7 +51,7 @@ async function renderReview(){
   const keys = []; for(let i = 0; i < 7; i++){ const k = addDaysKey(wk, i); if(k <= tk) keys.push(k); }
   const days = keys.map(k => map[k]).filter(e => e && hasContent(e));
   if(!days.length){
-    const c = el("div", "card"); const t = note(vt("In deze week heb je nog geen dagbeschouwing ingevuld.", "You have not filled in a daily reflection this week yet.")); t.style.marginTop = "0"; c.appendChild(t); box.appendChild(c);
+    box.appendChild(emptyState("week", vt("Deze week is nog leeg", "This week is still empty"), vt("In deze week heb je nog geen dagbeschouwing ingevuld.", "You have not filled in a daily reflection this week yet.")));
     return;
   }
   const scores = days.map(e => parseInt(e.cijfer, 10)).filter(n => n > 0);
@@ -68,6 +68,20 @@ async function renderReview(){
   const dc = daysClean(end); // zondag van deze week, ook als die nog moet komen
   if(dc !== null) sent += vt(" Aan het eind van deze week ben je " + dc + " dagen clean.", " At the end of this week you will be " + dc + " days clean.");
   const p = note(sent); p.style.cssText = "margin-top:6px;font-size:16px;color:var(--ink)"; c1.appendChild(p);
+  // de week als rij zachte bolletjes: elke dag een kleur naar hoe de dag was
+  const rij = el("div", "weekbollen");
+  const wdn = isEn() ? ["Mo","Tu","We","Th","Fr","Sa","Su"] : ["ma","di","wo","do","vr","za","zo"];
+  for(let i = 0; i < 7; i++){
+    const k = addDaysKey(wk, i), e = map[k], has = !!e && hasContent(e);
+    const b = el(has ? "button" : "div", "wb" + (k > tk ? " fut" : ""));
+    const bol = el("i", "bolletje " + (has ? dagKleurKlasse(e) : "leeg")); bol.style.setProperty("--i", i);
+    if(has && parseInt(e.cijfer, 10) > 0) bol.textContent = parseInt(e.cijfer, 10);
+    b.appendChild(bol); b.appendChild(el("span", null, wdn[i]));
+    if(has){ b.type = "button"; b.onclick = () => openSummary(e, true); b.setAttribute("aria-label", longDay(k)); }
+    rij.appendChild(b);
+  }
+  c1.appendChild(rij);
+  c1.appendChild(kleurLegenda());
   const tiles = el("div", "tiles");
   tiles.appendChild(tile(days.length + "/" + keys.length, vt("dagen ingevuld", "days filled in")));
   tiles.appendChild(tile(avg !== null ? nl1(avg) : "–", vt("gemiddeld cijfer", "average score")));

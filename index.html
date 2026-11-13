@@ -2,7 +2,7 @@
 <!--
   Mijn dag
   © 2026 Roy van Dalem. Alle rechten voorbehouden. All rights reserved.
-  Onderdelen van anderen (JSZip, PDF.js, Figtree): zie "Over deze app" en THIRD-PARTY-NOTICES.txt.
+  Onderdelen van anderen (JSZip, PDF.js, Figtree, Fraunces): zie "Over deze app" en THIRD-PARTY-NOTICES.txt.
 -->
 <html lang="nl">
 <head>
@@ -32,10 +32,24 @@
   </header>
 
   <section id="view-home" class="hidden">
-    <div class="sky" id="sky"><div class="skyorb" aria-hidden="true"></div><div class="skyhill" aria-hidden="true"></div>
+    <div class="sky" id="sky"><div class="skysterren" aria-hidden="true"></div>
     <div class="greet" id="greet"></div>
+    <div class="skyscene" aria-hidden="true">
+      <svg class="skyboog" viewBox="0 0 100 100" preserveAspectRatio="none"><path class="sbspoor" id="boogSpoor"/><path class="sbgedaan" id="boogGedaan"/></svg>
+      <div class="skyhill"></div><div class="skyhill h2"></div>
+      <div class="skyzon" id="skyZon"></div>
+    </div>
     <div class="skypanel">
-      <div class="skydagen" id="homeDagen"></div>
+      <div class="skytop">
+        <div class="skytop-tx">
+          <div class="skydagen" id="homeDagen"></div>
+          <div class="dagrondzin hidden" id="dagRondZin"></div>
+        </div>
+        <button type="button" class="dagring" id="dagRing" aria-expanded="false">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><g class="drsporen"></g><g class="drvul"></g><path class="drvink" d="M24 33l6 6 11-13"/></svg>
+        </button>
+      </div>
+      <div class="dagringuitleg hidden" id="dagRingUitleg"></div>
       <div id="msBox" class="hidden">
         <div class="note" id="msNext" style="margin:0"></div>
         <div class="bar" style="margin-top:6px"><i id="msBar"></i></div>

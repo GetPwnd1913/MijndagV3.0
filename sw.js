@@ -3,7 +3,7 @@
 // Strategie: eerst netwerk, cache als terugval. Tijdens ontwikkelen zie je zo altijd je laatste wijziging,
 // en zonder internet werkt de app toch met de laatst geladen versie.
 // Verhoog CACHE als je de lijst met bestanden hieronder verandert.
-const CACHE = "mijn-dag-v13";
+const CACHE = "mijn-dag-v14";
 const SHELL = [
   "./",
   "index.html",
@@ -11,6 +11,8 @@ const SHELL = [
   "opmaak/app.css",
   "lettertypes/figtree-latin.woff2",
   "lettertypes/figtree-latin-ext.woff2",
+  "lettertypes/fraunces-latin.woff2",
+  "lettertypes/fraunces-latin-ext.woff2",
   "iconen/icon-192.png",
   "iconen/icon-512.png",
   "onderdelen/basis/taal.js",

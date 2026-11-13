@@ -6,7 +6,7 @@ function closeMenu(){ $("drawer").classList.remove("open"); $("drawerBg").classL
 function showView(v){
   Object.keys(VIEWS).forEach(k => $("view-"+k).classList.toggle("hidden", k !== v));
   const sv = $("view-" + v); if(sv){ sv.classList.remove("fadein"); void sv.offsetWidth; sv.classList.add("fadein"); }
-  $("pageTitle").textContent = vt(VIEWS[v][0], VIEWS[v][1]);
+  $("pageTitle").textContent = vt(VIEWS[v][0], VIEWS[v][1]); pasTitelAan(); requestAnimationFrame(pasTitelAan);
   $("bottomBar").classList.toggle("hidden", v !== "today");
   $("sosBtn").classList.toggle("hidden", v === "sos");
   document.querySelectorAll("#drawer [data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));
@@ -27,6 +27,16 @@ function showView(v){
   if(v === "home" || v === "today") renderHome();
   if(v === "review"){ reviewWeek = null; renderReview(); }
 }
+// paginatitel past altijd naast de Noodplan-knop: zo nodig een fractie kleiner (smalle telefoons)
+function pasTitelAan(){
+  const h = $("pageTitle"); if(!h) return;
+  h.style.fontSize = "";
+  for(let i = 0; i < 8 && h.scrollWidth > h.clientWidth; i++) h.style.fontSize = (parseFloat(getComputedStyle(h).fontSize) - 1) + "px";
+}
+window.addEventListener("resize", pasTitelAan);
+// kopbalk krijgt een haarlijn zodra je scrollt (matglas over de inhoud)
+window.addEventListener("scroll", () => document.documentElement.classList.toggle("gescrold", window.scrollY > 4), {passive: true});
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(pasTitelAan);
 // na het wisselen van taal: het scherm dat open staat opnieuw tekenen
 function hertekenAlles(){
   const v = Object.keys(VIEWS).find(k => !$("view-" + k).classList.contains("hidden")) || "home";

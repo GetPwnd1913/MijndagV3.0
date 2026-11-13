@@ -579,3 +579,289 @@
   .overkopje{font-size:16px;margin:16px 0 6px}
   .overlijst{margin:0 0 14px;padding-left:20px;font-size:15px;line-height:1.5}
   .overlijst li{margin-bottom:6px}
+  /* ===== v4 sfeer: één dagboog als rode draad ===== */
+  :root{
+    /* timing: overal dezelfde beweging */
+    --ease:cubic-bezier(.22,.8,.24,1); --ease-veer:cubic-bezier(.3,1.45,.5,1);
+    --t-snel:.16s; --t:.32s; --t-traag:.6s;
+    /* kleuren van het moment van de dag */
+    --ochtend1:#f6cdc2; --ochtend2:#fde6c3; --middag1:#cfe5f6; --middag2:#eef6f2;
+    --avond1:#141d47; --avond2:#3f3f80; --nacht1:#0b1230; --nacht2:#1d2a50;
+    --zon:#f6b85e; --maan:#f4e6bd;
+    --tint:#f3c9a8;
+  }
+  html[data-tod="ochtend"]{--tint:#f3bfa8}
+  html[data-tod="middag"]{--tint:#a9d3ec}
+  html[data-tod="avond"]{--tint:#6d70c2}
+  html[data-tod="nacht"]{--tint:#40508c}
+  /* zachte kleurtoets van het moment over de hele app */
+  body::before{content:"";position:fixed;left:0;right:0;top:0;height:60vh;z-index:-1;pointer-events:none;
+    background:radial-gradient(120% 70% at 50% -12%,color-mix(in srgb,var(--tint) 30%,transparent),transparent 70%);transition:background var(--t-traag) var(--ease)}
+  body{position:relative;isolation:isolate}
+  /* de lucht */
+  .sky{padding:24px 20px 18px;border-radius:30px;margin-bottom:18px}
+  .sky[data-tod="ochtend"]{--sk1:var(--ochtend1);--sk2:var(--ochtend2);--hill:color-mix(in srgb,#d98a6a 22%,transparent);--skink:#2b1f1c}
+  .sky[data-tod="middag"]{--sk1:var(--middag1);--sk2:var(--middag2);--hill:color-mix(in srgb,var(--accent) 16%,transparent);--skink:#14201d}
+  .sky[data-tod="avond"]{--sk1:var(--avond1);--sk2:var(--avond2);--hill:rgba(8,10,34,.42);--skink:#fff}
+  .sky[data-tod="nacht"]{--sk1:var(--nacht1);--sk2:var(--nacht2);--hill:rgba(0,0,10,.45);--skink:#fff}
+  .sky{background:linear-gradient(180deg,var(--sk1) 0%,var(--sk2) 100%);transition:background var(--t-traag) var(--ease)}
+  .sky::before{display:none}
+  .sky .greet{margin:0 0 4px;padding-right:0}
+  .skysterren{position:absolute;inset:0;z-index:-1;opacity:0;transition:opacity var(--t-traag) var(--ease);
+    background-image:radial-gradient(1.3px 1.3px at 12% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 27% 34%,#fff 50%,transparent 52%),radial-gradient(1.5px 1.5px at 44% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 28%,#fff 50%,transparent 52%),radial-gradient(1.2px 1.2px at 71% 9%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 83% 30%,#fff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 92% 16%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 36% 52%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 66% 46%,#fff 50%,transparent 52%),radial-gradient(1.2px 1.2px at 6% 44%,#fff 50%,transparent 52%)}
+  .sky[data-tod="avond"] .skysterren{opacity:.75}
+  .sky[data-tod="nacht"] .skysterren{opacity:.95}
+  .skyscene{position:relative;height:104px;margin:0 -20px 10px}
+  .skyboog{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .skyboog path{fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round}
+  .sbspoor{stroke:color-mix(in srgb,var(--skink) 22%,transparent);stroke-width:1.5;stroke-dasharray:2 6}
+  .sbgedaan{stroke:color-mix(in srgb,var(--zon) 85%,transparent);stroke-width:2.5}
+  .sky[data-tod="avond"] .sbgedaan{stroke:color-mix(in srgb,#ffc9a0 80%,transparent)}
+  .skyzon{position:absolute;width:34px;height:34px;border-radius:50%;transform:translate(-50%,-50%);background:var(--zon);
+    box-shadow:0 0 0 7px color-mix(in srgb,var(--zon) 26%,transparent),0 0 30px 10px color-mix(in srgb,var(--zon) 45%,transparent);
+    transition:left var(--t-traag) var(--ease),top var(--t-traag) var(--ease)}
+  .sky[data-tod="ochtend"] .skyzon{background:#f7ad6c;box-shadow:0 0 0 7px rgba(247,160,120,.28),0 0 34px 12px rgba(246,150,120,.45)}
+  .sky[data-tod="avond"] .skyzon{background:#ffb48a;box-shadow:0 0 0 7px rgba(255,180,138,.22),0 0 34px 12px rgba(255,150,110,.4)}
+  .skyzon.maan{width:26px;height:26px;background:transparent;box-shadow:inset -8px -3px 0 0 var(--maan),0 0 22px 4px rgba(244,230,189,.18)}
+  .skyscene .skyhill{position:absolute;left:-8%;right:30%;bottom:-40px;height:70px;top:auto;border-radius:50%;background:var(--hill);z-index:0}
+  .skyscene .skyhill.h2{left:35%;right:-12%;bottom:-48px;height:78px;opacity:.75}
+  .skypanel{position:relative;z-index:1}
+  @media (prefers-color-scheme: dark){
+    .sky[data-tod="ochtend"]{--sk1:#3a2c3c;--sk2:#5a4038;--skink:#fff;--hill:rgba(0,0,0,.25)}
+    .sky[data-tod="middag"]{--sk1:#1d3446;--sk2:#21363a;--skink:#fff;--hill:rgba(0,0,0,.25)}
+  }
+  /* één verhaal: ochtend (roze/goud) → dag → avond (diepblauw) */
+  .ochrij{background:linear-gradient(100deg,color-mix(in srgb,var(--ochtend1) 55%,var(--card)),color-mix(in srgb,var(--ochtend2) 45%,var(--card)))}
+  #ochtendScherm{background:linear-gradient(180deg,color-mix(in srgb,var(--ochtend1) 45%,var(--bg)) 0%,var(--bg) 55%)!important}
+  #ochtendKaart{background:linear-gradient(135deg,color-mix(in srgb,var(--avond2) 14%,var(--card)),var(--card) 70%)}
+  @media (prefers-color-scheme: dark){
+    .ochrij{background:linear-gradient(100deg,#3a2c33,var(--card))}
+    #ochtendScherm{background:linear-gradient(180deg,#2c2230 0%,var(--bg) 55%)!important}
+    #ochtendKaart{background:linear-gradient(135deg,#232552,var(--card) 70%)}
+  }
+  /* ===== v4 punt 2: keytags en mijlpalen als echte voorwerpen ===== */
+  .kt svg.kton{filter:drop-shadow(0 2px 1.5px rgba(30,20,10,.22)) drop-shadow(0 8px 10px rgba(30,20,10,.16))}
+  .kt.glow svg{filter:drop-shadow(0 0 6px #9CFF7A) drop-shadow(0 0 14px #6BFF4A)}
+  .ktkantel{transform:perspective(320px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transform-origin:50% 12%;transition:transform var(--t) var(--ease)}
+  .ktkantel.kantelt{transition:transform 80ms linear}
+  .kt.ktkantel:hover{transform:perspective(320px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(-2px)}
+  .ktzwaai > svg{animation:ktZwaai .9s var(--ease)}
+  @keyframes ktZwaai{0%{transform:rotate(0)}25%{transform:rotate(-6deg)}55%{transform:rotate(4deg)}80%{transform:rotate(-1.5deg)}100%{transform:rotate(0)}}
+  .kt > svg{transform-origin:50% 10%}
+  .ktgloed > svg,.ktgloed.kt svg{animation:ktGloed 1.8s var(--ease)}
+  .card.ktgloed,.mpheld.ktgloed{animation:kaartGloed 1.8s var(--ease)}
+  @keyframes ktGloed{0%,100%{filter:drop-shadow(0 2px 1.5px rgba(30,20,10,.22)) drop-shadow(0 8px 10px rgba(30,20,10,.16))}40%{filter:drop-shadow(0 0 10px rgba(255,214,140,.95)) drop-shadow(0 0 26px rgba(255,190,110,.6))}}
+  @keyframes kaartGloed{0%,100%{box-shadow:var(--shadow)}40%{box-shadow:var(--shadow),0 0 0 6px rgba(246,184,94,.18),0 0 40px 6px rgba(246,184,94,.28)}}
+  /* felicitatiekaart: ruimte en een zachte gloed */
+  #msCelebrate{position:relative;overflow:hidden;padding:30px 20px 24px;isolation:isolate}
+  #msCelebrate::before,.mpheld::before{content:"";position:absolute;left:50%;top:38%;width:240px;height:240px;transform:translate(-50%,-50%);border-radius:50%;z-index:-1;
+    background:radial-gradient(circle,rgba(255,220,160,.75) 0%,rgba(255,220,160,.28) 40%,transparent 70%);animation:zachtAdem 5s var(--ease) infinite}
+  @keyframes zachtAdem{0%,100%{opacity:.75;transform:translate(-50%,-50%) scale(.94)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}}
+  .mpheld{position:relative;overflow:hidden;isolation:isolate;text-align:center;padding:36px 16px 26px;border-color:transparent;background:linear-gradient(160deg,var(--warm-soft),var(--accent-soft))}
+  .mptitel{font-weight:650;font-size:28px;letter-spacing:-.02em;margin-top:14px;line-height:1.2}
+  /* vitrine: de keytags in een rij op een plank */
+  .vitrine{margin:0 0 14px;padding:16px 14px 0;border-radius:var(--radius);background:linear-gradient(180deg,color-mix(in srgb,var(--card) 70%,var(--bg)),var(--card));box-shadow:var(--shadow);overflow:hidden}
+  .vitkop{font-size:13.5px;font-weight:600;color:var(--muted);margin:0 2px 10px}
+  .vitplank{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:6px 6px 14px;position:relative;
+    background:linear-gradient(180deg,transparent 0,transparent calc(100% - 14px),color-mix(in srgb,#a68a64 35%,var(--card)) calc(100% - 14px),color-mix(in srgb,#7c6445 30%,var(--card)) 100%);margin:0 -14px;padding-left:14px;padding-right:14px}
+  .vitplank .kt{margin-bottom:-2px}
+  .vitplank .kt.nu svg{filter:drop-shadow(0 0 8px rgba(255,214,140,.9)) drop-shadow(0 6px 8px rgba(30,20,10,.2))}
+  @media (prefers-color-scheme: dark){
+    #msCelebrate::before,.mpheld::before{background:radial-gradient(circle,rgba(255,200,130,.28) 0%,rgba(255,200,130,.1) 40%,transparent 70%)}
+    .mpheld{background:linear-gradient(160deg,#3a2b20,#22332f)}
+  }
+  /* ===== v4 punt 3: typografie met karakter ===== */
+  :root{--serif:"Fraunces",Georgia,"Times New Roman",serif}
+  body{line-height:1.5}
+  h1,#pageTitle,.sky .greet,.skydagen,.sheet h2,.dlg h3,#msCelTitle,.mptitel,.ochvraag,.datebar .d,#jftDate,#mLabel,.sectionhead,
+  .tile b,.groot-getal,#splash .nm,.drawer .dname,.cal .c > span:first-child,.daytabs .dn,.overnaam{
+    font-family:var(--serif);font-optical-sizing:auto;font-variant-numeric:lining-nums proportional-nums}
+  h1,#pageTitle{font-weight:600;font-size:27px;letter-spacing:-.015em}
+  @media (max-width:420px){ h1,#pageTitle{font-size:20.5px;letter-spacing:-.02em} .datebar .d{font-size:16.5px} }
+  .sky .greet{font-weight:600;font-size:31px;letter-spacing:-.02em;line-height:1.15}
+  .skydagen{font-weight:600;font-size:30px;letter-spacing:-.015em;margin-bottom:6px}
+  .sheet h2,.dlg h3{font-weight:600;letter-spacing:-.01em}
+  .sheet h2{font-size:24px}
+  #msCelTitle{font-weight:600!important;font-size:26px!important;line-height:1.2;letter-spacing:-.015em}
+  .mptitel{font-weight:600;font-size:30px}
+  .ochvraag{font-weight:600!important;font-size:28px!important;letter-spacing:-.015em!important}
+  .datebar .d,#mLabel{font-weight:600;font-size:18px;letter-spacing:-.005em}
+  #jftDate{font-weight:600!important;font-size:18px!important}
+  .sectionhead{font-weight:600;font-size:22px;letter-spacing:-.01em}
+  .tile b{font-weight:600;font-size:30px;line-height:1.1;letter-spacing:-.02em}
+  .tile{padding:14px 14px 12px}
+  .groot-getal{font-weight:600!important;font-size:52px!important}
+  .drawer .dname{font-weight:600;font-size:21px}
+  #splash .nm{font-weight:600;font-size:30px}
+  .cal .c > span:first-child{font-weight:500;font-size:15px}
+  .daytabs .dn{font-weight:600;font-size:15px}
+  .overnaam{font-weight:600;font-size:21px}
+  .qtitle{line-height:1.38}
+  .homekop{font-size:13px;letter-spacing:.02em;text-transform:none}
+  /* ===== v4 punt 4: glas en diepte ===== */
+  :root{
+    --bg:#f6f2eb; --card:#fffdf9; --field:#faf6ef; --line:#ebe3d6; --ink:#1d2321; --muted:#6c6a63;
+    --shadow:0 1px 2px rgba(70,50,25,.06),0 16px 34px -20px rgba(70,50,25,.30);
+    --shadow-hoog:0 2px 4px rgba(70,50,25,.07),0 24px 44px -22px rgba(70,50,25,.36);
+    --glas:color-mix(in srgb,var(--bg) 64%,transparent);
+    --glasrand:color-mix(in srgb,var(--line) 70%,transparent);
+  }
+  @media (prefers-color-scheme: dark){
+    /* avondstand: diep avondblauw met warm lamplicht, niet gewoon omgekeerd */
+    :root{
+      --bg:#121319; --card:#1b1d25; --field:#16171e; --line:#2a2c37; --ink:#f2ece2; --muted:#a8a196;
+      --warm:#eaa66c; --warm-soft:#3a2b22;
+      --shadow:0 1px 0 rgba(255,236,210,.035) inset,0 1px 2px rgba(0,0,0,.35),0 18px 36px -18px rgba(0,0,0,.75);
+      --shadow-hoog:0 1px 0 rgba(255,236,210,.05) inset,0 2px 4px rgba(0,0,0,.4),0 26px 48px -20px rgba(0,0,0,.8);
+      --glas:color-mix(in srgb,var(--bg) 58%,transparent);
+    }
+    body::after{content:"";position:fixed;inset:auto 0 0 0;height:55vh;z-index:-1;pointer-events:none;
+      background:radial-gradient(90% 60% at 85% 105%,rgba(255,170,95,.09),transparent 70%)}
+    .card,.ochrij,.meldrij,.snel{border-color:rgba(255,236,210,.05)}
+  }
+  /* kopbalk: matglas dat bij het scrollen over de lucht blijft staan */
+  header{position:sticky;top:0;z-index:9;margin:-18px -16px 16px;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;
+    background:var(--glas);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);
+    border-bottom:1px solid transparent;transition:border-color var(--t) var(--ease),box-shadow var(--t) var(--ease)}
+  html.gescrold header{border-bottom-color:var(--glasrand);box-shadow:0 10px 24px -18px rgba(40,30,20,.35)}
+  /* menu: matglas */
+  .drawer{background:color-mix(in srgb,var(--card) 76%,transparent);backdrop-filter:blur(24px) saturate(1.7);-webkit-backdrop-filter:blur(24px) saturate(1.7);
+    border-right:1px solid var(--glasrand)}
+  .drawer-bg{background:rgba(20,16,10,.22);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+  .sheet{background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+  .overlay{background:rgba(20,16,10,.38)}
+  /* kaarten zweven lichtjes: fijne dubbele schaduw en een haarlijn */
+  .card{border:1px solid color-mix(in srgb,var(--line) 55%,transparent);box-shadow:var(--shadow)}
+  .card.done{border-color:color-mix(in srgb,var(--accent) 26%,transparent)}
+  .ochrij,.meldrij,.snel,.vitrine,.dbdate{box-shadow:var(--shadow)}
+  .meldrij,.snel{border-color:color-mix(in srgb,var(--line) 55%,transparent)}
+  .dbknop{box-shadow:0 2px 4px color-mix(in srgb,var(--accent) 25%,transparent),0 18px 36px -18px color-mix(in srgb,var(--accent) 70%,transparent)}
+  .dbknop.klaar{box-shadow:var(--shadow)}
+  .bottom{background:var(--glas);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);border-color:var(--glasrand);box-shadow:var(--shadow-hoog)}
+  .skypanel{box-shadow:0 1px 2px rgba(40,30,20,.05),0 12px 26px -18px rgba(40,30,20,.35)}
+  @media (prefers-color-scheme: dark){
+    .dbknop:not(.klaar){background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 42%,var(--card)),color-mix(in srgb,var(--accent) 26%,var(--card)));color:var(--ink);
+      box-shadow:0 1px 0 rgba(255,236,210,.05) inset,0 18px 36px -18px rgba(0,0,0,.8)}
+    .dbknop:not(.klaar) .dbk-ic{background:rgba(255,255,255,.1)}
+    .dbknop:not(.klaar) .dbk-tx .bar{background:rgba(255,255,255,.14)}
+    .dbknop:not(.klaar) .dbk-tx .bar i{background:var(--accent)}
+  }
+  /* ===== v4 punt 5: dag-ring ===== */
+  :root{--dr0:#eaa07c;--dr1:#78b2d6;--dr2:#6b6cc4}
+  @media (prefers-color-scheme: dark){ :root{--dr0:#f0b08e;--dr1:#8cc4e6;--dr2:#9a9cf0} }
+  .skytop{display:flex;align-items:center;gap:12px}
+  .skytop-tx{flex:1;min-width:0}
+  .skytop .skydagen{margin-bottom:0}
+  .dagrondzin{font-family:var(--serif);font-style:italic;font-size:16px;margin-top:2px;color:inherit;opacity:.85}
+  .dagring{flex:none;width:68px;height:68px;padding:0;border:0;background:none;border-radius:50%;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}
+  .dagring svg{width:100%;height:100%;overflow:visible}
+  .dagring circle{fill:none;stroke-width:6.5;stroke-linecap:round;transform:rotate(-90deg);transform-origin:32px 32px}
+  .drspoor{stroke:color-mix(in srgb,currentColor 12%,transparent)}
+  .drdeel{transition:stroke-dasharray var(--t-traag) var(--ease)}
+  .drdeel.d0,.drbol.d0{stroke:var(--dr0);background:var(--dr0)}
+  .drdeel.d1,.drbol.d1{stroke:var(--dr1);background:var(--dr1)}
+  .drdeel.d2,.drbol.d2{stroke:var(--dr2);background:var(--dr2)}
+  .drvink{fill:none;stroke:var(--accent);stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:30;stroke-dashoffset:30;transition:stroke-dashoffset var(--t-traag) var(--ease) .1s}
+  .dagring.rond .drvink{stroke-dashoffset:0}
+  .dagring.rond::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(255,214,150,.45),transparent 68%);z-index:-1}
+  .dagring.netrond{animation:ringRond 1.8s var(--ease)}
+  @keyframes ringRond{0%{transform:scale(1)}30%{transform:scale(1.08);filter:drop-shadow(0 0 12px rgba(255,205,140,.9))}100%{transform:scale(1);filter:none}}
+  .dagringuitleg{margin:10px 0 2px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,currentColor 6%,transparent);font-size:14px}
+  .drregel{display:flex;align-items:center;gap:8px;padding:2px 0}
+  .drbol{width:9px;height:9px;border-radius:50%;flex:none}
+  .skytop .skydagen{font-size:min(28px,7vw)}
+  /* 's avonds en 's nachts: donker glas op de donkere lucht */
+  .sky[data-tod="avond"] .skypanel,.sky[data-tod="nacht"] .skypanel{background:rgba(255,255,255,.1);color:#fff;box-shadow:0 1px 0 rgba(255,255,255,.08) inset,0 12px 26px -18px rgba(0,0,0,.6)}
+  .sky[data-tod="avond"] .skypanel .note,.sky[data-tod="nacht"] .skypanel .note{color:rgba(255,255,255,.78)}
+  .sky[data-tod="avond"] .skypanel .linkbtn,.sky[data-tod="nacht"] .skypanel .linkbtn{color:#a8e6d4}
+  .sky[data-tod="avond"] .skypanel #msBox .bar,.sky[data-tod="nacht"] .skypanel #msBox .bar{background:rgba(255,255,255,.16)}
+  .sky[data-tod="avond"] .skypanel #msBox .bar i,.sky[data-tod="nacht"] .skypanel #msBox .bar i{background:#8fd6c2}
+  .sky[data-tod="avond"] .drvink,.sky[data-tod="nacht"] .drvink{stroke:#a8e6d4}
+  /* ===== v4 punt 6: beweging die klopt (overal dezelfde timing en vaart) ===== */
+  .fadein{animation:schermIn var(--t) var(--ease) both}
+  @keyframes schermIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+  /* knoppen veren een klein beetje */
+  .primary,.ghost,.danger,.chip,.scale button,.score button,.snel,.dbknop,.ochrij,.meldrij,.iconbtn,.sosbtn,.daytabs button,.gdays button,.klaarbtn,.cal .c,.drawer button{
+    transition:transform var(--t-snel) var(--ease-veer),background-color var(--t) var(--ease),border-color var(--t) var(--ease),color var(--t) var(--ease),box-shadow var(--t) var(--ease)}
+  .primary:active,.ghost:active,.danger:active,.chip:active,.scale button:active,.score button:active,.snel:active,.dbknop:active,.ochrij:active,.meldrij:active,
+  .iconbtn:active,.sosbtn:active,.daytabs button:active,.gdays button:active,.klaarbtn:active,.cal .c:active{transform:scale(.965)}
+  .drawer button:active{transform:scale(.98)}
+  .tap{animation:tapPop var(--t) var(--ease-veer)}
+  /* een gehaald onderdeel klikt vast */
+  .card.justdone{animation:vastKlik var(--t-traag) var(--ease-veer)}
+  @keyframes vastKlik{0%{transform:scale(1)}30%{transform:scale(.985)}65%{transform:scale(1.008)}100%{transform:scale(1)}}
+  .card.justdone .qhead .num{animation:numPop var(--t-traag) var(--ease-veer)}
+  .klaarbtn.on .kc{animation:vinkPop var(--t-traag) var(--ease-veer)}
+  .vastklik input[type=checkbox]{animation:vinkPop var(--t-traag) var(--ease-veer)}
+  .vastklik{animation:rijGloed var(--t-traag) var(--ease)}
+  @keyframes vinkPop{0%{transform:scale(1)}35%{transform:scale(.78)}70%{transform:scale(1.14)}100%{transform:scale(1)}}
+  @keyframes rijGloed{0%{background-color:transparent}35%{background-color:color-mix(in srgb,var(--accent) 10%,transparent)}100%{background-color:transparent}}
+  /* menu, vensters en meldingen in dezelfde vaart */
+  .drawer{transition:transform var(--t) var(--ease)}
+  .dlgback{transition:opacity var(--t) var(--ease)} .dlg{transition:transform var(--t) var(--ease-veer)}
+  #toast{transition:opacity var(--t) var(--ease),transform var(--t) var(--ease-veer)}
+  .overlay.show .sheet{animation:vanOnder var(--t) var(--ease)}
+  @keyframes vanOnder{from{transform:translateY(24px);opacity:.6}to{transform:none;opacity:1}}
+  .bar i,#dbKnopBar{transition:width var(--t-traag) var(--ease)}
+  /* minder beweging: geen animaties en geen overgangen */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.001ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
+    .ktkantel{transform:none!important}
+  }
+  /* ===== v4 punt 7: eigen tekeningen en lege staten ===== */
+  .emptystate{padding:28px 24px 30px}
+  .illu{width:168px;margin:0 auto 14px}
+  .illu svg{display:block;width:100%;height:auto;overflow:visible}
+  .illu .il-lijn,.illu .il-boog{fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .illu .il-vlak{fill:color-mix(in srgb,var(--accent-soft) 80%,var(--card))}
+  .illu .il-vlak.il-lijn{fill:color-mix(in srgb,var(--accent-soft) 80%,var(--card))}
+  .illu .il-boog{stroke-dasharray:2 6;opacity:.6}
+  .illu .il-heuvel{fill:color-mix(in srgb,var(--tint) 22%,var(--accent-soft))}
+  .illu .il-zon{fill:var(--zon)}
+  .illu .il-straal path{fill:none;stroke:var(--zon);stroke-width:2.6;stroke-linecap:round}
+  .illu .il-bol{fill:var(--dr0)} .illu .il-bol.b2{fill:var(--dr1)} .illu .il-bol.b3{fill:var(--dr2)}
+  .illu .il-leeg{fill:none;stroke:color-mix(in srgb,var(--muted) 55%,transparent);stroke-width:1.6;stroke-dasharray:2 2.5}
+  .illu{animation:illuIn var(--t-traag) var(--ease) both}
+  @keyframes illuIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .emptystate .et{font-family:var(--serif);font-weight:600;font-size:21px;letter-spacing:-.01em}
+  /* openingsscherm: dezelfde lucht als Vandaag */
+  #splash{--sp1:var(--middag1);--sp2:var(--middag2);--spink:#1d2a27;background:linear-gradient(180deg,var(--sp1),var(--sp2));overflow:hidden}
+  html[data-tod="ochtend"] #splash{--sp1:var(--ochtend1);--sp2:var(--ochtend2);--spink:#2b1f1c}
+  html[data-tod="avond"] #splash{--sp1:var(--avond1);--sp2:var(--avond2);--spink:#fff}
+  html[data-tod="nacht"] #splash{--sp1:var(--nacht1);--sp2:var(--nacht2);--spink:#fff}
+  #splash::after{content:"";position:absolute;left:-15%;right:-15%;bottom:-24vh;height:44vh;border-radius:50%;background:color-mix(in srgb,var(--spink) 9%,transparent)}
+  #splash .book{stroke:var(--spink)}
+  #splash .nm{color:var(--spink);position:relative;z-index:1}
+  #splash svg{position:relative;z-index:1}
+  #splash .book{stroke:var(--accent)}
+  html[data-tod="avond"] #splash .book,html[data-tod="nacht"] #splash .book{stroke:#fff}
+  /* ===== v4 punt 8: maand en week als zachte bolletjes ===== */
+  :root{--k0:color-mix(in srgb,var(--accent) 22%,var(--card));--k1:#e9a79c;--k2:#f1c48d;--k3:#b7d7a8;--k4:#78bc9a}
+  @media (prefers-color-scheme: dark){ :root{--k0:#86a69d;--k1:#d48f86;--k2:#dcb071;--k3:#9cc28f;--k4:#6cb592} }
+  .cal{gap:6px}
+  .cal .c{border-radius:50%;border:1.5px dashed color-mix(in srgb,var(--line) 90%,transparent);background:transparent;gap:1px}
+  .cal .c.has{border:0;color:#1d2321;
+    background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 58%),var(--kl,var(--k0));
+    box-shadow:0 1px 1px rgba(60,40,20,.06),0 6px 12px -8px rgba(60,40,20,.35);animation:bolIn var(--t-traag) var(--ease-veer) both;animation-delay:calc(var(--i,0) * 18ms)}
+  .cal .c.k0{--kl:var(--k0)} .cal .c.k1{--kl:var(--k1)} .cal .c.k2{--kl:var(--k2)} .cal .c.k3{--kl:var(--k3)} .cal .c.k4{--kl:var(--k4)}
+  .cal .c.now{box-shadow:0 0 0 2.5px var(--card),0 0 0 4.5px var(--accent)}
+  .cal .c.fut{opacity:.3}
+  .cal .c .dots{height:6px}
+  .cal .c.has .dot.z{background:#8a4b2a} .cal .c.has .dot.t{border-color:#8a4b2a}
+  @keyframes bolIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+  .kleurlegenda{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:13px;color:var(--muted);margin:12px 0 2px}
+  .kleurlegenda span{display:inline-flex;align-items:center;gap:6px}
+  .bolletje{display:inline-grid;place-items:center;width:12px;height:12px;border-radius:50%;font-style:normal;
+    background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.6),rgba(255,255,255,0) 58%),var(--kl,var(--k0))}
+  .bolletje.k0{--kl:var(--k0)} .bolletje.k1{--kl:var(--k1)} .bolletje.k2{--kl:var(--k2)} .bolletje.k3{--kl:var(--k3)} .bolletje.k4{--kl:var(--k4)}
+  .weekbollen{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:16px 0 2px}
+  .wb{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:none;padding:0;font:inherit;color:var(--muted);font-size:12.5px;cursor:pointer}
+  div.wb{cursor:default}
+  .wb .bolletje{width:38px;height:38px;font-family:var(--serif);font-size:16px;font-weight:600;color:#1d2321;box-shadow:0 1px 1px rgba(60,40,20,.06),0 8px 14px -9px rgba(60,40,20,.4);
+    animation:bolIn var(--t-traag) var(--ease-veer) both;animation-delay:calc(var(--i,0) * 50ms)}
+  .wb .bolletje.leeg{background:transparent;border:1.5px dashed var(--line);box-shadow:none}
+  .wb.fut{opacity:.4}
+  /* glow in the dark (1 jaar): meteen aan, zonder overvloeien of warme gloed vooraf */
+  .kt svg,.kt .ktb,#ktCard{transition:none}
+  .kt.glow svg,.kt.glow.ktgloed svg{animation:none;filter:drop-shadow(0 0 6px #9CFF7A) drop-shadow(0 0 14px #6BFF4A)}
+  .kt.glow .ktglans{display:none}

@@ -62,9 +62,29 @@ function confirmDialog(title, text, okLabel, calm){
     requestAnimationFrame(() => { back.classList.add("show"); no.focus(); });
   });
 }
+// eigen tekeningen voor lege schermen: één stijl (zon, zachte heuvel, lijnen zoals het app-icoon)
+const ILLUSTRATIES = {
+  book: '<circle class="il-zon" cx="70" cy="30" r="11"/><g class="il-straal"><path d="M70 9v5M70 46v5M49 30h5M86 30h5M55 15l3.5 3.5M81.5 41.5L85 45M85 15l-3.5 3.5M58.5 41.5L55 45"/></g>' +
+        '<path class="il-heuvel" d="M8 92c18-16 40-22 62-22s44 6 62 22z"/>' +
+        '<path class="il-vlak il-lijn" d="M30 58h26a14 14 0 0 1 14 14v18a9 9 0 0 0-9-9H30z"/><path class="il-vlak il-lijn" d="M110 58H84a14 14 0 0 0-14 14v18a9 9 0 0 1 9-9h31z"/>',
+  calendar: '<circle class="il-zon" cx="104" cy="22" r="9"/><path class="il-heuvel" d="M4 92c22-12 44-16 66-16s44 4 66 16z"/>' +
+        '<rect class="il-vlak il-lijn" x="34" y="24" width="64" height="56" rx="10"/><path class="il-lijn" d="M34 40h64M50 18v12M82 18v12"/>' +
+        '<circle class="il-bol" cx="52" cy="54" r="5"/><circle class="il-bol b2" cx="66" cy="54" r="5"/><circle class="il-bol b3" cx="80" cy="54" r="5"/><circle class="il-leeg" cx="52" cy="68" r="5"/><circle class="il-leeg" cx="66" cy="68" r="5"/>',
+  target: '<circle class="il-zon" cx="100" cy="26" r="10"/><path class="il-heuvel" d="M8 92c18-14 40-18 62-18s44 4 62 18z"/>' +
+        '<path class="il-lijn" d="M70 80V44"/><path class="il-vlak il-lijn" d="M70 58c-14 0-22-8-22-20 12 0 22 6 22 20z"/><path class="il-vlak il-lijn" d="M70 50c0-14 9-22 22-22 0 13-8 22-22 22z"/>',
+  week: '<path class="il-heuvel" d="M8 92c18-14 40-18 62-18s44 4 62 18z"/><path class="il-boog" d="M16 72C30 30 110 30 124 72"/>' +
+        '<circle class="il-leeg" cx="16" cy="72" r="5"/><circle class="il-leeg" cx="27" cy="52" r="5"/><circle class="il-leeg" cx="45" cy="39" r="5"/><circle class="il-zon" cx="70" cy="34" r="8"/><circle class="il-leeg" cx="95" cy="39" r="5"/><circle class="il-leeg" cx="113" cy="52" r="5"/><circle class="il-leeg" cx="124" cy="72" r="5"/>'
+};
+function illustratie(soort){
+  const s = ILLUSTRATIES[soort]; if(!s) return null;
+  const d = el("div", "illu"); d.setAttribute("aria-hidden", "true");
+  d.innerHTML = '<svg viewBox="0 0 140 96">' + s + '</svg>';
+  return d;
+}
 function emptyState(ic, title, text){
   const w = el("div", "card emptystate");
-  const c = el("div", "eic"); c.appendChild(icon(ic)); w.appendChild(c);
+  const il = illustratie(ic);
+  if(il) w.appendChild(il); else { const c = el("div", "eic"); c.appendChild(icon(ic)); w.appendChild(c); }
   w.appendChild(el("div", "et", title));
   if(text) w.appendChild(el("div", "es", text));
   return w;
@@ -73,7 +93,7 @@ function emptyState(ic, title, text){
 // ---------- openingsscherm ----------
 function showSplash(){
   if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-  const h = new Date().getHours(), night = h < 6 || h >= 18;
+  const h = (typeof ochKlok === "function" ? ochKlok() : new Date()).getHours(), night = h < 6 || h >= 18;
   const NS = "http://www.w3.org/2000/svg";
   const sp = el("div"); sp.id = "splash"; sp.setAttribute("aria-hidden", "true");
   const sv = document.createElementNS(NS, "svg"); sv.setAttribute("viewBox", "0 0 512 512");
@@ -111,6 +131,13 @@ document.addEventListener("click", e => {
   setTimeout(() => b.classList.remove("tap"), 400);
 }, true);
 document.addEventListener("touchstart", () => {}, {passive: true});
+// afvinken (planning, weekdoel, bespreekpunten): de regel "klikt" kort vast
+document.addEventListener("change", e => {
+  const cb = e.target; if(!cb || cb.type !== "checkbox" || !cb.checked) return;
+  const rij = cb.closest(".planitem,.goalcheck,.talkrow,label"); if(!rij) return;
+  rij.classList.remove("vastklik"); void rij.offsetWidth; rij.classList.add("vastklik");
+  setTimeout(() => rij.classList.remove("vastklik"), 700);
+}, true);
 function flyPlane(){
   if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const NS = "http://www.w3.org/2000/svg", sv = document.createElementNS(NS, "svg");

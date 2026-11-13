@@ -506,6 +506,7 @@ function renderGreeting(){
   }
   g.appendChild(sv);
   const sky = $("sky"); if(sky) sky.dataset.tod = h < 6 ? "nacht" : h < 12 ? "ochtend" : h < 18 ? "middag" : h < 22 ? "avond" : "nacht";
+  if(typeof renderDagboog === "function") renderDagboog();
   const first = (settings.naam || "").trim().split(/\s+/)[0];
   g.appendChild(document.createTextNode(word + (first ? ", " + first : "")));
 }

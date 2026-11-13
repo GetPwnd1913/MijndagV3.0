@@ -52,6 +52,15 @@ function scoreChart(nDays){
   pts.forEach(p => { svg += '<circle cx="'+x(p[0])+'" cy="'+y(p[1])+'" r="4" stroke-width="2" style="fill:var(--accent);stroke:var(--card)"/>'; });
   return svg + '</svg>';
 }
+// kleur van een dag op basis van het dagcijfer (zacht roze → goud → saliegroen); geen cijfer = neutraal
+function dagKleurKlasse(e){ const s = parseInt(e && e.cijfer, 10); if(!(s > 0)) return "k0"; return s <= 3 ? "k1" : s <= 5 ? "k2" : s <= 7 ? "k3" : "k4"; }
+function kleurLegenda(){
+  const l = el("div", "kleurlegenda");
+  [["k1", "zwaar", "hard"], ["k2", "wisselend", "mixed"], ["k3", "goed", "good"], ["k4", "heel goed", "very good"]].forEach(([k, nl, en]) => {
+    const s = el("span"); s.appendChild(el("i", "bolletje " + k)); s.appendChild(document.createTextNode(vt(nl, en))); l.appendChild(s);
+  });
+  return l;
+}
 function meetingPlacesOf(e){
   const a = e.answers && e.answers.q4;
   if(!a || !a.text) return null;
@@ -75,7 +84,8 @@ function renderMonth(){
     const has = !!e && !!hasContent(e);
     if(has) days.push(e);
     const c = document.createElement(has ? "button" : "div");
-    c.className = "c" + (has ? " has" : "") + (k === tk ? " now" : "") + (k > tk ? " fut" : "");
+    c.className = "c" + (has ? " has " + dagKleurKlasse(e) : "") + (k === tk ? " now" : "") + (k > tk ? " fut" : "");
+    if(has) c.style.setProperty("--i", d);
     const n = document.createElement("span"); n.textContent = d; c.appendChild(n);
     const dots = document.createElement("span"); dots.className = "dots";
     if(has && hadIt(e, "q5")){ const z = document.createElement("i"); z.className = "dot z"; dots.appendChild(z); }
@@ -84,6 +94,8 @@ function renderMonth(){
     if(has){ c.type = "button"; c.onclick = () => openSummary(e, true); }
     cal.appendChild(c);
   }
+  let lg = $("mKleur"); if(!lg){ lg = el("div"); lg.id = "mKleur"; cal.after(lg); }
+  lg.innerHTML = ""; lg.appendChild(kleurLegenda());
   const st = $("mStats"); st.innerHTML = "";
   if(!days.length){ st.appendChild(emptyState("calendar", vt("Deze maand nog niets ingevuld", "Nothing filled in this month yet"), vt("Zodra je een dagbeschouwing invult, zie je hier je cijfers, triggers en meetings.", "As soon as you fill in a daily reflection, you will see your scores, triggers and meetings here."))); return; }
   const zDays = days.filter(e => hadIt(e, "q5")), tDays = days.filter(e => hadIt(e, "q6"));

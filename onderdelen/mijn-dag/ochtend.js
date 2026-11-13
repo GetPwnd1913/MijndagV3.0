@@ -89,7 +89,7 @@ function openOchtend(){
     kop.appendChild(terug); kop.appendChild(bol); kop.appendChild(x); wrap.appendChild(kop);
 
     const vak = el("div"); vak.style.cssText = "flex:1;padding-top:12px"; wrap.appendChild(vak);
-    const vraag = t => { const h = el("div", null, t); h.style.cssText = "font-size:26px;font-weight:750;letter-spacing:-.02em;line-height:1.25;margin:8px 0 18px"; vak.appendChild(h); };
+    const vraag = t => { const h = el("div", "ochvraag", t); h.style.cssText = "font-size:26px;font-weight:750;letter-spacing:-.02em;line-height:1.25;margin:8px 0 18px"; vak.appendChild(h); };
     const rij = el("div", "chips"); rij.style.gap = "10px";
 
     if(stap === 0){

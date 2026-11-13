@@ -88,16 +88,26 @@ async function openMijlpaal(key){
   const onKey = e => { if(e.key === "Escape") sluit(); };
   document.addEventListener("keydown", onKey);
 
-  // 1. keytag en titel (met confetti in dit vak)
-  const held = el("div", "card"); held.style.cssText = "position:relative;overflow:hidden;text-align:center;padding:28px 16px 22px;background:linear-gradient(135deg,var(--warm-soft),var(--accent-soft));border-color:transparent";
+  // 1. keytag en titel (met een zachte gloed in dit vak)
+  const held = el("div", "card mpheld");
   const tag = mpKeytag(since, key, s);
   const tagEl = el("div"); tagEl.style.cssText = "display:flex;justify-content:center";
-  if(tag) tagEl.appendChild(keytagSvg(tag, true, 96));
+  if(tag) tagEl.appendChild(ktKantel(el("div", "kt groot"), 10)).appendChild(keytagSvg(tag, true, 104));
   else { const ic = el("div", "celic"); ic.appendChild(icon("award", 72)); tagEl.appendChild(ic); }
   held.appendChild(tagEl);
-  const h = el("div", null, mpTitel(s)); h.style.cssText = "font-weight:750;font-size:26px;letter-spacing:-.02em;margin-top:10px"; held.appendChild(h);
+  const h = el("div", "mptitel", mpTitel(s)); held.appendChild(h);
   const datum = note(vt("Behaald op ", "Achieved on ") + shortDate(key)); datum.style.cssText = "margin-top:4px;font-size:14px"; held.appendChild(datum);
   wrap.appendChild(held);
+
+  // 1b. vitrine: alle behaalde keytags tot deze datum in een rij
+  const alle = keytagList(since).filter(k => k.key <= key);
+  if(alle.length > 1){
+    const vit = el("div", "vitrine");
+    vit.appendChild(el("div", "vitkop", vt("Jouw keytags tot nu toe", "Your keytags so far")));
+    const plank = el("div", "vitplank");
+    alle.forEach(k => { const v = ktKantel(el("div", "kt" + (tag && k.key === tag.key ? " nu" : "")), 12); v.appendChild(keytagSvg(k, true, 44)); plank.appendChild(v); });
+    vit.appendChild(plank); wrap.appendChild(vit);
+  }
 
   // 2. bericht
   const msg = el("div", "card"); const mt = el("div", null, mpBericht(s)); mt.style.cssText = "font-size:17px;line-height:1.55"; msg.appendChild(mt); wrap.appendChild(msg);
@@ -122,7 +132,7 @@ async function openMijlpaal(key){
 
   document.body.appendChild(back); document.body.style.overflow = "hidden";
   requestAnimationFrame(() => { back.style.opacity = "1"; ok.focus({preventScroll: true}); });
-  setTimeout(() => ktConfetti(held, tagEl, true), 350);   // kort en rustig; niet bij "minder beweging"
+  setTimeout(() => ktConfetti(held, tagEl.firstChild, true), 350);   // zachte gloed; niet bij "minder beweging"
 
   const t = mpTelling(await allDays(), key);
   laden.remove();
@@ -132,7 +142,7 @@ async function openMijlpaal(key){
   sub.style.cssText = "margin-top:2px;font-size:14px"; st.appendChild(sub);
   if(t.meetings){
     const big = el("div"); big.style.cssText = "display:flex;align-items:baseline;gap:10px;margin-top:14px";
-    const g = el("div", null, String(t.meetings)); g.style.cssText = "font-size:44px;font-weight:750;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums";
+    const g = el("div", "groot-getal", String(t.meetings)); g.style.cssText = "font-size:44px;font-weight:750;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums";
     big.appendChild(g); big.appendChild(el("div", null, t.meetings === 1 ? "meeting" : "meetings")).style.cssText = "font-size:18px;font-weight:600";
     st.appendChild(big);
     if(t.plaatsen.length){ const p = note(vt("Meest bezocht: ", "Most visited: ") + t.plaatsen.slice(0, 3).map(([x, n]) => x + " (" + n + "×)").join(", ")); p.style.cssText = "margin-top:4px;font-size:15px"; st.appendChild(p); }
