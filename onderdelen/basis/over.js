@@ -40,30 +40,92 @@ const LICENTIES = [
  }
 ];
 
-// privacy: de tekst hangt af van waar de app draait, zodat hij altijd klopt.
-// Op claude.ai worden je dagen ook in je eigen claude.ai-account bewaard (window.claude "db"); elders alleen in de browser.
-function privacyRegels(){
-  const claudeAi = !!(window.claude && window.claude.use);
+// ---------- privacyverklaring en gebruiksvoorwaarden ----------
+// De tekst hangt af van waar de app draait, zodat hij altijd klopt: op claude.ai worden je dagen ook in je eigen
+// claude.ai-account bewaard (window.claude "db") en komen het lettertype en de Word/PDF-onderdelen van internet.
+// Verandert de app (tracking, server), dan moet deze tekst eerst mee veranderen.
+const CONTACT_ADRES = "";                       // leeg = geen contactregels tonen; vul een mailadres in om ze terug te zetten
+const TEKST_DATUM = ["13 november 2026", "13 November 2026"];
+const opClaudeAi = () => !!(window.claude && window.claude.use);
+// blokken: ["k", ...] kopje, ["p", ...] alinea, ["li", ...] opsomming, ["d", ...] datum; telkens nl, en
+function privacyBlokken(){
+  const ca = opClaudeAi();
   return [
-    claudeAi
-      ? vt("Wat je invult wordt bewaard in de browser en in je eigen claude.ai-account, zodat je het op al je apparaten ziet. claude.ai (Anthropic) bewaart het voor je, net als je andere claude.ai-gegevens. Er is geen andere server die je dagen bewaart.",
-           "What you enter is stored in the browser and in your own claude.ai account, so you can see it on all your devices. claude.ai (Anthropic) keeps it for you, like your other claude.ai data. There is no other server that stores your days.")
-      : vt("Wat je invult blijft op je eigen telefoon, in de browser. Er is geen account en geen server die je dagen bewaart.",
-           "What you enter stays on your own phone, in the browser. There is no account and no server that stores your days."),
-    claudeAi
-      ? vt("Deze versie van de app is privé: alleen wie toegang heeft tot jouw claude.ai-app kan hem openen.",
-           "This version of the app is private: only people with access to your claude.ai app can open it.")
-      : vt("Niemand, ook de maker van de app niet, kan je gegevens zien.", "Nobody, not even the maker of the app, can see your data."),
-    vt("De app stuurt niets naar adverteerders of analysebedrijven.", "The app sends nothing to advertisers or analytics companies."),
-    vt("Een back-up of export (Word/PDF) is een bestand dat jij zelf bewaart en deelt. Mailen gaat via je eigen mailapp: jij verstuurt het zelf.",
-       "A backup or export (Word/PDF) is a file that you keep and share yourself. Emailing goes through your own email app: you send it yourself."),
-    claudeAi
-      ? vt("Wis je je browsergegevens, dan blijven je dagen in je claude.ai-account staan. Maak toch regelmatig een back-up.",
-           "If you clear your browser data, your days stay in your claude.ai account. Still, make a backup regularly.")
-      : vt("Wis je je browsergegevens of de app, dan zijn je gegevens weg. Maak daarom regelmatig een back-up.",
-           "If you clear your browser data or delete the app, your data is gone. So make a backup regularly."),
-    vt("Alleen voor vandaag laad je zelf in; die tekst blijft op je telefoon.", "You load Just for Today yourself; that text stays on your phone.")
+    ["p", "Jouw gegevens zijn van jou. Mijn dag is gemaakt om privé te blijven.", "Your data is yours. My day is built to stay private."],
+    ["k", "Wat de app bewaart", "What the app stores"],
+    ca ? ["p", "Alles wat je invult (je dagen, antwoorden, instellingen, weekformulieren, keytags en dergelijke) wordt bewaard in de opslag van je browser en in je eigen claude.ai-account, zodat je het op al je apparaten ziet. claude.ai (Anthropic) bewaart het voor je, net als je andere claude.ai-gegevens. Wij hebben geen eigen server of database waarin jouw gegevens terechtkomen.",
+               "Everything you enter (your days, answers, settings, weekly forms, keytags and so on) is stored in your browser's storage and in your own claude.ai account, so you can see it on all your devices. claude.ai (Anthropic) keeps it for you, like your other claude.ai data. We have no server or database of our own that receives your data."]
+       : ["p", "Alles wat je invult (je dagen, antwoorden, instellingen, weekformulieren, keytags en dergelijke) wordt bewaard op je eigen apparaat, in de opslag van je browser. Wij hebben geen account, geen server en geen database waarin jouw gegevens terechtkomen. Wij kunnen jouw gegevens dus niet zien, lezen of delen.",
+               "Everything you enter (your days, answers, settings, weekly forms, keytags and so on) is stored on your own device, in your browser's storage. We have no account system, no server and no database that receives your data. We therefore cannot see, read or share your data."],
+    ["k", "Wat de app niet doet", "What the app does not do"],
+    ["li", "Geen tracking, geen advertenties en geen analyse van je gedrag.", "No tracking, no ads and no analysis of your behaviour."],
+    ca ? ["li", "Geen externe diensten waaraan de app jouw ingevulde gegevens doorgeeft. Het lettertype en de onderdelen voor Word en PDF worden van internet geladen; je ingevulde gegevens gaan daarbij niet mee.",
+                "No external services that the app passes your entered data to. The font and the parts for Word and PDF are loaded from the internet; your entered data is not sent along."]
+       : ["li", "Geen externe diensten waaraan de app jouw ingevulde gegevens doorgeeft. Alle onderdelen van de app, inclusief het lettertype, staan in de app zelf.",
+                "No external services that the app passes your entered data to. All parts of the app, including the font, are inside the app itself."],
+    ["li", "Geen verkoop of doorgifte van gegevens, want wij hebben ze niet.", "No selling or passing on of data, because we do not have it."],
+    ["k", "Back-ups en exporten", "Backups and exports"],
+    ["p", "Als je een back-up of een export (Word, PDF) maakt, wordt dat bestand op jouw apparaat opgeslagen. Wat je daarna met dat bestand doet, bepaal jij. Let op: een back-up bevat je persoonlijke gegevens, dus bewaar hem op een veilige plek.",
+          "When you create a backup or an export (Word, PDF), that file is saved on your own device. What you do with it afterwards is up to you. Please note that a backup contains your personal data, so keep it somewhere safe."],
+    ["k", "Bestanden die je opent", "Files you open"],
+    ["p", "Als je in de app een bestand kiest (bijvoorbeeld een back-up of een PDF), wordt het alleen op je eigen apparaat gelezen. Er wordt niets verstuurd.",
+          "If you choose a file in the app (for example a backup or a PDF), it is only read on your own device. Nothing is sent anywhere."],
+    ["k", "Gegevens kwijt of weggooien", "Losing or deleting your data"],
+    ca ? ["p", "Je dagen staan in je browser en in je claude.ai-account. Wis je je browsergegevens, dan blijven ze in je account staan. Maak toch regelmatig een back-up via het menu. De app heeft geen knop om alles in één keer te wissen.",
+               "Your days are in your browser and in your claude.ai account. If you clear your browser data, they stay in your account. Still, make regular backups from the menu. The app has no button to delete everything at once."]
+       : ["p", "Omdat alles op je apparaat staat, zijn je gegevens weg als je de browsergegevens wist, een ander apparaat of een andere browser gebruikt, of je apparaat kwijtraakt. Maak daarom regelmatig een back-up via het menu. Wil je alles verwijderen? De app heeft daar geen knop voor: wis de websitegegevens van deze app in je browser.",
+               "Because everything is on your device, your data is gone if you clear your browser data, switch to another device or browser, or lose your device. Make regular backups from the menu. To delete everything: the app has no button for this, so clear the site data for this app in your browser."],
+    ["k", "Gevoelige onderwerpen", "Sensitive topics"],
+    ca ? ["p", "Mijn dag kan persoonlijke dingen bevatten, zoals je stemming en je herstel. Deze versie van de app is privé: alleen wie toegang heeft tot jouw claude.ai-app kan hem openen. Zet een schermvergrendeling op je telefoon als anderen erbij kunnen.",
+               "My day may contain personal things, such as your mood and your recovery. This version of the app is private: only people with access to your claude.ai app can open it. Use a screen lock on your phone if others can get to it."]
+       : ["p", "Mijn dag kan persoonlijke dingen bevatten, zoals je stemming en je herstel. Omdat die gegevens alleen op jouw apparaat staan, bepaal jij wie ze ziet. Zet een schermvergrendeling op je telefoon als anderen erbij kunnen.",
+               "My day may contain personal things, such as your mood and your recovery. Because this data is only on your device, you decide who sees it. Use a screen lock on your phone if others can get to it."],
+    ["k", "Kinderen", "Children"],
+    ["p", "De app is bedoeld voor volwassenen.", "The app is intended for adults."],
+    ["k", "Wijzigingen", "Changes"],
+    ["p", "Verandert de app zo dat er gegevens buiten je apparaat komen, dan wordt deze verklaring eerst aangepast en laten we dat duidelijk zien.",
+          "If the app ever changes so that data leaves your device, this policy will be updated first and we will make that clearly visible."],
+    // contact alleen tonen als er een adres is ingevuld (Roy wil er nu nog geen)
+    ...(CONTACT_ADRES ? [["k", "Vragen of verzoeken", "Questions or requests"], ["p", "Mail naar " + CONTACT_ADRES + ".", "Email " + CONTACT_ADRES + "."]] : []),
+    ["d", "Laatst bijgewerkt: " + TEKST_DATUM[0], "Last updated: " + TEKST_DATUM[1]]
   ];
+}
+function voorwaardenBlokken(){
+  const ca = opClaudeAi();
+  return [
+    ["k", "Geen medische of therapeutische hulp", "Not medical or therapeutic help"],
+    ["p", "Mijn dag is een hulpmiddel voor reflectie en structuur in je dag. Het is geen medisch, psychologisch of therapeutisch advies en vervangt geen hulpverlener, behandeling, begeleider of sponsor. Heb je het zwaar, of gaat het niet goed met je? Zoek dan hulp bij een professional of bel een hulplijn. In een crisis bel je 112. In Nederland kun je 24/7 bellen met 113 Zelfmoordpreventie (0800-0113).",
+          "My day is a tool for reflection and structure in your day. It is not medical, psychological or therapeutic advice and does not replace a professional, treatment, counsellor or sponsor. If you are struggling or not doing well, please contact a professional or a helpline. In an emergency, call your local emergency number (112 in the EU). In the Netherlands you can call 113 Suicide Prevention 24/7 (0800-0113)."],
+    ["k", "Jij bent verantwoordelijk voor je gegevens", "You are responsible for your data"],
+    ca ? ["p", "Je gegevens staan in je browser en in je eigen claude.ai-account. Maak zelf regelmatig een back-up. Wij kunnen verloren gegevens niet terughalen.",
+               "Your data is in your browser and in your own claude.ai account. Make regular backups yourself. We cannot recover lost data."]
+       : ["p", "Je gegevens staan alleen op je eigen apparaat. Maak zelf regelmatig een back-up. Wij kunnen verloren gegevens niet terughalen.",
+               "Your data is only on your own device. Make regular backups yourself. We cannot recover lost data."],
+    ["k", "Gebruik op eigen risico", "Use at your own risk"],
+    ["p", "De app wordt aangeboden zoals hij is, zonder garantie dat hij foutloos of altijd beschikbaar is. Voor zover de wet het toestaat, zijn wij niet aansprakelijk voor schade door het gebruik van de app of het verlies van gegevens.",
+          "The app is provided as is, with no guarantee that it is error-free or always available. To the extent permitted by law, we are not liable for any damage resulting from the use of the app or the loss of data."],
+    ["k", "Auteursrecht", "Copyright"],
+    ["p", "Mijn dag is © Roy van Dalem. Je mag de app voor persoonlijk gebruik gebruiken. Kopiëren, doorverkopen of de app als eigen werk aanbieden is niet toegestaan zonder toestemming, behalve zoals de bijgevoegde licentie (LICENSE) en de vermelde bibliotheken van derden (THIRD-PARTY-NOTICES) toestaan.",
+          "My day is © Roy van Dalem. You may use the app for personal use. Copying, reselling or presenting the app as your own work is not allowed without permission, except as permitted by the included licence (LICENSE) and the listed third-party libraries (THIRD-PARTY-NOTICES)."],
+    ["k", "Wijzigingen", "Changes"],
+    ["p", "We kunnen de app en deze voorwaarden aanpassen. De nieuwste versie staat altijd in de app.", "We may change the app and these terms. The latest version is always in the app."],
+    ["k", "Toepasselijk recht", "Governing law"],
+    ["p", "Op deze voorwaarden is Nederlands recht van toepassing.", "These terms are governed by Dutch law."],
+    ...(CONTACT_ADRES ? [["p", "Contact: " + CONTACT_ADRES, "Contact: " + CONTACT_ADRES]] : []),
+    ["d", "Laatst bijgewerkt: " + TEKST_DATUM[0], "Last updated: " + TEKST_DATUM[1]]
+  ];
+}
+function tekstVak(titel, blokken){
+  const d = el("details", "overlic overtekstvak");
+  d.appendChild(el("summary", null, titel));
+  let ul = null;
+  blokken.forEach(([soort, nl, en]) => {
+    const tx = vt(nl, en);
+    if(soort === "li"){ if(!ul){ ul = el("ul", "overlijst"); d.appendChild(ul); } ul.appendChild(el("li", null, tx)); return; }
+    ul = null;
+    d.appendChild(el(soort === "k" ? "h4" : "p", soort === "k" ? "overkop4" : soort === "d" ? "note" : "overtekst", tx));
+  });
+  return d;
 }
 function openOver(){
   const sh = $("overSheet"); sh.innerHTML = "";
@@ -74,10 +136,8 @@ function openOver(){
   sh.appendChild(kop);
   sh.appendChild(el("p", "overtekst", vt("Deze app is voor persoonlijk gebruik. Niets hieruit mag zonder schriftelijke toestemming worden gekopieerd of verspreid.",
     "This app is for personal use. Nothing in it may be copied or distributed without written permission.")));
-  sh.appendChild(el("h3", "overkopje", "Privacy"));
-  const priv = el("ul", "overlijst");
-  privacyRegels().forEach(r => priv.appendChild(el("li", null, r)));
-  sh.appendChild(priv);
+  sh.appendChild(tekstVak(vt("Privacyverklaring", "Privacy policy"), privacyBlokken()));
+  sh.appendChild(tekstVak(vt("Gebruiksvoorwaarden", "Terms of use"), voorwaardenBlokken()));
   sh.appendChild(el("p", "overtekst", vt("Narcotics Anonymous, NA en Just for Today / Alleen voor vandaag zijn namen van NA World Services. Deze app is niet van NA en niet door NA goedgekeurd. De stappen staan hier kort in eigen woorden. De teksten van Alleen voor vandaag laad je zelf in uit je eigen exemplaar. De keytags zijn eigen tekeningen in de kleuren van de NA-keytags. Alles wordt alleen gebruikt voor persoonlijk herstel.",
     "Narcotics Anonymous, NA and Just for Today are names of NA World Services. This app is not made or approved by NA. The steps are summarised briefly in my own words. You load the Just for Today texts yourself from your own copy. The keytags are my own drawings in the colours of the NA keytags. Everything is used for personal recovery only.")));
   const alles = el("details", "overlic");

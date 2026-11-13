@@ -865,3 +865,10 @@
   .kt svg,.kt .ktb,#ktCard{transition:none}
   .kt.glow svg,.kt.glow.ktgloed svg{animation:none;filter:drop-shadow(0 0 6px #9CFF7A) drop-shadow(0 0 14px #6BFF4A)}
   .kt.glow .ktglans{display:none}
+  /* privacyverklaring en gebruiksvoorwaarden in Over deze app */
+  .overtekstvak{margin:0 0 10px}
+  .overtekstvak[open]{padding-bottom:12px}
+  .overtekstvak .overkop4{font-size:15.5px;font-weight:650;margin:14px 0 4px}
+  .overtekstvak .overtekst{font-size:15px;margin:0 0 6px}
+  .overtekstvak .overlijst{margin:0 0 6px}
+  .overtekstvak .note{margin-top:12px}
