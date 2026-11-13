@@ -69,9 +69,3 @@ function renderHome(){
 $("ktToggle").onclick = () => { ktOpen = !ktOpen; renderKeytags(); renderHomeKeytags(); };
 $("dbKnop").onclick = () => { if(curKey !== todayKey()) loadDay(todayKey()); showView("today"); };
 document.querySelectorAll("#snelKnoppen [data-naar]").forEach(b => b.onclick = () => showView(b.dataset.naar));
-$("menuKeytags").onclick = () => {
-  ktOpen = true; showView("home");
-  if(!settings.since){ toast(vt("Vul bij Instellingen je cleandatum in, dan zie je je keytags.", "Enter your clean date under Settings to see your keytags.")); return; }
-  renderKeytags(); renderHomeKeytags();
-  setTimeout(() => $("ktCard").scrollIntoView({block: "start", behavior: "smooth"}), 60);
-};
