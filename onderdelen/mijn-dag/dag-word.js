@@ -62,6 +62,17 @@ async function logoPng(size){
   return new Uint8Array(await blob.arrayBuffer());
 }
 window.__dagLogo = async () => Array.from(await logoPng(240));
+// Opsommingsteken in de export (Word én PDF; de PDF gebruikt answerLines hieronder): "-", "–", "•" of "*",
+// met of zonder spatie erachter, wordt een bolletje. Zo ziet "-Nazorg." er hetzelfde uit als een knopje ("- Nazorg.").
+// Bewuste uitzonderingen: een min of streepje direct gevolgd door een cijfer ("-5 graden") is geen opsomming
+// (met spatie, zoals het knopje "- 5 uit 10", wel); "**", "--" enz. (dubbel teken) ook niet; een losse "-" blijft tekst.
+// Alleen voor de export: de app zelf en de opgeslagen tekst veranderen niet (zie bullet()/lineIsItem() in weergave.js).
+function exportOpsomming(l){
+  const m = /^\s*([-–•*])(?![-–•*])(\s*)(\S.*)$/.exec(l);
+  if(!m) return null;
+  if((m[1] === "-" || m[1] === "–") && !m[2] && /^\d/.test(m[3])) return null;
+  return m[3].trim();
+}
 function answerLines(q, e){
   const raw = answerText(q, e) || "";
   if(!raw.trim()) return [{t: "–", k: "empty"}];
@@ -77,7 +88,8 @@ function answerLines(q, e){
     if(l.trim() === "") return {t: "", k: "blank"};
     if(i === 0 && lab && l === lab) return {t: l, k: "label"};
     if(isHeaderLine(q, l)) return {t: l, k: "head"};
-    if(/^- /.test(l)) return {t: l.slice(2), k: "bullet"};
+    const opsom = exportOpsomming(l);
+    if(opsom !== null) return {t: opsom, k: "bullet"};
     if(q.type === "score" && /^(Ik geef deze dag een|Cijfer:|I give this day a|Score:)/.test(l)) return {t: l, k: "label"};
     return {t: l, k: "text"};
   });
