@@ -63,10 +63,11 @@ function wfRows(wk, id){
     ];
   }
   const hulp = u.hulp || {};
-  // u.hulp heeft Nederlandse sleutels; in het bestand staat de naam in de gekozen taal
-  const hl = HULP.map(h => hulpNaam(h) + ": " + (hulp[h] ? vt("ja", "yes") : vt("nee", "no")));
+  // u.hulp heeft Nederlandse sleutels; in het bestand staat de naam in de gekozen taal. Alleen wat gekozen is, de rest is nee.
+  const gekozen = HULP.filter(h => hulp[h]).map(hulpNaam);
+  if((u.hulp_anders || "").trim()) gekozen.push(vt("Anders: ", "Other: ") + u.hulp_anders.trim());
   return [
-    {cells: [{t: ""}, {t: vt("Aantal", "Number"), c: 1}, {t: "", span: 2}], head: 1},
+    {cells: [{t: vt("Vraag", "Question")}, {t: vt("Aantal", "Number"), c: 1}, {t: vt("Toelichting", "Details"), span: 2}], head: 1},
     {cells: [{t: vt("Hoeveel meetings heb je bijgewoond?", "How many meetings did you attend?")}, {t: u.meet_n || "", c: 1}, {t: vt("Waar en wanneer?", "Where and when?"), sub: u.meet_txt, span: 2}]},
     {cells: [{t: vt("Hoe vaak heb je afgelopen week gesport, buiten het programma om", "How often did you exercise last week, outside the programme")}, {t: u.sport_n || "", c: 1}, {t: vt("Wat heb je qua sport gedaan en wanneer?", "What exercise did you do and when?"), sub: u.sport_txt, span: 2}]},
     {cells: [{t: vt("Heb je een servicepositie?", "Do you have a service position?")}, {t: u.serv_n || "", c: 1}, {t: vt("Zo ja, hoeveel, welke, waar en wanneer?", "If so, how many, which, where and when?"), sub: u.serv_txt, span: 2}]},
@@ -80,7 +81,7 @@ function wfRows(wk, id){
     {cells: [{t: vt("Wat is je doel deze week?", "What is your goal this week?"), i: 1}, {t: u.doel || "", span: 3}]},
     {cells: [{t: vt("Werk je aan dit doel?", "Are you working on this goal?"), i: 1}, {t: yn(u.doel_yn), c: 1}, {t: vt("Zo ja, hoe?", "If so, how?"), sub: u.doel_ja, i: 1}, {t: vt("Zo nee, waarom niet", "If not, why not"), sub: u.doel_nee, i: 1}]},
     {cells: [{t: vt("Heb je jouw huishoudelijke taken (Safehouse) uitgevoerd?", "Did you do your household chores (Safehouse)?"), i: 1}, {t: yn(u.huis_yn), c: 1}, {t: vt("Ja:", "Yes:"), sub: u.huis_ja, i: 1}, {t: vt("Zo nee, waarom niet", "If not, why not"), sub: u.huis_nee, i: 1}]},
-    {cells: [{t: vt("Heb je ergens extra hulp bij nodig aankomende week?", "Do you need extra help with anything in the coming week?")}, {t: "", c: 1}, {list: hl.slice(0, 6), small: 1, plain: 1, hl: hulp}, {list: hl.slice(6).concat([vt("Anders: ", "Other: ") + (u.hulp_anders || "")]), small: 1, plain: 1, hl: hulp}]},
+    {cells: [{t: vt("Heb je ergens extra hulp bij nodig aankomende week?", "Do you need extra help with anything in the coming week?")}, {t: "", c: 1}, {t: vt("Gekozen (de rest is nee):", "Chosen (the rest is no):"), sub: gekozen.length ? gekozen.join(String.fromCharCode(10)) : vt("Geen", "None"), span: 2}]},
     {cells: [{t: vt("Heb je een verzoek aan het team?", "Do you have a request for the team?")}, {t: u.verzoek || "", span: 3}], h: 40}
   ];
 }
@@ -344,7 +345,14 @@ const WFS = {
   wv: {get title(){ return vt("Weekendvoorbespreking", "Weekend plan"); }, get sub(){ return vt("weekend van", "weekend of"); }, cols: [0.2986, 0.2338, 0.2338, 0.2338]},
   upd: {get title(){ return vt("Wekelijkse Update", "Weekly update"); }, get sub(){ return vt("week van", "week of"); }, cols: [0.2978, 0.0924, 0.31, 0.2998]}
 };
-const wfsSubtitle = (wk, id) => { const w = wfWeekInfo(wk, id); return "Week " + w.week + "  ·  " + WFS[id].sub + " " + w.range; };
+const wfsSubtitle = (wk, id) => {
+  const w = wfWeekInfo(wk, id), basis = "Week " + w.week + "  ·  " + WFS[id].sub + " " + w.range;
+  if(id !== "upd") return basis;
+  const naam = (settings.naam || "").trim();
+  return (naam ? naam + "  ·  " : "") + basis;
+};
+// lege invulvelden: label lichter grijs, zodat ingevulde antwoorden opvallen
+const wfsLeeg = cell => "sub" in cell && !String(cell.sub == null ? "" : cell.sub).trim();
 // Ja/nee-cellen: "Vrijdag: Ja" → label gewoon, antwoord vet in de themakleur (of grijs als nog niet gekozen)
 const wfsYn = cell => {
   if(!(cell.c || cell.i) || cell.list || cell.lines || cell.t == null || "sub" in cell) return null;
@@ -368,25 +376,27 @@ function wfStyledXml(wk, id, withLogo){
   // kop: titel + week links, logo rechts
   const titleP = p(r(S.title, {b: 1, sz: 48, c: TH.hex}), {after: 40}) + p(r(wfsSubtitle(wk, id), {sz: 22, c: GRAY}));
   let body = "";
-  if(withLogo){
+  const upd = id === "upd";
+  if(upd){
+    // wekelijkse update: gekleurde kopbalk met titel, naam, week en periode (zoals de PDF), logo rechts
+    const EMU = 520000;
+    const pic = withLogo ? '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + EMU + '" cy="' + EMU + '"/><wp:docPr id="1" name="Logo Mijn dag"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + EMU + '" cy="' + EMU + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>' : "";
+    const btc = (w, inner, left) => '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="' + TH.hex + '"/><w:tcMar><w:top w:w="140" w:type="dxa"/><w:bottom w:w="140" w:type="dxa"/><w:left w:w="' + left + '" w:type="dxa"/><w:right w:w="200" w:type="dxa"/></w:tcMar><w:vAlign w:val="center"/></w:tcPr>' + inner + '</w:tc>';
+    body += '<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>' + nb + '<w:tblLayout w:type="fixed"/><w:tblCellMar><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid><w:gridCol w:w="8338"/><w:gridCol w:w="1300"/></w:tblGrid><w:tr>' +
+      btc(8338, p(r(S.title, {b: 1, sz: 40, c: "FFFFFF"}), {after: 20}) + p(r(wfsSubtitle(wk, id), {sz: 20, c: "FFFFFF"})), 400) + btc(1300, p(pic, {jc: "right"}), 0) + '</w:tr></w:tbl>';
+  } else if(withLogo){
     const EMU = 594360;
     const pic = '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + EMU + '" cy="' + EMU + '"/><wp:docPr id="1" name="Logo Mijn dag"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + EMU + '" cy="' + EMU + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
     const htc = (w, inner) => '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/><w:tcMar><w:left w:w="0" w:type="dxa"/><w:right w:w="0" w:type="dxa"/></w:tcMar><w:vAlign w:val="center"/></w:tcPr>' + inner + '</w:tc>';
     body += '<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>' + nb + '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="8200"/><w:gridCol w:w="1438"/></w:tblGrid><w:tr>' +
       htc(8200, titleP) + htc(1438, p(pic, {jc: "right"})) + '</w:tr></w:tbl>';
   } else body += titleP;
-  body += p("", {after: 200});
-  // wekelijkse update: naam, week en datum als vakjes (zoals bij de dagbeschouwing)
-  if(id === "upd"){
-    const tile = (label, value) => '<w:tc><w:tcPr><w:tcW w:w="3172" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="' + TH.softHex + '"/><w:tcMar><w:top w:w="140" w:type="dxa"/><w:bottom w:w="140" w:type="dxa"/><w:left w:w="180" w:type="dxa"/><w:right w:w="180" w:type="dxa"/></w:tcMar></w:tcPr>' +
-      p(r(label, {sz: 15, c: GRAY, caps: 1, sp: 10}), {after: 40}) + p(r(value || "–", {b: 1, sz: 24})) + '</w:tc>';
-    body += '<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/><w:tblCellSpacing w:w="60" w:type="dxa"/>' + nb + '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="3212"/><w:gridCol w:w="3213"/><w:gridCol w:w="3213"/></w:tblGrid><w:tr>' +
-      tile(vt("Naam", "Name"), settings.naam || "") + tile("Week", String(wfWeekInfo(wk, id).week)) + tile(vt("Datum", "Date"), wfDateText(wk, id)) + '</w:tr></w:tbl>' + p("", {after: 160});
-  }
+  body += p("", {after: upd ? 160 : 200});
+  // (naam, week en periode van de wekelijkse update staan in de kopbalk)
   // tabel
   const W = S.cols.map(x => Math.round(x * 9638)); W[3] = 9638 - W[0] - W[1] - W[2];
   const tc = (w, inner, o) => { const side = w < 1200 ? 70 : 140; return '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/>' + (o.span > 1 ? '<w:gridSpan w:val="' + o.span + '"/>' : '') + (o.fill ? '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>' : '') +
-    '<w:tcMar><w:top w:w="90" w:type="dxa"/><w:bottom w:w="90" w:type="dxa"/><w:left w:w="' + side + '" w:type="dxa"/><w:right w:w="' + side + '" w:type="dxa"/></w:tcMar>' + (o.va ? '<w:vAlign w:val="' + o.va + '"/>' : '') + '</w:tcPr>' + (inner || p("")) + '</w:tc>'; };
+    '<w:tcMar><w:top w:w="' + (upd ? 60 : 90) + '" w:type="dxa"/><w:bottom w:w="' + (upd ? 60 : 90) + '" w:type="dxa"/><w:left w:w="' + side + '" w:type="dxa"/><w:right w:w="' + side + '" w:type="dxa"/></w:tcMar>' + (o.va ? '<w:vAlign w:val="' + o.va + '"/>' : '') + '</w:tcPr>' + (inner || p("")) + '</w:tc>'; };
   const lines = (t, o, po) => String(t == null ? "" : t).split("\n").map(l => p(l ? r(l, o) : "", po)).join("");
   const kvColor = v => wfsJa(v) ? TH.hex : wfsNee(v) ? GRAY : INK;
   const cellXml = (cell, first, row, w) => {
@@ -401,7 +411,7 @@ function wfStyledXml(wk, id, withLogo){
     if(cell.lines) return cell.lines.map(([l, v]) => p(r(l, {sz: 18, c: GRAY}) + (v ? r(v, {sz: 20}) : ""), {after: 30})).join("");
     const yn = wfsYn(cell);
     if(yn) return p((yn[0] ? r(yn[0], {sz: 19}) : "") + r(yn[1], {b: 1, sz: w < 1200 ? 18 : 20, c: wfsNiet(yn[1]) ? GRAY : TH.hex}), jc);
-    if("sub" in cell) return lines(cell.t, {sz: 18, c: GRAY, i: cell.i}, {after: 30}) + lines(cell.sub, {sz: 21});
+    if("sub" in cell) return lines(cell.t, {sz: 18, c: wfsLeeg(cell) ? "A9ADAB" : GRAY, i: cell.i}, {after: 30}) + lines(cell.sub, {sz: 21});
     return lines(cell.t, {sz: 21, i: cell.i}, jc);
   };
   let rows = "";
@@ -418,7 +428,7 @@ function wfStyledXml(wk, id, withLogo){
   const brd = '<w:tblBorders>' + ["top","left","bottom","right","insideH","insideV"].map(x => '<w:' + x + ' w:val="single" w:sz="4" w:space="0" w:color="' + LINE + '"/>').join("") + '</w:tblBorders>';
   body += '<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>' + brd + '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid>' + W.map(g => '<w:gridCol w:w="' + g + '"/>').join("") + '</w:tblGrid>' + rows + '</w:tbl>';
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>' + body + p("") +
-    '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="' + (upd ? 850 : 1134) + '" w:right="1134" w:bottom="' + (upd ? 900 : 1134) + '" w:left="1134" w:header="567" w:footer="' + (upd ? 450 : 567) + '" w:gutter="0"/></w:sectPr></w:body></w:document>';
 }
 
 function wfStyledPdf(wk, id){
@@ -431,23 +441,15 @@ function wfStyledPdf(wk, id){
   const stroke = (x, yy, w, h) => k.ops.push(col(LINE) + " RG 0.7 w " + f(x) + " " + f(yy) + " " + f(w) + " " + f(h) + " re S");
   let y = H - M;
   // kop
-  const bandH = 76, sh = pdfShapes(k.ops);
+  // wekelijkse update: compacter (lagere kopbalk met naam en week, minder ruimte in de cellen) zodat hij op één pagina past
+  const upd = id === "upd";
+  const bandH = upd ? 66 : 76, sh = pdfShapes(k.ops);
   sh.rrect(M, y - bandH, CW, bandH, 12, TH.rgb);
-  txt(cp1252(S.title), M + 22, y - 34, 22, "F2", WHITE);
-  txt(cp1252(wfsSubtitle(wk, id)), M + 22, y - 55, 11, "F1", WHITE);
-  const LS = 50; pdfLogo(k.ops, M + CW - 16 - LS, y - (bandH - LS) / 2, LS, sh.rrect, sh.circle);
+  txt(cp1252(S.title), M + 22, y - (upd ? 31 : 34), 22, "F2", WHITE);
+  txt(cp1252(wfsSubtitle(wk, id)), M + 22, y - (upd ? 50 : 55), upd ? 10.5 : 11, "F1", WHITE);
+  const LS = upd ? 44 : 50; pdfLogo(k.ops, M + CW - 16 - LS, y - (bandH - LS) / 2, LS, sh.rrect, sh.circle);
   y -= bandH + 14;
-  // wekelijkse update: naam, week en datum als vakjes (zoals bij de dagbeschouwing)
-  if(id === "upd"){
-    const gap = 10, bw = (CW - 2 * gap) / 3, bh = 44;
-    [[vt("NAAM", "NAME"), settings.naam || "–"], ["WEEK", String(wfWeekInfo(wk, id).week)], [vt("DATUM", "DATE"), wfDateText(wk, id)]].forEach(([lb, v], i) => {
-      const x = M + i * (bw + gap);
-      sh.rrect(x, y - bh, bw, bh, 8, TH.soft);
-      txt(cp1252(lb), x + 12, y - 15, 7.5, "F2", MUT);
-      txt(cp1252(v), x + 12, y - 33, 12, "F2", INK);
-    });
-    y -= bh + 14;
-  } else y -= 4;
+  y -= 4;   // naam, week en periode van de wekelijkse update staan in de kopbalk
   // tabel: zelfde kolomverdeling als het formulier
   const cols = S.cols.map(x => x * CW);
   const bold = font => font === "F2";
@@ -478,7 +480,7 @@ function wfStyledPdf(wk, id){
     if(cell.lines){ const out = []; cell.lines.forEach(([l, v]) => mixed(l, "F1", 9, MUT, v, "F1", 10, INK, iw, 12.5).forEach(x => out.push(x))); return out; }
     const yn = wfsYn(cell);
     if(yn) return mixed(yn[0], "F1", 9.5, INK, yn[1], "F2", 9.5, wfsNiet(yn[1]) ? MUT : TH.rgb, iw, 13);
-    if("sub" in cell){ const out = plain(cell.t, 9, cell.i ? "F3" : "F1", MUT, iw, 12); if(cell.sub) plain(cell.sub, 10, "F1", INK, iw, 13).forEach(x => out.push(x)); return out; }
+    if("sub" in cell){ const out = plain(cell.t, 9, cell.i ? "F3" : "F1", wfsLeeg(cell) ? [0.66, 0.68, 0.67] : MUT, iw, 12); if(cell.sub) plain(cell.sub, 10, "F1", INK, iw, 13).forEach(x => out.push(x)); return out; }
     const out = plain(cell.t, 10, cell.i ? "F3" : "F1", INK, iw, 13);
     return out.length === 1 && out[0].segs[0].t === "" ? [] : out;
   };
@@ -492,12 +494,12 @@ function wfStyledPdf(wk, id){
     const band = row.who || row.head;
     let c = 0;
     const laid = row.cells.map((cell, ci) => {
-      const span = cell.span || 1, x = M + cols.slice(0, c).reduce((a, b) => a + b, 0), w = cols.slice(c, c + span).reduce((a, b) => a + b, 0), pad = w < 60 ? 4 : 6;
+      const span = cell.span || 1, x = M + cols.slice(0, c).reduce((a, b) => a + b, 0), w = cols.slice(c, c + span).reduce((a, b) => a + b, 0), pad = upd ? (w < 60 ? 3 : 4) : (w < 60 ? 4 : 6);
       c += span;
       return {cell, ci, x, w, pad, lines: layout(cell, w - 2 * pad, ci === 0 && !band, row)};
     });
     const textH = l => l.lines.reduce((a, x) => a + x.lh, 0);
-    const hh = Math.max(row.h || 0, row.who ? 26 : row.head ? 20 : 0, Math.max(...laid.map(l => textH(l) + 2 * l.pad)));
+    const hh = Math.max(row.h || 0, row.who ? (upd ? 24 : 26) : row.head ? (upd ? 18 : 20) : 0, Math.max(...laid.map(l => textH(l) + 2 * l.pad)));
     if(y - hh < BOTTOM) newPage();
     laid.forEach(l => {
       const bg = band ? TH.rgb : l.ci === 0 ? TH.soft : null;
