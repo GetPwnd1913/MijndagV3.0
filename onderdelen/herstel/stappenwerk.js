@@ -49,11 +49,12 @@ function renderSteps(){
     hb.appendChild(el("div", "qtitle", vt(title, STEPS_EN[idx])));
     const lab = s.status === "klaar" ? vt("Klaar", "Done") + (s.finished ? vt(" op ", " on ") + shortDate(s.finished) : "")
       : s.status === "bezig" ? vt("Bezig", "In progress") + (s.started ? vt(" sinds ", " since ") + shortDate(s.started) : "") : vt("Nog niet begonnen", "Not started yet");
-    const sl = note(lab); sl.style.cssText = "margin-top:2px;font-size:14px" + (s.status === "bezig" ? ";color:var(--warm);font-weight:600" : "");
+    const sl = note(lab); sl.style.cssText = "margin-top:2px;font-size:14px" + (s.status === "bezig" ? ";color:var(--warm-text);font-weight:600" : "");
     hb.appendChild(sl);
     head.appendChild(hb);
     const arrow = el("div"); arrow.appendChild(icon(stepOpen === n ? "chevD" : "chevR", 18)); arrow.style.color = "var(--muted)"; head.appendChild(arrow);
     head.onclick = () => { stepOpen = stepOpen === n ? null : n; renderSteps(); };
+    toetsKlik(head); head.setAttribute("aria-expanded", stepOpen === n ? "true" : "false");
     c.appendChild(head);
     if(stepOpen === n){
       const sc = el("div", "scale");

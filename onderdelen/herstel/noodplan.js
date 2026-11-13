@@ -150,7 +150,8 @@ function renderSos(){
       const ol = el("ol", "soslist");
       steps.forEach((s, i) => {
         const li = el("li"); li.appendChild(el("div", "num", String(i+1))); li.appendChild(el("span", "t", s));
-        li.onclick = () => li.classList.toggle("done");
+        li.onclick = () => { li.classList.toggle("done"); li.setAttribute("aria-pressed", li.classList.contains("done") ? "true" : "false"); };
+        toetsKlik(li); li.setAttribute("aria-pressed", "false");
         ol.appendChild(li);
       });
       c.appendChild(ol); box.appendChild(c);

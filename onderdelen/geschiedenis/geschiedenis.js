@@ -43,7 +43,7 @@ async function renderHistory(){
       regel.style.cssText = "font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
       c.querySelector(".s").after(regel);
     }
-    c.onclick = () => openSummary(e, true);
+    c.onclick = () => openSummary(e, true); toetsKlik(c);
     v.appendChild(c);
   });
 }

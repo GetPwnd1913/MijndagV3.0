@@ -248,6 +248,7 @@ function attachView(q, ta, parent){
     const h = document.createElement("span"); h.className = "hint"; h.textContent = vt("Tik om te bewerken", "Tap to edit"); view.appendChild(h);
   };
   view.onclick = () => { view.classList.add("hidden"); ta.classList.remove("hidden"); ta.focus(); try{ ta.setSelectionRange(ta.value.length, ta.value.length); }catch(e){} };
+  toetsKlik(view);
   ta.addEventListener("blur", update);
   ta._update = update;
   parent.insertBefore(view, ta);
@@ -344,7 +345,7 @@ function buildQuestion(q, i){
     showDetail();
     if(q.id === "q5" || q.id === "q6"){
       const s = el("button", "linkbtn more", vt("Is het zwaar? Open mijn noodplan", "Is it hard? Open my emergency plan")); s.type = "button";
-      s.style.cssText = "margin-top:12px;color:var(--warm);font-weight:600";
+      s.style.cssText = "margin-top:12px;color:var(--warm-text);font-weight:600";
       s.onclick = () => showView("sos");
       detail.appendChild(s);
     }

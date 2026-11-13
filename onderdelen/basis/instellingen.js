@@ -45,6 +45,27 @@ $("openSettings").onclick = () => {
 };
 $("setCancel").onclick = closeSettings;
 $("setBackup").onclick = () => { closeSettings(); showView("backup"); };
+// alles verwijderen: waarschuwing met de keuze om eerst een back-up te maken, daarna een tweede bevestiging
+$("setWissen").onclick = async () => {
+  const ca = !!(window.claude && window.claude.use);
+  const keuze = await confirmDialog(vt("Alles verwijderen?", "Delete everything?"),
+    ca ? vt("Al je dagen, je instellingen, je noodplan, weekformulieren, weekdoelen en keytags worden gewist, op dit toestel én in je claude.ai-account. Dit kan niet ongedaan worden gemaakt. Wil je iets bewaren? Maak dan eerst een back-up.",
+            "All your days, your settings, your emergency plan, weekly forms, weekly goals and keytags will be deleted, on this device and in your claude.ai account. This cannot be undone. Want to keep anything? Make a backup first.")
+       : vt("Al je dagen, je instellingen, je noodplan, weekformulieren, weekdoelen en keytags worden van dit toestel gewist. Dit kan niet ongedaan worden gemaakt. Wil je iets bewaren? Maak dan eerst een back-up.",
+            "All your days, your settings, your emergency plan, weekly forms, weekly goals and keytags will be deleted from this device. This cannot be undone. Want to keep anything? Make a backup first."),
+    vt("Verder", "Continue"), false, {label: vt("Eerst een back-up maken", "Make a backup first"), waarde: "backup"});
+  if(keuze === "backup"){ closeSettings(); showView("backup"); $("backupMake").click(); return; }
+  if(!keuze) return;
+  const zeker = await confirmDialog(vt("Echt alles verwijderen?", "Really delete everything?"),
+    vt("Dit is de laatste stap. Daarna is alles weg en begint de app helemaal leeg.", "This is the last step. After this everything is gone and the app starts completely empty."),
+    vt("Ja, alles verwijderen", "Yes, delete everything"));
+  if(!zeker) return;
+  closeSettings();
+  const ok = await wisAlleGegevens();
+  toast(ok ? vt("Alles is verwijderd", "Everything has been deleted") : vt("Niet alles kon worden verwijderd. Probeer het nog eens.", "Not everything could be deleted. Please try again."), !ok);
+  // opnieuw laden: geen oude gegevens in het geheugen, de app begint leeg
+  setTimeout(() => location.reload(), ok ? 1300 : 3000);
+};
 $("setSave").onclick = async () => {
   const andereTaal = taalVoorInstellingen !== null && (settings.taal || "nl") !== taalVoorInstellingen;
   taalVoorInstellingen = null;

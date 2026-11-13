@@ -43,7 +43,8 @@ function toast(text, warn){
   void t.offsetWidth; t.classList.add("show");
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), warn ? 4200 : 2600);
 }
-function confirmDialog(title, text, okLabel, calm){
+// extra (optioneel): {label, waarde} = een derde knop; de belofte geeft dan die waarde terug (bv. "eerst een back-up maken")
+function confirmDialog(title, text, okLabel, calm, extra){
   return new Promise(resolve => {
     const back = el("div", "dlgback"); back.setAttribute("role", "dialog"); back.setAttribute("aria-modal", "true");
     const d = el("div", "dlg");
@@ -57,7 +58,9 @@ function confirmDialog(title, text, okLabel, calm){
     no.onclick = () => done(false); yes.onclick = () => done(true);
     back.onclick = e => { if(e.target === back) done(false); };
     document.addEventListener("keydown", onKey);
-    row.appendChild(no); row.appendChild(yes); d.appendChild(row); back.appendChild(d);
+    row.appendChild(no);
+    if(extra){ const ex = el("button", "ghost", extra.label); ex.type = "button"; ex.onclick = () => done(extra.waarde); row.appendChild(ex); }
+    row.appendChild(yes); d.appendChild(row); back.appendChild(d);
     document.body.appendChild(back);
     requestAnimationFrame(() => { back.classList.add("show"); no.focus(); });
   });
@@ -80,6 +83,14 @@ function illustratie(soort){
   const d = el("div", "illu"); d.setAttribute("aria-hidden", "true");
   d.innerHTML = '<svg viewBox="0 0 140 96">' + s + '</svg>';
   return d;
+}
+// een aantikbaar element dat geen <button> is, ook met het toetsenbord bedienbaar maken (Tab, Enter, Spatie)
+function toetsKlik(node, label){
+  if(!node || node.tagName === "BUTTON") return node;
+  node.tabIndex = 0; node.setAttribute("role", "button");
+  if(label) node.setAttribute("aria-label", label);
+  node.addEventListener("keydown", e => { if(e.target === node && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); node.click(); } });
+  return node;
 }
 function emptyState(ic, title, text){
   const w = el("div", "card emptystate");

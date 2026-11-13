@@ -220,7 +220,7 @@
   .talkrow .tx small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
   .talkrow.done .tx span{text-decoration:line-through;color:var(--muted)}
   .talkrow .del{border:0;background:none;color:var(--muted);font:inherit;font-size:14px;padding:2px 4px;flex:none}
-  .talkrow .del.sure{color:var(--warm);font-weight:600}
+  .talkrow .del.sure{color:var(--warm-text);font-weight:600}
   html{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent}
   *{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent}
   ::-webkit-scrollbar{width:8px;height:8px}
@@ -270,7 +270,7 @@
   .mrow .tx{flex:1;min-width:0}
   .mrow .tt{font-weight:650;font-size:16px}
   .mrow .ad{font-size:14px;color:var(--muted);margin-top:2px;word-wrap:break-word}
-  .mrow .nt{font-size:13px;color:var(--warm);margin-top:2px}
+  .mrow .nt{font-size:13px;color:var(--warm-text);margin-top:2px}
   .mrow .links{display:flex;gap:14px;margin-top:4px;flex-wrap:wrap}
   .star{border:0;background:none;font-size:24px;line-height:1;padding:2px 4px;color:var(--muted);flex:none;cursor:pointer}
   .star.on{color:#e0a020}
@@ -313,7 +313,7 @@
   .wfitem{display:flex;align-items:center;gap:10px;width:100%;font:inherit;color:var(--ink);cursor:pointer;text-align:left}
   .wfitem .cnt{font-size:22px;color:var(--muted)}
   .wfst{display:inline-block;margin-top:8px;font-size:13px;font-weight:600;border-radius:999px;padding:3px 10px;background:var(--bg);color:var(--muted)}
-  .wfst.busy{background:#fdf0e3;color:var(--warm)}
+  .wfst.busy{background:#fdf0e3;color:var(--warm-text)}
   .wfst.ok{background:var(--accent-soft);color:var(--accent)}
   .wff{margin-top:12px}
   .wff textarea{margin-top:0}
@@ -335,7 +335,7 @@
   .slot.has.end .tx{border-bottom-left-radius:8px;border-bottom-right-radius:8px}
   .slot.cont{border-top-color:transparent}
   .slot.sel{background:#fdf0e3}
-  .slot.sel .tm{color:var(--warm);font-weight:700}
+  .slot.sel .tm{color:var(--warm-text);font-weight:700}
   .slotpanel{border:2px solid var(--warm);border-radius:14px;padding:12px;margin:6px 0 10px;background:var(--card)}
   ul.remind{margin:8px 0 0;padding-left:20px;font-size:15px;line-height:1.5}
   .qhead .num{position:relative}
@@ -880,3 +880,18 @@
   .bkstap b{display:block;color:var(--ink);font-weight:650;font-size:15px;margin-bottom:2px}
   .welkomterug{background:linear-gradient(135deg,color-mix(in srgb,var(--accent-soft) 70%,var(--card)),var(--card));border-color:transparent}
   .welkomterug .note{font-size:15px;color:var(--ink)}
+  /* Instellingen: alles verwijderen (rood, rustig onderaan) */
+  .overlink.wislink{color:var(--danger-text,var(--danger));margin-top:22px}
+  /* contrast (WCAG 4,5 voor kleine tekst, nagerekend): warme kleur en rood als tekstkleur.
+     Licht: #9c5420 haalt 5,06-5,58 op kaart, achtergrond en lichtoranje vlak (de gewone --warm haalde 3,1-3,4).
+     Donker: --warm (#eaa66c) haalt 6,6-9,0; de lichtoranje vlakjes worden daar donkerwarm (anders 1,84).
+     Rood in donker: #ec6b6b haalt 5,5-6,1 (de gewone --danger 4,0). --warm zelf blijft voor iconen en vlakken. */
+  :root{--warm-text:#9c5420;--danger-text:#c62828}
+  @media (prefers-color-scheme: dark){
+    :root{--warm-text:var(--warm);--danger-text:#ec6b6b}
+    .wfst.busy,.slot.sel{background:var(--warm-soft)}
+  }
+  /* keytags: zichtbare rand alleen bij toetsenbordgebruik (niet bij tik of muisklik) */
+  .kt:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:14px}
+  .kt:focus:not(:focus-visible){outline:none}
+  [role="button"]:focus:not(:focus-visible){outline:none}

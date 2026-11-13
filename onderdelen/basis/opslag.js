@@ -44,3 +44,24 @@ async function syncSettings(){
     } else if(settings.updated){ await setDoc.set(Object.assign({}, settings)); }
   }catch(e){}
 }
+
+// ---------- alles wissen ----------
+// Wist alle gegevens van de app: alle localStorage-keys die met "dagbeschouwing:" beginnen (dagen, instellingen
+// met taal en thema, back-updatum, Alleen voor vandaag, ...) en op claude.ai ook je eigen opslag (dagen + instellingen).
+// De caches van de service worker blijven staan: dat zijn alleen de app-bestanden, geen gegevens.
+async function wisAlleGegevens(){
+  let gelukt = true;
+  try{ if(typeof saveTimer !== "undefined") clearTimeout(saveTimer); if(typeof saving !== "undefined") await saving; }catch(e){}
+  if(typeof dirty !== "undefined") dirty = false;
+  if(col){
+    try{ const snap = await col.get(); for(const d of snap.docs){ try{ await col.doc(d.id).delete(); }catch(e){ gelukt = false; } } }
+    catch(e){ gelukt = false; }
+  }
+  if(setDoc){ try{ await setDoc.delete(); }catch(e){ gelukt = false; } }
+  try{
+    const weg = [];
+    for(let i = 0; i < localStorage.length; i++){ const k = localStorage.key(i); if(k && k.indexOf(LS) === 0) weg.push(k); }
+    weg.forEach(k => localStorage.removeItem(k));
+  }catch(e){ gelukt = false; }
+  return gelukt;
+}

@@ -114,7 +114,10 @@ function renderKeytags(){
   list.forEach(t => {
     const on = t.key <= curKey;
     const w = el("div", "kt"); w.tabIndex = 0;
-    w.appendChild(keytagSvg(t, on, 48)); if(on) ktKantel(w);
+    const tagSvg = keytagSvg(t, on, 48); w.appendChild(tagSvg); if(on) ktKantel(w);
+    // toetsenbord en schermlezer: een knop met een naam, Enter en Spatie werken als een tik
+    w.setAttribute("role", "button"); w.setAttribute("aria-label", tagSvg.getAttribute("aria-label")); tagSvg.setAttribute("aria-hidden", "true");
+    w.addEventListener("keydown", ev => { if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); w.click(); } });
     w.onclick = () => {
       if(on){
         // behaalde tag: info + linkje naar het mijlpaal-overzicht (geteld tot die datum)
