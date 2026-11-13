@@ -874,3 +874,9 @@
   .overtekstvak .note{margin-top:12px}
   /* inschuiven zonder "blijvende" animatie: anders wordt het scherm de referentie voor het grote schrijfscherm (vraag 1) */
   .fadein{animation:schermIn var(--t) var(--ease)}
+  /* back-up: uitleg en welkomstkaart op een leeg toestel */
+  .bkuitleg{margin-top:16px;border-top:1px solid var(--line);padding-top:12px;display:grid;gap:10px}
+  .bkstap{font-size:14.5px;line-height:1.5;color:var(--muted)}
+  .bkstap b{display:block;color:var(--ink);font-weight:650;font-size:15px;margin-bottom:2px}
+  .welkomterug{background:linear-gradient(135deg,color-mix(in srgb,var(--accent-soft) 70%,var(--card)),var(--card));border-color:transparent}
+  .welkomterug .note{font-size:15px;color:var(--ink)}

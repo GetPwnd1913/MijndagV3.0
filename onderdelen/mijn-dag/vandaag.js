@@ -60,7 +60,18 @@ function renderIntro(){
 }
 $("introKnop").onclick = () => { introOpen = !introOpen; renderIntro(); };
 
+// leeg toestel (nog geen dagen en geen gegevens): vraag of je een back-up wilt terugzetten
+const WELKOM_WEG = "dagbeschouwing:welkomTerugWeg";
+function renderWelkomTerug(){
+  const c = $("welkomTerug"); if(!c) return;
+  let weg = false; try{ weg = localStorage.getItem(WELKOM_WEG) === "1"; }catch(e){}
+  const leegToestel = !settings.naam && !settings.since && !local.days().some(e => e && hasContent(e));
+  c.classList.toggle("hidden", weg || !leegToestel);
+}
+$("welkomTerugKnop").onclick = () => { showView("backup"); $("backupFile").click(); };
+$("welkomNieuw").onclick = () => { try{ localStorage.setItem(WELKOM_WEG, "1"); }catch(e){} renderWelkomTerug(); };
 function renderHome(){
+  renderWelkomTerug();
   renderHomeKeytags();
   renderDbKnop();
   renderMeldingen();

@@ -44,6 +44,7 @@ $("openSettings").onclick = () => {
   $("setOverlay").classList.add("show");
 };
 $("setCancel").onclick = closeSettings;
+$("setBackup").onclick = () => { closeSettings(); showView("backup"); };
 $("setSave").onclick = async () => {
   const andereTaal = taalVoorInstellingen !== null && (settings.taal || "nl") !== taalVoorInstellingen;
   taalVoorInstellingen = null;

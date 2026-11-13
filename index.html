@@ -63,6 +63,15 @@
     </div>
     </div>
 
+    <div class="card hidden welkomterug" id="welkomTerug">
+      <div class="qtitle" data-en="New on this device?">Nieuw op dit toestel?</div>
+      <div class="note" data-en="Have you used My day before? Restore your backup and all your days will be back.">Heb je Mijn dag eerder gebruikt? Zet je back-up terug, dan staan al je dagen er weer.</div>
+      <div class="row" style="justify-content:flex-start;margin-top:12px">
+        <button type="button" class="primary" id="welkomTerugKnop" data-en="Restore a backup">Back-up terugzetten</button>
+        <button type="button" class="ghost" id="welkomNieuw" data-en="Start fresh">Ik begin nieuw</button>
+      </div>
+    </div>
+
     <div id="homeTop"></div>
 
     <div class="card hidden" id="msCelebrate" role="button" tabindex="0" style="cursor:pointer;text-align:center;background:linear-gradient(135deg,var(--warm-soft),var(--accent-soft));border-color:transparent">
@@ -206,6 +215,10 @@
         <button class="ghost" id="backupRestore" type="button" data-en="Restore a backup">Back-up terugzetten</button>
       </div>
       <div class="note" id="backupLast" style="margin-top:12px"></div>
+      <div class="bkuitleg">
+        <div class="bkstap"><b data-en="Not automatic">Niet vanzelf</b><span data-en="A backup is not made automatically. You make it here and keep the file yourself, for example in iCloud Drive or in your email. The app reminds you every two weeks.">Een back-up gaat niet vanzelf. Jij maakt hem hier en bewaart het bestand zelf, bijvoorbeeld in iCloud Drive of in je mail. De app herinnert je er om de twee weken aan.</span></div>
+        <div class="bkstap"><b data-en="Restoring">Terugzetten</b><span data-en="New phone or everything lost? Tap ‘Restore a backup’ and choose your backup file (on the iPhone: in Files). Your days and settings come back. What is already on this device is kept.">Nieuwe telefoon of alles kwijt? Tik op ‘Back-up terugzetten’ en kies je back-upbestand (op de iPhone: in Bestanden). Je dagen en instellingen komen terug. Wat al op dit toestel staat, blijft bewaard.</span></div>
+      </div>
       <div class="note" id="backupMsg"></div>
       <input type="file" id="backupFile" accept="application/json,.json" class="hidden">
     </div>
@@ -279,6 +292,7 @@
       <button class="ghost" id="setCancel" data-en="Cancel">Annuleren</button>
       <button class="primary" id="setSave" data-en="Save">Opslaan</button>
     </div>
+    <button type="button" class="linkbtn overlink" id="setBackup" data-en="Make or restore a backup">Back-up maken of terugzetten</button>
     <button type="button" class="linkbtn overlink" id="openOver" data-en="About this app">Over deze app</button>
   </div>
 </div>
