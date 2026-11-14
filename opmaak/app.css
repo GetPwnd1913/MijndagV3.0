@@ -915,3 +915,5 @@
   .chip.vastchip{min-height:40px}
   .chip.vastchip.verborgen{background:transparent;color:var(--muted);border-style:dashed;text-decoration:line-through}
   .chip.vastchip:focus-visible,.eigenlijst .xbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  /* Just for Today: bronregel onder het citaat */
+  .jftbody p.bron{text-align:right;font-weight:600;font-size:14px;color:var(--muted);margin:-4px 0 14px}

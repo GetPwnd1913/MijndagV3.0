@@ -130,7 +130,7 @@ function openOchtend(){
         sam.appendChild(r);
       });
       vak.appendChild(sam);
-      if(typeof jft !== "undefined" && jft && jft.entries){
+      if(typeof jftHeeftTekst === "function" && jftHeeftTekst()){
         const lk = el("button", "linkbtn more", vt("Lees Alleen voor vandaag", "Read Just for Today")); lk.type = "button"; lk.style.cssText = "min-height:44px;font-size:16px";
         lk.onclick = () => { bewaar(); sluit(); showView("jft"); }; vak.appendChild(lk);
       }

@@ -1,9 +1,28 @@
 // © 2026 Roy van Dalem. Alle rechten voorbehouden.
-// ---------- Alleen voor vandaag (own PDF, read on the device) ----------
+// ---------- Alleen voor vandaag / Just for Today (eigen PDF, gelezen op het toestel) ----------
+// De Nederlandse ("Alleen voor vandaag") en de Engelse ("Just for Today") uitgave worden allebei herkend.
+// Bewaard als {nl: {entries, count, loaded}, en: {...}}; de oude vorm {entries, count, loaded} was altijd Nederlands
+// en wordt bij het laden vanzelf omgezet naar {nl: ...}. Alleen de uitgelezen tekst staat op het toestel, nooit de PDF.
 const MONTHS = ["januari","februari","maart","april","mei","juni","juli","augustus","september","oktober","november","december"];
+const MONTHS_EN = ["january","february","march","april","may","june","july","august","september","october","november","december"];
 const MDAYS = [31,29,31,30,31,30,31,31,30,31,30,31];
 const JFT_KEY = "dagbeschouwing:jft";
-let jft = (function(){ try{ const v = localStorage.getItem(JFT_KEY); return v ? JSON.parse(v) : null; }catch(e){ return null; } })();
+function jftLaad(){
+  let v = null;
+  try{ const s = localStorage.getItem(JFT_KEY); v = s ? JSON.parse(s) : null; }catch(e){ v = null; }
+  if(v && v.entries){ v = {nl: v}; try{ localStorage.setItem(JFT_KEY, JSON.stringify(v)); }catch(e){} }   // oude vorm -> nl
+  return v && (v.nl || v.en) ? v : null;
+}
+let jft = jftLaad();
+// welke tekst tonen: de taal van de app, anders de andere ingelezen taal
+function jftKeuze(){
+  if(!jft) return null;
+  const voorkeur = isEn() ? "en" : "nl", ander = voorkeur === "en" ? "nl" : "en";
+  if(jft[voorkeur] && jft[voorkeur].entries) return {taal: voorkeur, data: jft[voorkeur], anders: false};
+  if(jft[ander] && jft[ander].entries) return {taal: ander, data: jft[ander], anders: true};
+  return null;
+}
+const jftHeeftTekst = () => !!jftKeuze();
 let jftOpen = false;
 let jftShift = 0; // 0 = vandaag, -1 = gisteren, enz.
 
@@ -27,11 +46,18 @@ function itemsToLines(items, page){
       }
       txt += p.s; end = p.x + p.w;
     });
-    return {text: txt.replace(/\s+/g," ").trim(), y: l.y, h: l.h, page: page};
+    return {text: txt.replace(/\s+/g," ").trim(), y: l.y, h: l.h, page: page, x: l.parts[0].x};
   }).filter(l => l.text);
 }
 
+// Taal van het bestand herkennen aan de kopregels: beide herkenners proberen, de beste (minstens 300 dagen) wint.
 function parseJft(lines){
+  const nl = parseJftNl(lines), en = parseJftEn(lines);
+  const n = x => x ? Object.keys(x).length : 0;
+  if(!nl && !en) return null;
+  return n(en) > n(nl) ? {taal: "en", entries: en} : {taal: "nl", entries: nl};
+}
+function parseJftNl(lines){
   const mp = MONTHS.join("|");
   const ra = new RegExp("^(\\d{1,2})\\s+("+mp+")(?:\\s+(.*))?$","i");
   const rb = new RegExp("^(.*\\S)\\s+(\\d{1,2})\\s+("+mp+")$","i");
@@ -73,6 +99,74 @@ function parseJft(lines){
   return out;
 }
 
+// Engelse uitgave ("Just for Today", NA): per dag een pagina met
+//   kop "<Month> <day> <Title>" (soms "June1", soms zonder titel: dan staat de titel op de regel eronder),
+//   een cursief citaat (gecentreerd), een vette bronregel rechts ("Basic Text, p. 57"), dan alinea's die beginnen met
+//   een inspringing (x ~37; doorlopende regels x ~26), en tot slot "Just for today: ...".
+// Het citaat herkennen we aan zijn plek (alles tussen kop en bron), niet aan aanhalingstekens: die ontbreken soms.
+function parseJftEn(lines){
+  const mp = MONTHS_EN.join("|");
+  const ra = new RegExp("^(" + mp + ")\\s*(\\d{1,2})(?:\\s+(.*))?$", "i");
+  const exp = [];
+  MONTHS_EN.forEach((m, mi) => { for(let d = 1; d <= MDAYS[mi]; d++) exp.push([d, m]); });
+  const hits = [];
+  let k = 0;
+  for(let i = 0; i < lines.length && k < exp.length; i++){
+    const x = lines[i].text.match(ra);
+    if(x && +x[2] === exp[k][0] && x[1].toLowerCase() === exp[k][1]){ hits.push({i, d: +x[2], m: x[1].toLowerCase(), rest: (x[3] || "").trim()}); k++; }
+  }
+  if(hits.length < 300) return null;
+  const monthOnly = new RegExp("^(" + mp + ")$", "i");
+  const regelX = l => typeof l.x === "number" ? l.x : 0;
+  const startJft = t => /^Just for today\s*:/i.test(t);
+  // regels aan elkaar: een streepje aan het eind blijft staan (in deze uitgave zijn dat samenstellingen: open-minded, self-centered)
+  const plak = (a, b) => /-$/.test(a) ? a + b : a + " " + b;
+  const out = {};
+  hits.forEach((h, n) => {
+    const endI = n + 1 < hits.length ? hits[n + 1].i : Math.min(lines.length, h.i + 60);
+    let body = lines.slice(h.i + 1, endI).filter(l => !monthOnly.test(l.text) && !/^\d{1,3}$/.test(l.text));
+    let title = h.rest;
+    if(!title && body.length){ title = body[0].text; body = body.slice(1); }
+    // citaat en bron: de bron staat rechts uitgelijnd (x >= 140), direct voor de eerste ingesprongen alinea (x ~37).
+    // Een citaat kan zelf ook links beginnen, dus we zoeken op die combinatie en niet op de eerste regel links.
+    const inspr = l => regelX(l) > 31 && regelX(l) <= 45;
+    let p0 = -1;
+    for(let j = 1; j < Math.min(body.length, 12); j++) if(regelX(body[j - 1]) >= 140 && inspr(body[j])){ p0 = j; break; }
+    if(p0 < 0){ p0 = body.findIndex(l => regelX(l) <= 45); if(p0 < 0) p0 = 0; }
+    const kop = body.slice(0, p0), rest = body.slice(p0);
+    let bron = "", quote = "";
+    if(kop.length >= 2){ bron = kop[kop.length - 1].text; quote = kop.slice(0, -1).map(l => l.text).reduce(plak); }
+    else if(kop.length === 1){ if(/^[‘'“"….]/.test(kop[0].text)) quote = kop[0].text; else bron = kop[0].text; }
+    // alinea's: nieuwe alinea bij inspringing, een grotere witregel of "Just for today:"
+    const gaps = [];
+    for(let j = 1; j < rest.length; j++) if(rest[j].page === rest[j - 1].page){ const g = rest[j - 1].y - rest[j].y; if(g > 0) gaps.push(g); }
+    gaps.sort((a, b) => a - b);
+    const med = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 11;
+    const paras = [];
+    let cur = null, prev = null;
+    rest.forEach(l => {
+      const inspring = regelX(l) > 31 && regelX(l) <= 45;
+      const gapBreak = prev && prev.page === l.page && (prev.y - l.y) > med * 1.45;
+      if(!cur || inspring || gapBreak || startJft(l.text)){ cur = {t: l.text}; paras.push(cur); }
+      else cur.t = plak(cur.t, l.text);
+      prev = l;
+    });
+    let ps = paras.map(x => x.t.trim()).filter(x => /[\p{L}\p{N}]/u.test(x));
+    // een witregel midden in een zin (bron): samenvoegen als de vorige niet op een leesteken eindigt en de volgende klein begint
+    ps = ps.reduce((acc, x) => {
+      const vorige = acc[acc.length - 1];
+      if(vorige && !startJft(x) && !/[.!?:;”"’)]$/.test(vorige) && /^[a-z]/.test(x)) acc[acc.length - 1] = vorige + " " + x;
+      else acc.push(x);
+      return acc;
+    }, []);
+    // 9 augustus staat in de bron twee keer een "Just for today" (de tweede hoort bij 8 augustus): alleen de eerste tonen
+    let gezien = false;
+    ps = ps.filter(x => { if(!startJft(x)) return true; if(gezien) return false; gezien = true; return true; });
+    out[pad(MONTHS_EN.indexOf(h.m) + 1) + "-" + pad(h.d)] = {title, quote, bron, paras: ps};
+  });
+  return out;
+}
+
 function loadScript(src){
   return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
 }
@@ -94,14 +188,19 @@ async function readPdf(file){
 }
 
 function renderJft(){
-  const has = jft && jft.entries;
+  const keuze = jftKeuze(), has = !!keuze;
   $("jftHave").classList.toggle("hidden", !has);
   $("jftNone").classList.toggle("hidden", !!has);
   if(!has) return;
+  // welke talen zijn ingelezen, en een korte regel als de tekst in de andere taal is
+  const talen = ["nl", "en"].filter(x => jft[x] && jft[x].entries).map(x => x === "nl" ? vt("Nederlands", "Dutch") : vt("Engels", "English"));
+  $("jftTalen").textContent = vt("Ingelezen: ", "Loaded: ") + talen.join(vt(" en ", " and "));
+  $("jftAnders").textContent = keuze.anders ? (keuze.taal === "en" ? vt("Deze tekst is Engels: je hebt nog geen Nederlandse PDF gekozen.", "This text is in English.") : vt("Deze tekst is Nederlands.", "This text is in Dutch: you have not chosen an English PDF yet.")) : "";
+  $("jftAnders").classList.toggle("hidden", !keuze.anders);
   const base = parseKey(curKey);
   const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() + jftShift);
   const key = pad(d.getMonth()+1)+"-"+pad(d.getDate());
-  const e = jft.entries[key];
+  const e = keuze.data.entries[key];
   const DAGEN = ["zondag","maandag","dinsdag","woensdag","donderdag","vrijdag","zaterdag"];
   $("jftDate").textContent = isEn() ? d.toLocaleDateString("en-GB", {weekday:"long", day:"numeric", month:"long"}) : DAGEN[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()];
   $("jftRel").textContent = jftShift === 0 ? vt("vandaag", "today") : jftShift === -1 ? vt("gisteren", "yesterday") : (-jftShift) + vt(" dagen geleden", " days ago");
@@ -110,10 +209,12 @@ function renderJft(){
   $("jftPickDate").max = curKey; $("jftPickDate").value = keyOf(d);
   $("jftTitle").textContent = e ? e.title : vt("Geen tekst gevonden voor deze datum", "No text found for this date");
   const body = $("jftBody"); body.innerHTML = "";
+  if(e && e.quote){ const q = document.createElement("p"); q.className = "quote"; q.textContent = e.quote; body.appendChild(q); }
+  if(e && e.bron){ const b = document.createElement("p"); b.className = "bron"; b.textContent = e.bron; body.appendChild(b); }
   if(e) e.paras.forEach((t,i) => {
     const p = document.createElement("p"); p.textContent = t;
-    if(/^Alleen voor vandaag\s*:/i.test(t)) p.className = "avv";
-    else if(i===0 && /^[‘'“"]/.test(t)) p.className = "quote";
+    if(/^(Alleen voor vandaag|Just for today)\s*:/i.test(t)) p.className = "avv";
+    else if(i===0 && !e.quote && /^[‘'“"]/.test(t)) p.className = "quote";
     body.appendChild(p);
   });
   body.classList.toggle("hidden", !jftOpen || !e);
@@ -139,15 +240,18 @@ $("jftFile").onchange = async ev => {
   const msg = $("jftMsg");
   msg.textContent = vt("Bestand lezen… dit kan even duren.", "Reading file… this may take a moment.");
   try{
-    const entries = await readPdf(f);
-    if(!entries){ msg.textContent = vt("In dit bestand kon ik de dagen niet vinden. Is het de PDF van ‘Alleen voor vandaag’?", "I could not find the days in this file. Is it the Dutch ‘Alleen voor vandaag’ PDF?"); return; }
-    jft = {entries: entries, count: Object.keys(entries).length, loaded: Date.now()};
+    const res = await readPdf(f);
+    if(!res){ msg.textContent = vt("In dit bestand kon ik de dagen niet vinden. Is het de PDF van ‘Alleen voor vandaag’ of ‘Just for Today’?", "I could not find the days in this file. Is it the ‘Alleen voor vandaag’ or ‘Just for Today’ PDF?"); return; }
+    const deel = {entries: res.entries, count: Object.keys(res.entries).length, loaded: Date.now()};
+    jft = Object.assign({}, jft || {}, {[res.taal]: deel});
     let stored = true;
     try{ localStorage.setItem(JFT_KEY, JSON.stringify(jft)); }catch(e){ stored = false; }
-    msg.textContent = jft.count + vt(" dagen gevonden.", " days found.") + (stored ? "" : vt(" Let op: opslaan op dit toestel lukte niet, dus je moet het bestand de volgende keer opnieuw kiezen.", " Note: saving on this device did not work, so you will have to choose the file again next time."));
+    msg.textContent = deel.count + vt(" dagen gevonden", " days found") + " (" + (res.taal === "en" ? vt("Engels", "English") : vt("Nederlands", "Dutch")) + ")." + (stored ? "" : vt(" Let op: opslaan op dit toestel lukte niet, dus je moet het bestand de volgende keer opnieuw kiezen.", " Note: saving on this device did not work, so you will have to choose the file again next time."));
     jftOpen = false;
     renderJft();
   }catch(e){
     msg.textContent = vt("Het bestand lezen lukte niet. Probeer het nog eens of kies het bestand opnieuw.", "Reading the file did not work. Try again or choose the file again.");
   }
 };
+// testhaakje voor de rooktest (zonder echt PDF-bestand): herkenners en het omzetten van de oude opslag
+window.__jft = {parseJft, jftLaad};
