@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<!--
+  Mijn dag
+  © 2026 Roy van Dalem. Alle rechten voorbehouden. All rights reserved.
+  Onderdelen van anderen (JSZip, PDF.js, Figtree, Fraunces): zie "Over deze app" en THIRD-PARTY-NOTICES.txt.
+-->
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<script>/* weergave zo vroeg mogelijk (geen lichte flits): zelfde regel als pasModusToe in instellingen.js; met pincode (vergrendel.js) de inhoud meteen verbergen */(function(){try{var s=JSON.parse(localStorage.getItem("dagbeschouwing:settings")||"{}"),m=s.modus,h=document.documentElement;var d=m==="donker"||(m!=="licht"&&!!window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);if(m==="licht"||m==="donker")h.setAttribute("data-modus",m);if(d)h.setAttribute("data-donker","");if(s.theme)h.setAttribute("data-theme",s.theme);if(s.taal==="en")h.setAttribute("data-taal","en");if(s.tekstgrootte==="groot"||s.tekstgrootte==="extra")h.setAttribute("data-tekst",s.tekstgrootte);var nu=new Date(),kl=/[?&]klok=(\d{1,2})(?::|%3A)(\d{2})/i.exec(location.search);var u=kl?+kl[1]+kl[2]/60:nu.getHours()+nu.getMinutes()/60;h.setAttribute("data-tod",u<6?"nacht":u<12?"ochtend":u<18?"middag":u<22?"avond":"nacht");}catch(e){}try{var l=JSON.parse(localStorage.getItem("dagbeschouwing:lock")||"null");if(l&&l.hash)document.documentElement.setAttribute("data-slot","");}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mijn dag">
+<meta name="theme-color" content="#2f6f62">
+<title>Mijn dag</title>
+<link rel="icon" type="image/svg+xml" href="iconen/icon.svg">
+<link rel="apple-touch-icon" href="iconen/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preload" href="lettertypes/figtree-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="opmaak/fonts.css">
+<link rel="stylesheet" href="opmaak/app.css">
+</head>
+<body>
+<!-- openingsscherm: staat in de pagina zelf, zodat de animatie meteen bij het eerste beeld begint
+     (niet pas als alle scripts geladen zijn). showSplash() in vormgeving.js laat hem daarna verdwijnen. -->
+<div id="splash" aria-hidden="true"><svg viewBox="0 0 512 512"><g class="sun spdag"><circle cx="256" cy="150" r="34" fill="#f4b45f"/><line x1="308.0" y1="150.0" x2="330.0" y2="150.0" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:0.90s"/><line x1="292.8" y1="186.8" x2="308.3" y2="202.3" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:0.96s"/><line x1="256.0" y1="202.0" x2="256.0" y2="224.0" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.02s"/><line x1="219.2" y1="186.8" x2="203.7" y2="202.3" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.08s"/><line x1="204.0" y1="150.0" x2="182.0" y2="150.0" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.14s"/><line x1="219.2" y1="113.2" x2="203.7" y2="97.7" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.20s"/><line x1="256.0" y1="98.0" x2="256.0" y2="76.0" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.26s"/><line x1="292.8" y1="113.2" x2="308.3" y2="97.7" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.32s"/></g><g class="sun spnacht"><path d="M276 104a52 52 0 1 0 30 92a42 42 0 0 1-30-92z" fill="#f4b45f"/><circle cx="338" cy="96" r="6" fill="#f4b45f" class="ray" style="animation-delay:0.95s"/><circle cx="372" cy="150" r="4.5" fill="#f4b45f" class="ray" style="animation-delay:1.07s"/><circle cx="182" cy="108" r="5" fill="#f4b45f" class="ray" style="animation-delay:1.19s"/><circle cx="150" cy="168" r="3.5" fill="#f4b45f" class="ray" style="animation-delay:1.31s"/></g><g class="book" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"><path d="M90 250h96a70 70 0 0 1 70 70v130a44 44 0 0 0-44-44H90z"/><path d="M422 250h-96a70 70 0 0 0-70 70v130a44 44 0 0 1 44-44h122z"/></g></svg><div class="nm"><span class="spnl">Mijn dag</span><span class="spen">My day</span></div></div>
+<div class="wrap">
+  <header>
+    <button class="iconbtn" id="menuBtn" type="button" aria-label="Menu openen" data-en-aria="Open menu"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div style="flex:1;min-width:0">
+      <h1 id="pageTitle">Mijn dag</h1>
+      <div class="status" id="status">Bezig met laden…</div>
+    </div>
+    <button class="sosbtn" id="sosBtn" type="button" data-en="Emergency"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l4 4M14.4 14.4l4 4M18.4 5.6l-4 4M9.6 14.4l-4 4"/></svg>Noodplan</button>
+  </header>
+
+  <section id="view-home" class="hidden">
+    <div class="sky" id="sky"><div class="skysterren" aria-hidden="true"></div>
+    <div class="greet" id="greet"></div>
+    <div class="skyscene" aria-hidden="true">
+      <svg class="skyboog" viewBox="0 0 100 100" preserveAspectRatio="none"><path class="sbspoor" id="boogSpoor"/><path class="sbgedaan" id="boogGedaan"/></svg>
+      <div class="skyhill"></div><div class="skyhill h2"></div>
+      <div class="skyzon" id="skyZon"></div>
+    </div>
+    <div class="skypanel">
+      <div class="skytop">
+        <div class="skytop-tx">
+          <div class="skydagen" id="homeDagen"></div>
+          <div class="dagrondzin hidden" id="dagRondZin"></div>
+        </div>
+        <button type="button" class="dagring" id="dagRing" aria-expanded="false">
+          <svg viewBox="0 0 64 64" aria-hidden="true"><g class="drsporen"></g><g class="drvul"></g><path class="drvink" d="M24 33l6 6 11-13"/></svg>
+        </button>
+      </div>
+      <div class="dagringuitleg hidden" id="dagRingUitleg"></div>
+      <div id="msBox" class="hidden">
+        <div class="note" id="msNext" style="margin:0"></div>
+        <div class="bar" style="margin-top:6px"><i id="msBar"></i></div>
+        <button class="linkbtn" id="msDoneBtn" type="button" style="margin-top:8px"></button>
+        <div id="msDone" class="hidden" style="margin-top:6px"></div>
+      </div>
+      <div class="skylinks">
+        <button class="linkbtn" id="ktToggle" type="button"></button>
+        <button class="linkbtn" id="openSettings" type="button">Gegevens instellen</button>
+      </div>
+    </div>
+    </div>
+
+    <div class="card hidden welkomterug" id="welkomTerug">
+      <div class="qtitle" data-en="New on this device?">Nieuw op dit toestel?</div>
+      <div class="note" data-en="Have you used My day before? Restore your backup and all your days will be back.">Heb je Mijn dag eerder gebruikt? Zet je back-up terug, dan staan al je dagen er weer.</div>
+      <div class="row" style="justify-content:flex-start;margin-top:12px">
+        <button type="button" class="primary" id="welkomTerugKnop" data-en="Restore a backup">Back-up terugzetten</button>
+        <button type="button" class="ghost" id="welkomNieuw" data-en="Start fresh">Ik begin nieuw</button>
+      </div>
+    </div>
+    <p class="terugregel hidden" id="terugRegel"><span data-en="Have a backup?">Heb je een back-up?</span> <button type="button" class="linkbtn" id="terugRegelKnop" data-en="Restore it">Zet hem terug</button></p>
+
+    <div id="homeTop"></div>
+
+    <div class="card hidden" id="msCelebrate" role="button" tabindex="0" style="cursor:pointer;text-align:center;background:linear-gradient(135deg,var(--warm-soft),var(--accent-soft));border-color:transparent">
+      <div id="msCelEmoji" class="celic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5.5"/><path d="M8.6 13.4 7 21l5-2.8 5 2.8-1.6-7.6"/><path d="M12 6.5l.8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2z"/></svg></div>
+      <div id="msCelTag" style="display:flex;justify-content:center"></div>
+      <div id="msCelTitle" style="font-weight:700;font-size:calc(22px*var(--ts));margin-top:6px"></div>
+      <div id="msCelText" class="note" style="font-size:calc(15px*var(--ts));margin-top:4px"></div>
+      <div class="linkbtn more" style="margin-top:6px;display:inline-block" data-en="See your overview">Bekijk je overzicht</div>
+    </div>
+    <div class="card hidden" id="ktCard"></div>
+
+    <button type="button" class="ochrij hidden" id="ochtendRij"></button>
+
+    <button type="button" class="dbknop" id="dbKnop">
+      <span class="dbk-ic" id="dbKnopIc" aria-hidden="true"></span>
+      <span class="dbk-tx"><b id="dbKnopTitel"></b><small id="dbKnopSub"></small><span class="bar"><i id="dbKnopBar"></i></span></span>
+      <span class="dbk-pijl" aria-hidden="true">›</span>
+    </button>
+
+    <div id="homeVandaag">
+      <div class="homekop" id="homeVandaagKop" data-en="Today">Vandaag</div>
+      <div class="card hidden" id="meetToday"></div>
+      <div class="card hidden" id="planCard"></div>
+      <div class="card hidden" id="goalsMini"></div>
+    </div>
+
+    <button type="button" class="meldrij hidden" id="meldRij" aria-expanded="false"></button>
+    <div id="meldBox" class="hidden">
+      <div class="card hidden" id="reviewBanner"></div>
+      <div class="card hidden" id="backupBanner"></div>
+      <div class="card hidden" id="wfRemind" style="background:var(--accent-soft);border-color:transparent"></div>
+    </div>
+
+    <div class="homekop" data-en="Quick links">Snel naar</div>
+    <div class="snelgrid" id="snelKnoppen">
+      <button type="button" class="snel sos" data-naar="sos"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l4 4M14.4 14.4l4 4M18.4 5.6l-4 4M9.6 14.4l-4 4"/></svg><span data-en="Emergency plan">Noodplan</span></button>
+      <button type="button" class="snel" data-naar="jft"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3z"/><path d="M21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg><span data-en="Just for Today">Alleen voor vandaag</span></button>
+      <button type="button" class="snel" data-naar="meetings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span data-en="Meetings">Meetings</span></button>
+      <button type="button" class="snel" data-naar="patterns"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 7-8"/><path d="M15 7h4v4"/><path d="M3 21h18"/></svg><span data-en="My patterns">Mijn patronen</span></button>
+    </div>
+  </section>
+
+  <section id="view-today" class="hidden">
+    <div class="datebar dbdate">
+      <button class="iconbtn" id="prevDay" aria-label="Vorige dag" data-en-aria="Previous day"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+      <div class="d" id="dateLabel"></div>
+      <button class="iconbtn" id="nextDay" aria-label="Volgende dag" data-en-aria="Next day"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="introrij">
+      <p class="intro" id="introTekst" data-en="In a daily reflection you take a personal inventory. You look at what went well during the day and what could be better. Be open and honest.">Bij een dagbeschouwing doe je zelfonderzoek. Je gaat na wat er op de dag goed verlopen is en wat voor verbetering vatbaar is. Wees open en eerlijk.</p>
+      <button type="button" class="infoknop hidden" id="introKnop" aria-label="Uitleg" data-en-aria="Explanation" aria-expanded="false">i</button>
+    </div>
+
+    <div id="questions"></div>
+  </section>
+
+  <section id="view-jft" class="hidden">
+    <div class="card" style="background:var(--accent-soft);border-color:transparent">
+      <div class="qtitle" data-en="Just for Today">Alleen voor vandaag</div>
+      <div id="jftHave" class="hidden">
+        <div class="jftnav">
+          <button type="button" class="jftarrow" id="jftPrev" aria-label="Vorige dag" data-en-aria="Previous day"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <label class="jftday"><span id="jftDate"></span><span id="jftRel" class="note"></span>
+            <input type="date" id="jftPickDate" aria-label="Kies een datum" data-en-aria="Choose a date"></label>
+          <button type="button" class="jftarrow" id="jftNext" aria-label="Volgende dag" data-en-aria="Next day"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+        </div>
+        <button type="button" class="linkbtn hidden" id="jftToday" style="display:block;margin:-4px auto 8px;font-weight:600" data-en="Back to today">Terug naar vandaag</button>
+        <div id="jftTitle" style="font-weight:650;font-size:calc(20px*var(--ts));margin:2px 0 10px"></div>
+        <div class="note hidden" id="jftAnders" style="margin:-4px 0 10px"></div>
+        <div id="jftBody" class="hidden jftbody"></div>
+        <div class="row" style="justify-content:flex-start">
+          <button class="primary" id="jftToggle" type="button">Lees de tekst</button>
+        </div>
+        <button class="linkbtn" id="jftChange" type="button" style="margin-top:10px" data-en="Choose a file (English or Dutch)">Bestand kiezen (Nederlands of Engels)</button>
+        <div class="note" id="jftTalen" style="margin-top:2px"></div>
+        <details class="jfthulp"><summary data-en="Where do I find the PDF?">Waar vind ik de PDF?</summary><div class="note jftwaar"><span data-en="The texts are not included in the app, because they are copyrighted by NA. You choose the official PDF yourself; it is only stored on your own device. You usually get the Dutch PDF (‘Alleen voor vandaag’) through your group, your sponsor or someone else in NA; the English book ‘Just for Today’ is published by ">De teksten zitten niet in de app, want ze vallen onder het auteursrecht van NA. Je kiest zelf de officiële PDF; die wordt alleen op je eigen toestel opgeslagen. De Nederlandse PDF (‘Alleen voor vandaag’) krijg je meestal via je groep, je sponsor of iemand anders uit NA; het Engelse boek ‘Just for Today’ is uitgegeven door </span><a href="https://www.na.org/" target="_blank" rel="noopener noreferrer" data-en="NA World Services (na.org)">NA World Services (na.org)</a><span data-en=". Choose one PDF per language: Dutch, English or both.">. Kies per taal één PDF: Nederlands, Engels of allebei.</span></div></details>
+      </div>
+      <div id="jftNone">
+        <div class="note" style="margin:2px 0 12px" data-en="Choose your own ‘Just for Today’ (English) or ‘Alleen voor vandaag’ (Dutch) PDF once. After that you will see the reading for that date here every day. You can load both. The file stays on your phone.">Kies één keer je eigen PDF van ‘Alleen voor vandaag’ (Nederlands) of ‘Just for Today’ (Engels). Daarna zie je hier elke dag automatisch de tekst van die datum. Je kunt ze allebei inlezen. Het bestand blijft op je telefoon.</div>
+        <div class="note jftwaar"><span data-en="The texts are not included in the app, because they are copyrighted by NA. You choose the official PDF yourself; it is only stored on your own device. You usually get the Dutch PDF (‘Alleen voor vandaag’) through your group, your sponsor or someone else in NA; the English book ‘Just for Today’ is published by ">De teksten zitten niet in de app, want ze vallen onder het auteursrecht van NA. Je kiest zelf de officiële PDF; die wordt alleen op je eigen toestel opgeslagen. De Nederlandse PDF (‘Alleen voor vandaag’) krijg je meestal via je groep, je sponsor of iemand anders uit NA; het Engelse boek ‘Just for Today’ is uitgegeven door </span><a href="https://www.na.org/" target="_blank" rel="noopener noreferrer" data-en="NA World Services (na.org)">NA World Services (na.org)</a><span data-en=". Choose one PDF per language: Dutch, English or both.">. Kies per taal één PDF: Nederlands, Engels of allebei.</span></div>
+        <div class="row" style="justify-content:flex-start">
+          <button class="primary" id="jftPick" type="button" data-en="Choose my file">Mijn bestand kiezen</button>
+        </div>
+        <div class="note" style="margin-top:12px"><span data-en="Or read online: ">Of lees online: </span><a href="https://www-jftna-org.translate.goog/jft/?_x_tr_sl=en&amp;_x_tr_tl=nl&amp;_x_tr_hl=nl" target="_blank" rel="noopener" style="color:var(--accent)" data-en="translated into Dutch">vertaald naar Nederlands</a> · <a href="https://www.jftna.org/jft/" target="_blank" rel="noopener" style="color:var(--accent)" data-en="original (English)">origineel (Engels)</a></div>
+      </div>
+      <div class="note" id="jftMsg" role="status" aria-live="polite"></div>
+      <input type="file" id="jftFile" accept="application/pdf,.pdf" class="hidden">
+    </div>
+  </section>
+
+  <section id="view-hist" class="hidden">
+    <section id="viewHist" class="hist"></section>
+  </section>
+
+  <section id="view-month" class="hidden">
+    <div class="card" id="monthCard">
+      <div class="datebar" style="margin:0 0 10px">
+        <button class="iconbtn" id="mPrev" type="button" aria-label="Vorige maand" data-en-aria="Previous month"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+        <div class="d" id="mLabel"></div>
+        <button class="iconbtn" id="mNext" type="button" aria-label="Volgende maand" data-en-aria="Next month"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+      </div>
+      <div class="cal" id="mCal"></div>
+      <div class="legend"><span data-en=" craving"><i class="dot z"></i> zucht</span><span data-en=" trigger"><i class="dot t"></i> trigger</span><span data-en="Tap a day to open it">Tik op een dag om hem te openen</span></div>
+      <div id="mStats"></div>
+    </div>
+  </section>
+
+  <section id="view-patterns" class="hidden">
+    <div id="patBox"></div>
+  </section>
+
+  <section id="view-talk" class="hidden">
+    <div class="sectionhead" id="goalsHead" style="margin-top:4px" data-en="Weekly goal from my support worker">Weekdoel van mijn begeleider</div>
+    <div id="goalsBox"></div>
+    <div class="sectionhead" data-en="Talking points">Bespreekpunten</div>
+    <div id="talkBox"></div>
+  </section>
+
+  <section id="view-meetings" class="hidden">
+    <div id="meetBox"></div>
+  </section>
+
+  <section id="view-wf" class="hidden">
+    <div id="wfBox"></div>
+  </section>
+
+  <section id="view-steps" class="hidden">
+    <div id="stepsBox"></div>
+  </section>
+
+  <section id="view-review" class="hidden">
+    <div id="reviewBox"></div>
+  </section>
+
+  <section id="view-sos" class="hidden">
+    <div id="sosBox"></div>
+  </section>
+
+  <section id="view-backup" class="hidden">
+    <div class="card">
+      <div class="qtitle" data-en="Backup">Back-up</div>
+      <div class="note" style="margin:2px 0 12px" data-en="Keep all your days in one file. With that file you can restore them later, also on another device.">Bewaar al je dagen in één bestand. Met dat bestand zet je ze later terug, ook op een ander toestel.</div>
+      <div class="row" style="justify-content:flex-start">
+        <button class="primary" id="backupMake" type="button" data-en="Make a backup">Back-up maken</button>
+        <button class="ghost" id="backupRestore" type="button" data-en="Restore a backup">Back-up terugzetten</button>
+      </div>
+      <div class="note" id="backupLast" style="margin-top:12px"></div>
+      <div class="bkuitleg">
+        <div class="bkstap"><b data-en="Not automatic">Niet vanzelf</b><span data-en="A backup is not made automatically. You make it here and keep the file yourself, for example in iCloud Drive or in your email. The app reminds you every two weeks.">Een back-up gaat niet vanzelf. Jij maakt hem hier en bewaart het bestand zelf, bijvoorbeeld in iCloud Drive of in je mail. De app herinnert je er om de twee weken aan.</span></div>
+        <div class="bkstap"><b data-en="Restoring">Terugzetten</b><span data-en="New phone or everything lost? Tap ‘Restore a backup’ and choose your backup file (on the iPhone: in Files). Your days and settings come back. What is already on this device is kept.">Nieuwe telefoon of alles kwijt? Tik op ‘Back-up terugzetten’ en kies je back-upbestand (op de iPhone: in Bestanden). Je dagen en instellingen komen terug. Wat al op dit toestel staat, blijft bewaard.</span></div>
+      </div>
+      <div class="note" id="backupMsg" role="status" aria-live="polite"></div>
+      <input type="file" id="backupFile" accept="application/json,.json" class="hidden">
+    </div>
+  </section>
+  <footer class="credits" data-en="My day v3.7 · Roy/GetPwnd · 2026">Mijn dag v3.7 · Roy/GetPwnd · 2026</footer>
+</div>
+
+<div class="drawer-bg" id="drawerBg"></div>
+<nav class="drawer" id="drawer" aria-label="Menu" data-en-aria="Menu">
+  <div class="dhead"><div class="dlogo"><svg class="logo" viewBox="40 40 432 432" aria-hidden="true"><circle cx="256" cy="128" r="30" fill="#f4b45f"/><g stroke="#f4b45f" stroke-width="13" stroke-linecap="round"><line x1="302.0" y1="128.0" x2="320.0" y2="128.0"/><line x1="288.5" y1="160.5" x2="301.3" y2="173.3"/><line x1="256.0" y1="174.0" x2="256.0" y2="192.0"/><line x1="223.5" y1="160.5" x2="210.7" y2="173.3"/><line x1="210.0" y1="128.0" x2="192.0" y2="128.0"/><line x1="223.5" y1="95.5" x2="210.7" y2="82.7"/><line x1="256.0" y1="82.0" x2="256.0" y2="64.0"/><line x1="288.5" y1="95.5" x2="301.3" y2="82.7"/></g><g fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"><path d="M100 222h92a64 64 0 0 1 64 64v136a40 40 0 0 0-40-40h-116z"/><path d="M412 222h-92a64 64 0 0 0-64 64v136a40 40 0 0 1 40-40h116z"/></g></svg></div><div><div class="dname" data-en="My day">Mijn dag</div><div class="dsub" id="drawerSub">Dagbeschouwing</div></div></div>
+  <div class="dgroup" data-en="Today">Vandaag</div>
+  <button type="button" data-view="home" data-en="Today"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg>Vandaag</button>
+  <button type="button" data-view="today" data-en="Daily reflection"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>Dagbeschouwing</button>
+  <button type="button" data-view="jft" data-en="Just for Today"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3z"/><path d="M21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg>Alleen voor vandaag</button>
+  <div class="dgroup" data-en="Recovery">Herstel</div>
+  <button type="button" data-view="sos" class="sos" data-en="Emergency plan"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l4 4M14.4 14.4l4 4M18.4 5.6l-4 4M9.6 14.4l-4 4"/></svg>Noodplan</button>
+  <button type="button" data-view="steps" data-en="Step work"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h5v-5h5v-5h5V5h3"/></svg>Stappenwerk</button>
+  <button type="button" data-view="meetings" data-en="Meetings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Meetings</button>
+  <button type="button" data-view="talk" data-en="1-to-1 &amp; weekly goal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg>1-op-1 &amp; weekdoel</button>
+  <div class="dgroup" data-en="Week">Week</div>
+  <button type="button" data-view="wf" data-en="Weekly forms"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M8 14h3M8 17h6"/></svg>Weekformulieren</button>
+  <button type="button" data-view="review" data-en="Week in review"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z"/><path d="M18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg>Weekterugblik</button>
+  <div class="dgroup" data-en="Overviews">Overzichten</div>
+  <button type="button" data-view="hist" data-en="Earlier days"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></svg>Eerdere dagen</button>
+  <button type="button" data-view="month" data-en="Month overview"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M8 17v-3M12 17v-5M16 17v-2"/></svg>Maandoverzicht</button>
+  <button type="button" data-view="patterns" data-en="My patterns"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 7-8"/><path d="M15 7h4v4"/><path d="M3 21h18"/></svg>Mijn patronen</button>
+  <div class="dgroup" data-en="App">App</div>
+  <button type="button" id="menuUitleg" data-en="How it works"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/></svg>Uitleg</button>
+  <button type="button" id="menuSettings" data-en="Settings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Instellingen</button>
+  <button type="button" data-view="backup" data-en="Backup"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>Back-up<span class="bkdot hidden" id="backupDot" aria-label="Back-up nodig" data-en-aria="Backup needed"></span></button>
+  <button type="button" id="menuModus"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg><span id="menuModusTx"></span></button>
+  <button type="button" id="menuTaal" data-en="Nederlands"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>English</button>
+</nav>
+
+<div class="bottom" id="bottomBar">
+  <div class="in">
+    <div class="prog">
+      <svg class="ring" id="progRing" viewBox="0 0 44 44" aria-hidden="true"><circle class="rb" cx="22" cy="22" r="18"/><circle class="rf" id="progArc" cx="22" cy="22" r="18" stroke-dasharray="113.1" stroke-dashoffset="113.1"/><text class="rt" id="progNum" x="22" y="26.5" text-anchor="middle">0</text><path class="rc" d="M15 22.5l4.5 4.5 9.5-10"/></svg>
+      <div class="ptx"><small id="progText">0 van 13 vragen</small>
+      <div class="bar"><i id="progBar"></i></div></div>
+    </div>
+    <button class="primary" id="summaryBtn" data-en="Finish">Afronden</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2 data-en="Daily reflection">Dagbeschouwing</h2>
+    <div class="note" id="sumNote"></div>
+    <pre id="sumText"></pre>
+    <div class="row" style="margin-bottom:10px;justify-content:stretch"><button class="primary" id="saveDocx" style="flex:1" data-en="Word file">Word-bestand</button><button class="primary" id="savePdf" style="flex:1" data-en="PDF file">PDF-bestand</button></div>
+    <div class="note" id="docxMsg" role="status" aria-live="polite" style="margin:-4px 0 10px"></div>
+    <div class="row">
+      <button class="ghost" id="editDay" data-en="Edit">Aanpassen</button>
+      <button class="ghost" id="closeSum" data-en="Close">Sluiten</button>
+      <button class="ghost" id="copySum" data-en="Copy text">Kopieer tekst</button>
+    </div>
+    <div class="note" id="copyMsg" role="status" aria-live="polite"></div>
+    <div class="note" id="mailRow"></div>
+  </div>
+</div>
+
+<div class="overlay" id="setOverlay">
+  <div class="sheet">
+    <h2 data-en="Settings">Instellingen</h2>
+    <div class="note" data-en="You fill this in once. The number of days is then worked out automatically every day.">Dit vul je één keer in. Het aantal dagen wordt daarna elke dag vanzelf uitgerekend.</div>
+    <div class="field"><label data-en="Language">Taal</label><div class="scale" id="setTaal"></div></div>
+    <div class="field"><label for="setNaam" data-en="Name">Naam</label><input id="setNaam" autocomplete="name"></div>
+    <div class="field"><label for="setSince" data-en="Sober/clean since">Nuchter/clean sinds</label><input id="setSince" type="date"></div>
+    <div class="field"><label for="setMail" data-en="Email address for your daily reflection (optional)">Mailadres voor je dagbeschouwing (mag leeg)</label><input id="setMail" type="email" inputmode="email" autocomplete="off"></div>
+    <div class="field"><label data-en="App colour">Kleur van de app</label><div class="swatches" id="setTheme"></div></div>
+    <div class="field"><label data-en="Appearance">Weergave</label><div class="scale" id="setModus"></div></div>
+    <div class="field"><label id="setTekstLabel" data-en="Text size">Tekstgrootte</label><div class="scale" id="setTekst" role="group" aria-labelledby="setTekstLabel"></div></div>
+    <div class="field"><label data-en="PIN">Pincode</label><p class="pinstatus" id="pinStatus"></p><div class="row pinknoppen" id="pinKnoppen"></div></div>
+    <div class="row" style="margin-top:16px">
+      <button class="ghost" id="setCancel" data-en="Cancel">Annuleren</button>
+      <button class="primary" id="setSave" data-en="Save">Opslaan</button>
+    </div>
+    <button type="button" class="linkbtn overlink" id="openLijsten" data-en="Own lists (buttons)">Eigen lijsten (knopjes)</button>
+    <button type="button" class="linkbtn overlink" id="setBackup" data-en="Make or restore a backup">Back-up maken of terugzetten</button>
+    <button type="button" class="linkbtn overlink" id="openOver" data-en="About this app">Over deze app</button>
+    <button type="button" class="linkbtn overlink wislink" id="setWissen" data-en="Delete everything">Alles verwijderen</button>
+  </div>
+</div>
+
+<div class="overlay" id="lijstOverlay" role="dialog" aria-modal="true" aria-label="Eigen lijsten" data-en-aria="Own lists">
+  <div class="sheet" id="lijstSheet"></div>
+</div>
+<div class="overlay" id="overOverlay" role="dialog" aria-modal="true" aria-label="Over deze app" data-en-aria="About this app">
+  <div class="sheet" id="overSheet"></div>
+</div>
+
+<script src="externe-bibliotheken/jszip.min.js"></script>
+<!-- voorlezen van meldingen (toegankelijkheid.js): staan er vanaf het begin, anders leest VoiceOver niets voor -->
+<div id="srStatus" class="srregio" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="srAlert" class="srregio" role="alert" aria-atomic="true"></div>
+<!-- Gewone scripts (geen modules): ze delen hun namen, dus de volgorde telt. onderdelen/basis/start.js als laatste. -->
+<script src="onderdelen/basis/taal.js"></script>
+<script src="onderdelen/mijn-dag/vragen.js"></script>
+<script src="onderdelen/basis/helpers.js"></script>
+<script src="onderdelen/basis/opslag.js"></script>
+<script src="onderdelen/mijn-dag/dag.js"></script>
+<script src="onderdelen/mijn-dag/weergave.js"></script>
+<script src="onderdelen/mijn-dag/ochtend.js"></script>
+<script src="onderdelen/mijn-dag/vandaag.js"></script>
+<script src="onderdelen/basis/instellingen.js"></script>
+<script src="onderdelen/basis/over.js"></script>
+<script src="onderdelen/basis/eigen-lijsten.js"></script>
+<script src="onderdelen/basis/uitleg.js"></script>
+<script src="onderdelen/mijn-dag/samenvatting.js"></script>
+<script src="onderdelen/mijn-dag/dag-word.js"></script>
+<script src="onderdelen/mijn-dag/dag-pdf.js"></script>
+<script src="onderdelen/geschiedenis/geschiedenis.js"></script>
+<script src="onderdelen/geschiedenis/maandoverzicht.js"></script>
+<script src="onderdelen/geschiedenis/patronen.js"></script>
+<script src="onderdelen/basis/menu.js"></script>
+<script src="onderdelen/herstel/noodplan.js"></script>
+<script src="onderdelen/herstel/jft.js"></script>
+<script src="onderdelen/herstel/stappenwerk.js"></script>
+<script src="onderdelen/herstel/een-op-een.js"></script>
+<script src="onderdelen/week/weekdoel.js"></script>
+<script src="onderdelen/week/weekterugblik.js"></script>
+<script src="onderdelen/basis/backup.js"></script>
+<script src="onderdelen/mijn-dag/planning-gisteren.js"></script>
+<script src="onderdelen/herstel/keytags.js"></script>
+<script src="onderdelen/herstel/mijlpaal.js"></script>
+<script src="onderdelen/herstel/meetings.js"></script>
+<script src="onderdelen/week/weekformulieren.js"></script>
+<script src="onderdelen/week/weekplanning.js"></script>
+<script src="onderdelen/week/wekelijkse-update.js"></script>
+<script src="onderdelen/week/weekendvoorbespreking.js"></script>
+<script src="onderdelen/week/exporteren.js"></script>
+<script src="onderdelen/basis/vormgeving.js"></script>
+<script src="onderdelen/basis/vergrendel.js"></script>
+<script src="onderdelen/basis/toegankelijkheid.js"></script>
+<script src="onderdelen/basis/start.js"></script>
+<script src="onderdelen/basis/sw-register.js"></script>
+</body>
+</html>
