@@ -9,7 +9,8 @@ const ICONS = {
   book: '<path d="M3 6.5h6a3 3 0 0 1 3 3V20a2.2 2.2 0 0 0-2.2-2.2H3z"/><path d="M21 6.5h-6a3 3 0 0 0-3 3V20a2.2 2.2 0 0 1 2.2-2.2H21z"/>',
   calendar: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',
   target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
-  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z"/><path d="M10 21a2.2 2.2 0 0 0 4 0"/>'
 };
 function icon(name, size, filled){
   const NS = "http://www.w3.org/2000/svg", sv = document.createElementNS(NS, "svg");

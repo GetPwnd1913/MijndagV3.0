@@ -41,7 +41,9 @@ function renderMeldingen(){
   rij.classList.toggle("hidden", !n);
   box.classList.toggle("hidden", !n || !meldOpen);
   rij.setAttribute("aria-expanded", meldOpen ? "true" : "false");
-  rij.textContent = "🔔 " + aantal(n, "melding", "meldingen", "notification", "notifications") + (meldOpen ? " ▾" : " ›");
+  // belletje als lijnicoon (zelfde set als de rest), geen emoji
+  rij.textContent = ""; rij.appendChild(icon("bell", 20));
+  rij.appendChild(document.createTextNode(aantal(n, "melding", "meldingen", "notification", "notifications") + (meldOpen ? " ▾" : " ›")));
   $("homeVandaagKop").classList.toggle("hidden", VANDAAG_IDS.every(id => $(id).classList.contains("hidden")));
 }
 $("meldRij").onclick = () => { meldOpen = !meldOpen; renderMeldingen(); };

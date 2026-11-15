@@ -44,10 +44,12 @@ function scoreChart(nDays){
   const y = s => (T + (10-s) / 9 * (H-T-B)).toFixed(1);
   let svg = '<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="' + vt("Dagcijfers van deze maand", "Daily scores this month") + '" style="display:block">';
   [10, 5, 1].forEach(s => {
-    svg += '<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(s)+'" y2="'+y(s)+'" stroke-width="1" style="stroke:var(--line)"/>';
-    svg += '<text x="'+(L-7)+'" y="'+(+y(s)+4)+'" text-anchor="end" font-size="11" style="fill:var(--muted)">'+s+'</text>';
+    svg += '<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y(s)+'" y2="'+y(s)+'" stroke-width="1" stroke-dasharray="2 4" stroke-linecap="round" style="stroke:var(--line)"/>';
+    svg += '<text x="'+(L-7)+'" y="'+(+y(s)+4)+'" text-anchor="end" font-size="12" style="fill:var(--muted)">'+s+'</text>';
   });
-  [1, 15, nDays].forEach(d => { svg += '<text x="'+x(d)+'" y="'+(H-5)+'" text-anchor="middle" font-size="11" style="fill:var(--muted)">'+d+'</text>'; });
+  [1, 15, nDays].forEach(d => { svg += '<text x="'+x(d)+'" y="'+(H-5)+'" text-anchor="middle" font-size="12" style="fill:var(--muted)">'+d+'</text>'; });
+  // zacht vlak onder de lijn (alleen opmaak; de lijn en de punten zijn hetzelfde)
+  if(pts.length > 1) svg += '<polygon stroke="none" style="fill:var(--accent);opacity:.13" points="'+x(pts[0][0])+","+y(1)+" "+pts.map(p => x(p[0])+","+y(p[1])).join(" ")+" "+x(pts[pts.length-1][0])+","+y(1)+'"/>';
   if(pts.length > 1) svg += '<polyline fill="none" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" style="stroke:var(--accent)" points="'+pts.map(p => x(p[0])+","+y(p[1])).join(" ")+'"/>';
   pts.forEach(p => { svg += '<circle cx="'+x(p[0])+'" cy="'+y(p[1])+'" r="4" stroke-width="2" style="fill:var(--accent);stroke:var(--card)"/>'; });
   return svg + '</svg>';

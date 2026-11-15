@@ -7,6 +7,10 @@ function closeMenu(){ $("drawer").classList.remove("open"); $("drawerBg").classL
 function showView(v){
   Object.keys(VIEWS).forEach(k => $("view-"+k).classList.toggle("hidden", k !== v));
   const sv = $("view-" + v); if(sv){ sv.classList.remove("fadein"); void sv.offsetWidth; sv.classList.add("fadein"); }
+  // "komtop": alleen vlak na het wisselen van scherm verschijnen de kaarten rustig na elkaar (zie app.css). Daarna gaat de
+  // klasse weer weg, zodat kaarten die later opnieuw getekend worden niet telkens opnieuw bewegen.
+  document.querySelectorAll(".komtop").forEach(n => n.classList.remove("komtop"));
+  if(sv){ sv.classList.add("komtop"); clearTimeout(showView.komtopTimer); showView.komtopTimer = setTimeout(() => sv.classList.remove("komtop"), 700); }
   $("pageTitle").textContent = vt(VIEWS[v][0], VIEWS[v][1]); pasTitelAan(); requestAnimationFrame(pasTitelAan);
   $("bottomBar").classList.toggle("hidden", v !== "today");
   $("sosBtn").classList.toggle("hidden", v === "sos");

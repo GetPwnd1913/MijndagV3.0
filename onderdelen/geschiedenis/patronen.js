@@ -155,10 +155,10 @@ async function renderPatterns(){
     const grid = el("div"); grid.style.cssText = "display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:12px;text-align:center";
     const maxR = Math.max(...perDag.map(x => x.n ? x.z / x.n : 0), 0.01);
     perDag.forEach(x => {
-      const cel = el("div"); cel.style.cssText = "border-radius:10px;padding:6px 0;background:var(--bg);font-size:calc(12px*var(--ts));line-height:1.4" + (zwaarsteDag && x.d === zwaarsteDag.d ? ";outline:2px solid var(--warm)" : "");
+      const cel = el("div"); cel.style.cssText = "border-radius:12px;padding:8px 0 6px;background:var(--field);font-size:calc(12px*var(--ts));line-height:1.4" + (zwaarsteDag && x.d === zwaarsteDag.d ? ";background:var(--warm-soft);outline:1.5px solid color-mix(in srgb,var(--warm) 60%,transparent)" : "");
       const r = x.n ? x.z / x.n : 0;
       const bar = el("div"); bar.style.cssText = "height:36px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:2px";
-      const b = el("i"); b.style.cssText = "display:block;width:12px;border-radius:4px;background:var(--warm);height:" + Math.max(2, Math.round(r / maxR * 34)) + "px;opacity:" + (x.n ? 1 : .25); bar.appendChild(b);
+      const b = el("i"); b.style.cssText = "display:block;width:14px;border-radius:7px;background:linear-gradient(0deg,color-mix(in srgb,var(--warm) 55%,var(--card)),var(--warm));height:" + Math.max(4, Math.round(r / maxR * 34)) + "px;opacity:" + (x.n ? 1 : .25); bar.appendChild(b);
       cel.appendChild(bar);
       cel.appendChild(el("div", null, kort[x.d])).style.fontWeight = "600";
       cel.appendChild(el("div", null, x.gem !== null ? nl1(x.gem) : "–")).style.color = "var(--muted)";
