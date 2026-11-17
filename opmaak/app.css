@@ -1219,11 +1219,11 @@
   .weg #msNext{display:none}   /* staat nu als bordje in de verte */
   .wegbalk{display:none!important}
   .wegrij{position:relative;margin-top:-6px}
-  /* eigen schuifgebied: alleen de weg schuift, aan het eind schuift het beginscherm niet mee */
+  /* eigen schuifgebied: de app schuift de weg zelf (wegVegenAan), het beginscherm schuift niet mee */
   .wegscroll{height:380px;overflow:hidden;
     -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 14%,#000 86%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 14%,#000 86%,transparent 100%)}
-  .wegrij.lang .wegscroll{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:none}
-  .wegrij.lang .wegscroll::-webkit-scrollbar{display:none}
+  .wegrij.lang .wegscroll{touch-action:none;cursor:grab}
+  .wegrij.lang .wegbaan{will-change:transform}
   .wegscroll:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
   .weghint{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);pointer-events:none;white-space:nowrap;
     padding:5px 12px 5px 28px;border-radius:99px;font-size:var(--fs-klein);font-weight:650;color:var(--ink);

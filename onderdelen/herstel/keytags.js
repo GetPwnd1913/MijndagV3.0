@@ -178,7 +178,7 @@ function renderKeytags(){
 // De laatst behaalde keytags staan als haltes in het landschap (dezelfde tekeningen als "Mijn keytags", keytagSvg),
 // de lichtende bol is "jij", en de volgende keytag staat klein in de verte met een bordje "nog … dagen".
 // Oudere keytags staan verder naar beneden langs hetzelfde pad: in het venster (eigen schuifgebied) veeg je omlaag
-// tot aan je welkomstag. Het beginscherm zelf schuift dan niet mee (overscroll-behavior: contain).
+// tot aan je welkomstag. Het vegen doet de app zelf (wegVegenAan), het beginscherm schuift dan niet mee.
 // Tikken op een behaalde keytag opent het mijlpaal-overzicht, op de komende toont hoeveel dagen nog.
 // Het landschap past precies in de breedte van het scherm (geen zijwaarts scrollen) en wordt opnieuw getekend als die verandert.
 const WEG_H = 380, WEG_HZ = 112, WEG_MAX = 3;
@@ -326,12 +326,87 @@ function renderWeg(){
   const hint = $("wegHint");
   hint.textContent = vt("Veeg omlaag langs je weg", "Swipe down along your road");
   hint.classList.toggle("hidden", !ouder.length || wegHintWeg);
-  sc.onscroll = () => {
-    rij.classList.toggle("onder", sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 4);
-    if(sc.scrollTop > 24 && !wegHintWeg){ wegHintWeg = true; hint.classList.add("hidden"); }
-  };
-  sc.onscroll();
+  wegMax = Math.max(0, H - (sc.clientHeight || WEG_H));
+  wegStop(); wegZet(wegKlem(wegPos));
+  wegVegenAan(sc);
 }
 // ander schermformaat (draaien, venster groter): het landschap opnieuw passend tekenen
 let wegResizeT = null;
 window.addEventListener("resize", () => { clearTimeout(wegResizeT); wegResizeT = setTimeout(() => { if($("wegRij") && $("wegRij").clientWidth) renderWeg(); }, 200); });
+// Vegen door Jouw weg: de app volgt zelf je vinger (niet de browser), zodat het op iPhone, Android en computer hetzelfde werkt.
+// Alleen de weg schuift; een veeg op de weg laat het beginscherm stilstaan. Loslaten met vaart schiet door en remt rustig af.
+let wegPos = 0, wegMax = 0, wegVaart = null;
+function wegZet(p){
+  const baan = $("wegBaan"); if(!baan) return;
+  wegPos = p; baan.style.transform = "translate3d(0," + (-p).toFixed(1) + "px,0)";
+  if(p > 24 && !wegHintWeg){ wegHintWeg = true; const h = $("wegHint"); if(h) h.classList.add("hidden"); }
+}
+const wegKlem = p => Math.max(0, Math.min(wegMax, p));
+function wegStop(){ if(wegVaart){ cancelAnimationFrame(wegVaart); wegVaart = null; } }
+function wegTerug(){   // na overtrekken voorbij het begin of eind: zacht terugveren
+  wegStop();
+  const doel = wegKlem(wegPos); if(doel === wegPos) return;
+  const stap = () => { const d = doel - wegPos; if(Math.abs(d) < .5){ wegZet(doel); wegVaart = null; return; } wegZet(wegPos + d * .2); wegVaart = requestAnimationFrame(stap); };
+  wegVaart = requestAnimationFrame(stap);
+}
+function wegGlij(v){   // v in px per ms; afremmen tot stilstand
+  wegStop();
+  if(KT_RUSTIG()) return;
+  let t0 = performance.now();
+  const stap = now => {
+    const dt = Math.min(40, now - t0); t0 = now;
+    let p = wegPos + v * dt;
+    if(p < 0 || p > wegMax){ wegZet(wegKlem(p)); wegVaart = null; return; }
+    wegZet(p); v *= Math.pow(.995, dt);
+    if(Math.abs(v) < .02){ wegVaart = null; return; }
+    wegVaart = requestAnimationFrame(stap);
+  };
+  wegVaart = requestAnimationFrame(stap);
+}
+function wegVegenAan(sc){
+  if(sc.dataset.veeg) return; sc.dataset.veeg = "1";
+  const lang = () => $("wegRij").classList.contains("lang") && wegMax > 0;
+  let y0 = 0, x0 = 0, p0 = 0, richting = "", sporen = [], bewogen = false;
+  sc.addEventListener("touchstart", e => {
+    if(!lang() || e.touches.length !== 1) return;
+    wegStop();
+    y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; p0 = wegPos; richting = ""; bewogen = false;
+    sporen = [[performance.now(), y0]];
+  }, {passive: true});
+  sc.addEventListener("touchmove", e => {
+    if(!lang() || e.touches.length !== 1) return;
+    const y = e.touches[0].clientY, x = e.touches[0].clientX, dy = y - y0, dx = x - x0;
+    if(!richting){ if(Math.abs(dy) < 5 && Math.abs(dx) < 5) return; richting = Math.abs(dy) >= Math.abs(dx) ? "v" : "h"; }
+    if(richting !== "v") return;
+    e.preventDefault();   // het beginscherm blijft staan
+    bewogen = true;
+    let p = p0 - dy;
+    if(p < 0) p = p * .35; else if(p > wegMax) p = wegMax + (p - wegMax) * .35;   // voorbij het eind: een beetje meegeven
+    wegZet(p);
+    const nu = performance.now(); sporen.push([nu, y]); while(sporen.length > 2 && nu - sporen[0][0] > 100) sporen.shift();
+  }, {passive: false});
+  const los = () => {
+    if(richting !== "v"){ richting = ""; return; }
+    richting = "";
+    if(wegPos < 0 || wegPos > wegMax){ wegTerug(); return; }
+    const a = sporen[0], b = sporen[sporen.length - 1], dt = b[0] - a[0];
+    const v = dt > 0 ? -(b[1] - a[1]) / dt : 0;
+    if(Math.abs(v) > .1) wegGlij(v);
+  };
+  sc.addEventListener("touchend", los); sc.addEventListener("touchcancel", los);
+  // na een veeg geen tik doorgeven aan een keytag
+  sc.addEventListener("click", e => { if(bewogen){ e.stopPropagation(); e.preventDefault(); bewogen = false; } }, true);
+  // muiswiel en touchpad op de computer
+  sc.addEventListener("wheel", e => {
+    if(!lang()) return;
+    e.preventDefault(); wegStop();
+    wegZet(wegKlem(wegPos + (e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY)));
+  }, {passive: false});
+  // toetsenbord: pijltjes, Page Up/Down, Home/End als het venster de focus heeft
+  sc.addEventListener("keydown", e => {
+    if(!lang()) return;
+    const m = {ArrowDown: 60, ArrowUp: -60, PageDown: 300, PageUp: -300, Home: -1e6, End: 1e6}[e.key];
+    if(m === undefined) return;
+    e.preventDefault(); wegStop(); wegZet(wegKlem(wegPos + m));
+  });
+}
