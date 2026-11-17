@@ -70,7 +70,13 @@
     </div>
     <p class="terugregel hidden" id="terugRegel"><span data-en="Have a backup?">Heb je een back-up?</span> <button type="button" class="linkbtn" id="terugRegelKnop" data-en="Restore it">Zet hem terug</button></p>
 
-    <div id="homeTop"></div>
+    <div id="homeTop">
+      <button type="button" class="dbknop" id="dbKnop">
+        <span class="dbk-ring" aria-hidden="true"><span class="dbk-ic" id="dbKnopIc"></span></span>
+        <span class="dbk-tx"><span class="dbk-moment" id="dbKnopMoment"></span><b id="dbKnopTitel"></b><small id="dbKnopSub"></small><span class="bar"><i id="dbKnopBar"></i></span></span>
+        <span class="dbk-pijl" aria-hidden="true">›</span>
+      </button>
+    </div>
 
     <div class="card hidden" id="msCelebrate" role="button" tabindex="0" style="cursor:pointer;text-align:center;background:linear-gradient(135deg,var(--warm-soft),var(--accent-soft));border-color:transparent">
       <div id="msCelEmoji" class="celic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5.5"/><path d="M8.6 13.4 7 21l5-2.8 5 2.8-1.6-7.6"/><path d="M12 6.5l.8 1.6 1.7.2-1.2 1.2.3 1.7-1.6-.8-1.6.8.3-1.7-1.2-1.2 1.7-.2z"/></svg></div>
@@ -79,15 +85,6 @@
       <div id="msCelText" class="note" style="font-size:calc(15px*var(--ts));margin-top:4px"></div>
       <div class="linkbtn more" style="margin-top:6px;display:inline-block" data-en="See your overview">Bekijk je overzicht</div>
     </div>
-    <div class="card hidden" id="ktCard"></div>
-
-    <button type="button" class="ochrij hidden" id="ochtendRij"></button>
-
-    <button type="button" class="dbknop" id="dbKnop">
-      <span class="dbk-ic" id="dbKnopIc" aria-hidden="true"></span>
-      <span class="dbk-tx"><b id="dbKnopTitel"></b><small id="dbKnopSub"></small><span class="bar"><i id="dbKnopBar"></i></span></span>
-      <span class="dbk-pijl" aria-hidden="true">›</span>
-    </button>
 
     <div class="weg" id="weg">
       <div class="wegkop">
@@ -106,23 +103,24 @@
         <button class="linkbtn" id="openSettings" type="button">Gegevens instellen</button>
       </div>
     </div>
+    <div class="card hidden" id="ktCard"></div>
 
-    <div id="homeVandaag">
+    <div class="rustlijst" id="homeVandaag">
+      <button type="button" class="ochrij hidden" id="ochtendRij"></button>
       <div class="homekop" id="homeVandaagKop" data-en="Today">Vandaag</div>
       <div class="card hidden" id="meetToday"></div>
       <div class="card hidden" id="planCard"></div>
       <div class="card hidden" id="goalsMini"></div>
-    </div>
-
-    <button type="button" class="meldrij hidden" id="meldRij" aria-expanded="false"></button>
-    <div id="meldBox" class="hidden">
-      <div class="card hidden" id="reviewBanner"></div>
-      <div class="card hidden" id="backupBanner"></div>
-      <div class="card hidden" id="wfRemind" style="background:var(--accent-soft);border-color:transparent"></div>
+      <button type="button" class="meldrij hidden" id="meldRij" aria-expanded="false"></button>
+      <div id="meldBox" class="hidden">
+        <div class="card hidden" id="reviewBanner"></div>
+        <div class="card hidden" id="backupBanner"></div>
+        <div class="card hidden" id="wfRemind" style="background:var(--accent-soft);border-color:transparent"></div>
+      </div>
     </div>
 
     <div class="homekop" data-en="Quick links">Snel naar</div>
-    <div class="snelgrid" id="snelKnoppen">
+    <div class="snelgrid rustlijst" id="snelKnoppen">
       <button type="button" class="snel sos" data-naar="sos"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l4 4M14.4 14.4l4 4M18.4 5.6l-4 4M9.6 14.4l-4 4"/></svg><span data-en="Emergency plan">Noodplan</span></button>
       <button type="button" class="snel" data-naar="jft"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3z"/><path d="M21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></svg><span data-en="Just for Today">Alleen voor vandaag</span></button>
       <button type="button" class="snel" data-naar="meetings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span data-en="Meetings">Meetings</span></button>

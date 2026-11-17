@@ -6,30 +6,41 @@ let ktOpen = false, meldOpen = false, introOpen = false;
 
 function homeNu(){ return typeof ochKlok === "function" ? ochKlok() : new Date(); }
 
-// Keytags-kaart alleen tonen op een mijlpaaldag of als je hem zelf openklapt
+// Keytags-kaart alleen als je hem zelf openklapt: de keytags staan al als haltes op Jouw weg
+// (op een mijlpaaldag toont het feestkaartje de nieuwe keytag)
 function renderHomeKeytags(){
   const kt = $("ktCard"), tg = $("ktToggle"), tk = todayKey();
   const heeft = !!settings.since && tk >= settings.since;
-  const mijlpaal = heeft && (keytagList(settings.since).some(t => t.key === tk) || milestones(settings.since).some(m => m.key === tk));
-  if(!heeft || !(mijlpaal || ktOpen)) kt.classList.add("hidden");
-  tg.classList.toggle("hidden", !heeft || mijlpaal);
+  if(!heeft || !ktOpen) kt.classList.add("hidden");
+  tg.classList.toggle("hidden", !heeft);
   tg.textContent = (ktOpen ? "▾ " : "▸ ") + vt("Mijn keytags", "My keytags");
   tg.setAttribute("aria-expanded", ktOpen ? "true" : "false");
 }
 
-// grote knop naar de dagbeschouwing, met voortgang; na 18:00 bovenaan
+// grote knop naar de dagbeschouwing: het hoofdelement van het beginscherm, altijd bovenaan.
+// "Levend": de ring rond het potlood loopt vol met de vragen, en de regel erboven past zich aan het moment van de dag aan.
+function dbKnopMoment(u, n, T){
+  if(n === T) return vt("Vandaag", "Today");
+  if(n > 0) return vt("Ga verder waar je was", "Pick up where you left off");
+  if(u < 6) return vt("Nog even terugkijken?", "Look back before you sleep?");
+  if(u < 12) return vt("Voor vanavond", "For tonight");
+  if(u < 18) return vt("Straks, als je dag erop zit", "Later, when your day is done");
+  return vt("Nu is een goed moment", "Now is a good moment");
+}
 function renderDbKnop(){
   const k = $("dbKnop"); if(!k) return;
   const T = QUESTIONS.length, n = curKey === todayKey() ? QUESTIONS.filter(isDone).length : 0, klaar = n === T;
+  const nu = homeNu(), u = nu.getHours() + nu.getMinutes() / 60;
   k.classList.toggle("klaar", klaar);
-  $("dbKnopIc").textContent = klaar ? "✓" : "✎";
+  k.classList.toggle("bezig", n > 0 && !klaar);
+  k.style.setProperty("--dbf", (n / T).toFixed(3));
+  $("dbKnopIc").textContent = "";
+  $("dbKnopIc").appendChild(klaar ? icon("check", 24) : el("span", null, "✎"));
+  $("dbKnopMoment").textContent = dbKnopMoment(u, n, T);
   $("dbKnopTitel").textContent = klaar ? vt("Dagbeschouwing ingevuld", "Daily reflection done") : vt("Dagbeschouwing invullen", "Fill in your daily reflection");
   $("dbKnopSub").textContent = klaar ? vt("Bekijk of pas aan", "View or change") : n + vt(" van ", " of ") + T + vt(" vragen", " questions");
   $("dbKnopBar").style.width = (n / T * 100) + "%";
   renderDagRing();
-  const avond = homeNu().getHours() >= 18, top = $("homeTop");
-  if(avond && k.parentNode !== top) top.appendChild(k);
-  else if(!avond && k.parentNode === top) $("homeVandaag").before(k);
 }
 
 // meldingen (weekterugblik, back-up, weekformulieren) samen in één regel; kopje "Vandaag" alleen als er iets staat
@@ -45,12 +56,14 @@ function renderMeldingen(){
   rij.textContent = ""; rij.appendChild(icon("bell", 20));
   rij.appendChild(document.createTextNode(aantal(n, "melding", "meldingen", "notification", "notifications") + (meldOpen ? " ▾" : " ›")));
   $("homeVandaagKop").classList.toggle("hidden", VANDAAG_IDS.every(id => $(id).classList.contains("hidden")));
+  // de rustige lijst zelf verdwijnt als er niets in staat
+  $("homeVandaag").classList.toggle("leeg", VANDAAG_IDS.concat(["meldRij", "ochtendRij"]).every(id => $(id).classList.contains("hidden")));
 }
 $("meldRij").onclick = () => { meldOpen = !meldOpen; renderMeldingen(); };
 // de kaarten worden door hun eigen onderdeel getoond/verborgen (soms pas later): dan de telling bijwerken
 if(window.MutationObserver){
   const mo = new MutationObserver(() => renderMeldingen());
-  MELD_IDS.concat(VANDAAG_IDS).forEach(id => mo.observe($(id), {attributes: true, attributeFilter: ["class"]}));
+  MELD_IDS.concat(VANDAAG_IDS, ["ochtendRij"]).forEach(id => mo.observe($(id), {attributes: true, attributeFilter: ["class"]}));
 }
 
 // uitleg op de Dagbeschouwing: eerste 5 ingevulde dagen open, daarna achter een ⓘ-knopje

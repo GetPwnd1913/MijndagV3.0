@@ -228,6 +228,7 @@ function logMeetingVisit(m){
   return vt("Genoteerd bij vraag 4.", "Noted under question 4.");
 }
 
+let meetTodayOpen = false;
 function renderMeetToday(){
   const card = $("meetToday"); if(!card) return;
   const wd = parseKey(curKey).getDay();
@@ -235,7 +236,14 @@ function renderMeetToday(){
   card.classList.toggle("hidden", !list.length);
   card.innerHTML = "";
   if(!list.length) return;
-  card.appendChild(el("div", "qtitle", curKey === todayKey() ? vt("Meeting vandaag", "Meeting today") : vt("Meeting op deze dag", "Meeting on this day")));
+  // rustige regel "Meeting vandaag · 19:30 Utrecht ›"; tikken klapt de details en de knop "Ik ben geweest" open
+  const head = el("button", "plankop"); head.type = "button"; head.setAttribute("aria-expanded", meetTodayOpen ? "true" : "false");
+  head.appendChild(icon("pin", 20));
+  head.appendChild(el("div", "qtitle", curKey === todayKey() ? vt("Meeting vandaag", "Meeting today") : vt("Meeting op deze dag", "Meeting on this day")));
+  const cnt = el("div", "note", (list[0].t || "?") + (list.length > 1 ? " +" + (list.length - 1) : "") + (meetTodayOpen ? " ▾" : " ›")); cnt.style.cssText = "margin:0;flex:none"; head.appendChild(cnt);
+  head.onclick = () => { meetTodayOpen = !meetTodayOpen; renderMeetToday(); };
+  card.appendChild(head);
+  if(!meetTodayOpen) return;
   const q4 = (entry.answers && entry.answers.q4 && entry.answers.q4.text) || "";
   list.forEach(m => {
     const r = el("div", "mrow"); r.style.borderTop = "0";

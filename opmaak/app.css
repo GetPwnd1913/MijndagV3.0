@@ -1180,49 +1180,113 @@
     color:var(--ink);border-color:color-mix(in srgb,var(--accent) 40%,transparent);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
   .dbknop.klaar::after{display:none}
 
-  /* ---- Jouw weg ---- */
-  .weg{margin:30px -14px 0}
+  /* ---- de grote knop: het hoofdelement van het beginscherm ---- */
+  #homeTop .dbknop{min-height:132px;padding:24px 22px 24px 20px;gap:18px;margin-bottom:var(--ruimte-2)}
+  .dbk-ring{flex:none;position:relative;display:grid;place-items:center;width:64px;height:64px;border-radius:50%;
+    background:conic-gradient(currentColor calc(var(--dbf,0)*1turn),color-mix(in srgb,currentColor 22%,transparent) 0);transition:--dbf .6s}
+  .dbk-ring .dbk-ic{width:54px;height:54px;background:color-mix(in srgb,var(--accent) 70%,#000 12%);color:inherit}
+  html[data-donker] .dbk-ring .dbk-ic{background:color-mix(in srgb,var(--accent) 22%,var(--card))}
+  .dbknop.klaar .dbk-ring{background:var(--accent);color:var(--accent)}
+  .dbknop.klaar .dbk-ring .dbk-ic{background:var(--accent-soft)}
+  .dbk-ring .dbk-ic svg.i{stroke-width:2.6}
+  .dbk-moment{font-size:var(--fs-klein);font-weight:650;opacity:.88;letter-spacing:.01em}
+  #homeTop .dbknop .dbk-tx b{font-size:calc(25px*var(--ts))}
+  #homeTop .dbknop .dbk-tx .bar{display:none}
+  /* levend: een zachte lichtstreep glijdt af en toe over de knop (niet bij "minder beweging", niet als hij klaar is) */
+  .dbknop{overflow:hidden;isolation:isolate}
+  .dbknop::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;
+    background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.22) 50%,transparent 65%);transform:translateX(-120%);animation:dbLicht 7s ease-in-out 1.6s infinite}
+  @keyframes dbLicht{0%{transform:translateX(-120%)}22%,100%{transform:translateX(120%)}}
+  .dbknop.klaar::before{display:none}
+
+  @media (max-width:360px){
+    #homeTop .dbknop{gap:14px;padding:20px 16px}
+    .dbk-ring{width:54px;height:54px} .dbk-ring .dbk-ic{width:45px;height:45px}
+    #homeTop .dbknop .dbk-tx b{font-size:calc(22px*var(--ts))}
+  }
+  /* feestkaartje op een mijlpaaldag: compact, zodat de grote knop het hoofdelement blijft */
+  #msCelebrate{padding:16px 18px}
+  #msCelebrate .kt.groot svg{width:52px;height:auto}
+  #msCelTitle{font-size:var(--fs-kop-s)!important;margin-top:2px!important}
+  #msCelText{font-size:var(--fs-tekst)!important}
+
+  /* ---- Jouw weg: een landschap met een kronkelend pad ---- */
+  .weg{margin:26px -16px 0}
   .wegkop{padding:0 16px}
   .weg .label{text-transform:none;letter-spacing:0;font-size:var(--fs-label);font-weight:650;color:var(--muted);margin:0}
   .weg .skydagen{margin:4px 0 0;font-family:var(--serif);font-weight:500;letter-spacing:-.025em;line-height:1.04;color:var(--ink);
     font-size:calc(clamp(34px,10.6vw,48px)*(1 + (var(--ts) - 1)*.5))}
-  .weg #msNext{margin-top:6px!important;font-size:var(--fs-tekst);color:var(--muted)}
+  .weg #msNext{display:none}   /* staat nu als bordje in de verte */
   .wegbalk{display:none!important}
-  .wegrij{position:relative;margin-top:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
-    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%)}
-  .wegrij::-webkit-scrollbar{display:none}
-  .wegbaan{position:relative}
+  .wegrij{position:relative;margin-top:-6px;overflow:hidden;
+    -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 14%,#000 86%,transparent 100%);mask-image:linear-gradient(180deg,transparent 0,#000 14%,#000 86%,transparent 100%)}
+  .wegbaan{position:relative;margin:0 auto}
   .wegpad{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}
-  .wegpad path{fill:none;stroke-linecap:round}
-  .wegtoekomst{stroke:var(--lijn);stroke-width:2.5;stroke-dasharray:3 8}
-  .weggelopen{stroke:var(--accent);stroke-width:4.5;filter:drop-shadow(0 0 7px color-mix(in srgb,var(--accent) 70%,transparent))}
-  .wegstop{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
-  .wegtag{display:block;filter:drop-shadow(0 8px 8px rgba(0,0,0,.28));transform-origin:50% 0;animation:wegSlinger 6s ease-in-out infinite}
-  .wegstop:nth-child(even) .wegtag{animation-delay:-2.4s}
+  .wegheuvel{stroke:none}
+  .wegheuvel.h-ver{fill:color-mix(in srgb,var(--accent) 9%,transparent)}
+  .wegheuvel.h-mid{fill:color-mix(in srgb,var(--accent) 11%,transparent)}
+  .wegheuvel.h-voor{fill:color-mix(in srgb,var(--accent) 13%,transparent)}
+  .wegboom{fill:color-mix(in srgb,var(--accent) 45%,transparent)}
+  .wegstam{fill:color-mix(in srgb,var(--ink) 30%,transparent)}
+  .weglint{fill:color-mix(in srgb,var(--accent) 26%,transparent);stroke:color-mix(in srgb,var(--accent) 40%,transparent);stroke-width:1}
+  .weglint.komt{fill:color-mix(in srgb,var(--ink) 7%,transparent);stroke:color-mix(in srgb,var(--ink) 12%,transparent)}
+  .wegpad .wegtoekomst,.wegpad .weggelopen{fill:none;stroke-linecap:round}
+  .wegtoekomst{stroke:var(--lijn);stroke-width:2;stroke-dasharray:3 7}
+  .weggelopen{stroke:var(--accent);stroke-width:3.5;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 70%,transparent))}
+  .weggelopen.tekent{stroke-dasharray:1;stroke-dashoffset:1;animation:wegTeken 1.8s var(--ease) .5s forwards}
+  @keyframes wegTeken{to{stroke-dashoffset:0}}
+  .wegstop{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
+  .wegtag{display:block;filter:drop-shadow(0 6px 6px rgba(0,0,0,.25));transform-origin:50% 0;animation:wegSlinger 6s ease-in-out infinite}
   .wegglow{filter:drop-shadow(0 0 10px #d6f5c8) drop-shadow(0 0 22px rgba(160,255,130,.55))}
   @keyframes wegSlinger{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
-  .wegpaal{display:block;width:2px;height:24px;background:var(--lijn)}
-  .wegnaam{margin-top:22px;font-size:var(--fs-klein);font-weight:650;white-space:nowrap}
-  .wegsub{font-size:var(--fs-bijschrift);color:var(--muted);white-space:nowrap}
-  .wegstop.komt .wegtag{filter:none;animation:none;opacity:.85}
-  .wegstop.komt .wegnaam{color:var(--muted)}
+  .wegpaal{display:block;width:2px;background:color-mix(in srgb,var(--ink) 35%,transparent)}
+  .wegstop.komt .wegtag{filter:none;animation:none;opacity:.8}
+  .wegbord{display:flex;flex-direction:column;align-items:center;margin-bottom:6px;padding:5px 11px;border-radius:12px;white-space:nowrap;line-height:1.2;
+    background:var(--gk);border:1px solid var(--gr);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:var(--shadow)}
+  .wegbord b{font-size:var(--fs-klein);font-weight:700;color:var(--ink)}
+  .wegbord span{font-size:var(--fs-bijschrift);color:var(--muted)}
   .wegjij{position:absolute;transform:translate(-50%,-50%);pointer-events:none}
-  .wegorb{position:relative;display:block;width:24px;height:24px;border-radius:50%;background:#fff;
-    box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 55%,transparent),0 0 34px 12px color-mix(in srgb,var(--accent) 60%,transparent)}
+  .wegjij.komt-aan{opacity:0;animation:wegAan .6s var(--ease) 2.1s forwards}
+  @keyframes wegAan{to{opacity:1}}
+  .wegorb{position:relative;display:block;width:22px;height:22px;border-radius:50%;background:#fff;
+    box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 55%,transparent),0 0 30px 10px color-mix(in srgb,var(--accent) 60%,transparent)}
   .wegorb::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--accent);animation:wegGolf 2.6s ease-out infinite}
   @keyframes wegGolf{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.1);opacity:0}}
-  .wegwie{position:absolute;left:50%;top:calc(34px + 44px*var(--ts));transform:translateX(-50%);white-space:nowrap;padding:6px 13px;border-radius:99px;font-size:var(--fs-klein);font-weight:700;
+  .wegwie{position:absolute;left:24px;top:50%;transform:translateY(-50%);white-space:nowrap;padding:6px 13px;border-radius:99px;font-size:var(--fs-klein);font-weight:700;
     background:var(--gk);border:1px solid var(--gr);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--ink)}
-  .weg .skylinks{padding:0 16px;margin-top:4px}
+  .wegwie.links{left:auto;right:24px}
+  .weg .skylinks{padding:0 16px;margin-top:-8px}
 
-  /* ---- snelknoppen als tegels ---- */
-  .snelgrid{gap:12px}
-  .snelgrid .snel{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:14px;min-height:104px;padding:18px 16px;border-radius:26px;font-weight:650;line-height:1.2}
-  .snelgrid .snel .ic{width:26px;height:26px;color:var(--accent)}
+  /* ---- rustige regels onder de knop: één glazen vlak met dunne scheidingslijnen in plaats van losse kaarten ---- */
+  .rustlijst{margin:22px 0 0;border-radius:24px;background:var(--gk);border:1px solid var(--gr);box-shadow:var(--shadow);overflow:hidden}
+  body[data-scherm="home"] .rustlijst{-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){ .rustlijst{background:var(--card)} }
+  .rustlijst.leeg{display:none}
+  .rustlijst .homekop{display:none}
+  #homeVandaag .card,.rustlijst .ochrij,.rustlijst .meldrij,.rustlijst .snel{margin:0;border:0;border-radius:0;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  #homeVandaag .card{padding:4px var(--ruimte-4)}
+  #homeVandaag > :not(.hidden) ~ :not(.hidden),#snelKnoppen > .snel + .snel{border-top:1px solid color-mix(in srgb,var(--ink) 9%,transparent)}
+  #homeVandaag .plankop{align-items:center;min-height:52px;gap:12px}
+  #homeVandaag .plankop > svg.i{flex:none;color:var(--accent)}
+  #homeVandaag .plankop > .qtitle{flex:1;min-width:0;font-family:inherit;font-size:var(--fs-lees);font-weight:600;margin:0}
+  #homeVandaag .plankop > .note{color:var(--muted);font-weight:600}
+  .rustlijst .ochrij{min-height:52px;padding:var(--ruimte-3) var(--ruimte-4)}
+  .rustlijst .meldrij{min-height:52px;padding:10px var(--ruimte-4);font-size:var(--fs-lees);gap:12px}
+  #meldBox{padding:0 var(--ruimte-3) var(--ruimte-3)}
+  #meldBox .card{border-radius:16px;margin-top:8px}
+  .homekop{margin-top:22px}
+
+  /* ---- snelknoppen: rustige regels in hetzelfde glas ---- */
+  .snelgrid.rustlijst{display:block;margin-top:0}
+  .snelgrid .snel{display:flex;flex-direction:row;align-items:center;gap:12px;width:100%;min-height:52px;padding:10px var(--ruimte-4);font-size:var(--fs-lees);font-weight:600}
+  .snelgrid .snel .ic{width:20px;height:20px;color:var(--accent)}
   .snelgrid .snel.sos .ic{color:var(--danger-text)}
+  .snelgrid .snel::after{content:"›";margin-left:auto;color:var(--muted);font-size:calc(20px*var(--ts));line-height:1}
 
   @media (prefers-reduced-motion:reduce){
-    .lichaam,.ster,.wolk,.wegtag,.wegorb::after,.dbknop::after,.vallend{animation:none!important}
+    .lichaam,.ster,.wolk,.wegtag,.wegorb::after,.dbknop::after,.dbknop::before,.vallend{animation:none!important}
+    .weggelopen.tekent{animation:none;stroke-dashoffset:0}
+    .wegjij.komt-aan{animation:none;opacity:1}
     .hemel .laag,.sterren,.wolken,.lichaam,.heuvels path{transition-duration:.01ms!important}
   }
 

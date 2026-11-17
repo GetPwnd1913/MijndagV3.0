@@ -114,15 +114,21 @@ function renderGoals(){
   row.appendChild(inp); row.appendChild(go); add.appendChild(row);
   box.appendChild(add);
 }
+// op het beginscherm een rustige regel "Mijn weekdoel · 0 van 2 ›"; tikken klapt de doelen open
+let goalsMiniOpen = false;
 function renderGoalsMini(){
   const card = $("goalsMini"), wk = mondayOf(curKey), data = weekData(wk);
   card.classList.toggle("hidden", !data.goals.length);
   card.innerHTML = "";
   if(!data.goals.length) return;
-  const head = el("div"); head.style.cssText = "display:flex;justify-content:space-between;align-items:baseline;gap:8px";
+  const head = el("button", "plankop"); head.type = "button"; head.setAttribute("aria-expanded", goalsMiniOpen ? "true" : "false");
+  head.appendChild(icon("target", 20));
   head.appendChild(el("div", "qtitle", vt("Mijn weekdoel", "My weekly goal")));
-  const lk = el("button", "linkbtn more", vt("Bekijk", "View")); lk.type = "button"; lk.onclick = () => { showView("talk"); $("goalsHead").scrollIntoView(); }; head.appendChild(lk);
+  const af = data.goals.filter(g => g.done).length;
+  const cnt = el("div", "note", af + vt(" van ", " of ") + data.goals.length + (goalsMiniOpen ? " ▾" : " ›")); cnt.style.cssText = "margin:0;flex:none"; head.appendChild(cnt);
+  head.onclick = () => { goalsMiniOpen = !goalsMiniOpen; renderGoalsMini(); };
   card.appendChild(head);
+  if(!goalsMiniOpen) return;
   const wrap = el("div"); wrap.style.marginTop = "6px";
   data.goals.forEach((g, i) => {
     const row = el("label", "planitem" + (g.done ? " done" : "")); if(i === 0) row.style.borderTop = "0";
@@ -131,5 +137,8 @@ function renderGoalsMini(){
     row.appendChild(cb); row.appendChild(el("span", null, g.text));
     wrap.appendChild(row);
   });
+  const lk = el("button", "linkbtn more", vt("Alle weekdoelen bekijken", "View all weekly goals")); lk.type = "button"; lk.style.marginTop = "6px";
+  lk.onclick = () => { showView("talk"); $("goalsHead").scrollIntoView(); };
+  wrap.appendChild(lk);
   card.appendChild(wrap);
 }

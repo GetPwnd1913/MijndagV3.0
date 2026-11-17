@@ -29,11 +29,12 @@ async function renderPlan(){
     const head = el("button", "plankop"); head.type = "button"; head.setAttribute("aria-expanded", planOpen ? "true" : "false");
     const lijst = el("div"); lijst.classList.toggle("hidden", !planOpen);
     head.onclick = () => { planOpen = !planOpen; head.setAttribute("aria-expanded", planOpen ? "true" : "false"); lijst.classList.toggle("hidden", !planOpen); upd(); };
+    head.appendChild(icon("calendar", 20));
     head.appendChild(el("div", "qtitle", k === todayKey() ? vt("Mijn planning voor vandaag", "My plan for today") : vt("Planning voor deze dag", "Plan for this day")));
     const cnt = el("div", "note"); cnt.style.cssText = "margin:0;flex:none"; head.appendChild(cnt);
     card.appendChild(head); card.appendChild(lijst);
     const sub = note(vt("Gemaakt bij je dagbeschouwing van ", "Made in your daily reflection of ") + shortDate(pk) + vt(". Vink af wat je gedaan hebt.", ". Tick off what you have done.")); sub.style.cssText = "margin-top:2px;font-size:calc(14px*var(--ts))"; lijst.appendChild(sub);
-    const upd = () => { const d = entry.planDone || {}; cnt.textContent = keys.filter(x => d[x]).length + vt(" van ", " of ") + keys.length + vt(" gedaan", " done") + (planOpen ? " ▾" : " ›"); };
+    const upd = () => { const d = entry.planDone || {}; cnt.textContent = keys.filter(x => d[x]).length + vt(" van ", " of ") + keys.length + (planOpen ? " ▾" : " ›"); };
     groups.forEach(g => {
       lijst.appendChild(el("div", "label", g.toon));
       g.items.forEach(it => {
