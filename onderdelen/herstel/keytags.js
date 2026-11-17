@@ -174,21 +174,28 @@ function renderKeytags(){
 }
 
 // ---------- Jouw weg (beginscherm): je clean-tijd als kronkelend pad door een landschap ----------
-// Alleen tonen: er wordt niets opgeslagen. Het pad begint vooraan (groot, je begin) en slingert naar de horizon.
-// De laatst behaalde keytags staan als haltes langs het gelopen stuk (dezelfde tekeningen als "Mijn keytags", keytagSvg),
+// Alleen tonen: er wordt niets opgeslagen. Het pad begint vooraan (groot) en slingert naar de horizon.
+// De laatst behaalde keytags staan als haltes in het landschap (dezelfde tekeningen als "Mijn keytags", keytagSvg),
 // de lichtende bol is "jij", en de volgende keytag staat klein in de verte met een bordje "nog … dagen".
+// Oudere keytags staan verder naar beneden langs hetzelfde pad: in het venster (eigen schuifgebied) veeg je omlaag
+// tot aan je welkomstag. Het beginscherm zelf schuift dan niet mee (overscroll-behavior: contain).
 // Tikken op een behaalde keytag opent het mijlpaal-overzicht, op de komende toont hoeveel dagen nog.
 // Het landschap past precies in de breedte van het scherm (geen zijwaarts scrollen) en wordt opnieuw getekend als die verandert.
 const WEG_H = 380, WEG_HZ = 112, WEG_MAX = 3;
-let wegSig = "";
+const WEG_DY = (WEG_H - 22 - WEG_HZ) * 1.4;   // hoe snel het pad vooraan (t = 0) naar beneden loopt; onder t = 0 gaat het zo recht door
+let wegSig = "", wegHintWeg = false;
 function wegPunt(t, W){
-  const y = WEG_H - 22 - (WEG_H - 22 - WEG_HZ) * (1 - Math.pow(1 - Math.min(1, t), 1.4));   // t < 0 loopt onderaan uit beeld
+  if(t < 0){   // onder het landschap: het pad slingert in een gelijkmatige golf verder naar beneden
+    return [W * .5 + W * .33 * Math.sin(t * Math.PI * 1.9 - 1.2), WEG_H - 22 - WEG_DY * t];
+  }
+  const y = WEG_H - 22 - (WEG_H - 22 - WEG_HZ) * (1 - Math.pow(1 - Math.min(1, t), 1.4));
   const x = W * .5 + W * .33 * (1 - .65 * t) * Math.sin(t * Math.PI * 1.9 - 1.2);
   return [x, y];
 }
 const wegKant = (t, W) => wegPunt(t, W)[0] < W / 2 ? -1 : 1;   // keytags aan de buitenkant van de bocht
-const wegBreed = t => 22 * (1 - .8 * t) + 1.5;   // halve breedte van het pad: vooraan breed, in de verte smal
-const wegSchaal = t => 1 - .55 * t;
+const wegBreed = t => 22 * (1 - .8 * Math.max(0, t)) + 1.5;   // halve breedte van het pad: vooraan breed, in de verte smal
+const wegSchaal = t => 1 - .55 * Math.max(0, t);
+const wegBocht = n => (Math.PI / 2 + n * Math.PI + 1.2) / (1.9 * Math.PI);   // diepte t van de n-de bocht (n = -2, -3, … liggen onder het landschap)
 function wegLint(a, b, W){   // het pad als vlak tussen diepte a en b (linker- en rechterrand)
   const L = [], R = [], n = Math.max(2, Math.round((b - a) * 60));
   for(let i = 0; i <= n; i++){
@@ -204,13 +211,13 @@ function wegLijn(a, b, W){
   for(let i = 0; i <= n; i++){ const [x, y] = wegPunt(a + (b - a) * i / n, W); p.push(x.toFixed(1) + " " + y.toFixed(1)); }
   return "M" + p.join(" L");
 }
-function wegHeuvel(W, y0, amp, f, fase){   // een heuvelrug van links naar rechts, naar beneden opgevuld
-  let d = "M0 " + WEG_H;
+function wegHeuvel(W, y0, amp, f, fase, H){   // een heuvelrug van links naar rechts, naar beneden opgevuld (tot H)
+  let d = "M0 " + H;
   for(let x = 0; x <= W + 8; x += 8) d += " L" + x + " " + (y0 + amp * Math.sin(x / W * Math.PI * f + fase)).toFixed(1);
-  return d + " L" + W + " " + WEG_H + "Z";
+  return d + " L" + W + " " + H + "Z";
 }
 function renderWeg(){
-  const box = $("weg"), baan = $("wegBaan"), rij = $("wegRij"); if(!box || !baan || !rij) return;
+  const box = $("weg"), baan = $("wegBaan"), rij = $("wegRij"), sc = $("wegScroll"); if(!box || !baan || !rij || !sc) return;
   const since = settings.since, tk = todayKey();
   const toon = !!since && tk >= since;
   rij.classList.toggle("hidden", !toon);
@@ -226,52 +233,75 @@ function renderWeg(){
   if(sig === wegSig) return;
   const eerste = wegSig === ""; wegSig = sig;
   baan.innerHTML = "";
-  baan.style.width = W + "px"; baan.style.height = WEG_H + "px";
   let L = -1; list.forEach((t, i) => { if(t.key <= tk) L = i; });
   const volg = list[L + 1];
   const behaald = list.slice(Math.max(0, L + 1 - WEG_MAX), L + 1);
+  const ouder = list.slice(0, Math.max(0, L + 1 - WEG_MAX)).reverse();   // verder terug in de tijd = verder naar beneden
+  const tOud = ouder.map((t, j) => wegBocht(-2 - j));
+  const tEind = ouder.length ? tOud[tOud.length - 1] - .2 : -.2;   // het pad loopt nog even door en vervaagt onderaan
+  const H = ouder.length ? Math.round(wegPunt(tEind, W)[1] + 10) : WEG_H;
+  baan.style.width = W + "px"; baan.style.height = H + "px";
+  rij.classList.toggle("lang", ouder.length > 0);
   const dagenTot = k => Math.round((parseKey(k) - parseKey(since)) / 864e5);
   const tLaatst = behaald.length > 1 ? .36 : .16, tVolg = .94;
   const tStop = i => behaald.length > 1 ? .04 + (tLaatst - .04) * i / (behaald.length - 1) : tLaatst;
   const a = dagenTot(list[L].key), b = dagenTot(volg.key);
   const tJij = tLaatst + (tVolg - tLaatst) * Math.max(.28, Math.min(.82, (dagenTot(tk) - a) / ((b - a) || 1)));   // nooit bovenop een keytag
 
-  const svg = svgEl("svg", {class: "wegpad", viewBox: "0 0 " + W + " " + WEG_H, "aria-hidden": "true"});
-  svg.appendChild(svgEl("path", {class: "wegheuvel h-ver", d: wegHeuvel(W, WEG_HZ - 14, 12, 2.6, .6)}));
-  svg.appendChild(svgEl("path", {class: "wegheuvel h-mid", d: wegHeuvel(W, WEG_HZ + 54, 16, 1.7, 2.2)}));
-  svg.appendChild(svgEl("path", {class: "wegheuvel h-voor", d: wegHeuvel(W, WEG_H - 70, 18, 1.3, 4)}));
+  const svg = svgEl("svg", {class: "wegpad", viewBox: "0 0 " + W + " " + H, "aria-hidden": "true"});
+  svg.appendChild(svgEl("path", {class: "wegheuvel h-ver", d: wegHeuvel(W, WEG_HZ - 14, 12, 2.6, .6, H)}));
+  svg.appendChild(svgEl("path", {class: "wegheuvel h-mid", d: wegHeuvel(W, WEG_HZ + 54, 16, 1.7, 2.2, H)}));
+  svg.appendChild(svgEl("path", {class: "wegheuvel h-voor", d: wegHeuvel(W, WEG_H - 70, 18, 1.3, 4, H)}));
   // boompjes aan de kant waar geen keytag staat, kleiner naarmate ze verder weg staan
-  [[.12, -1], [.3, 1], [.44, -1], [.66, 1], [.8, -1], [.97, 1.6]].forEach(([t, kant]) => {
-    const [x, y] = wegPunt(t, W), s = wegSchaal(t), side = -wegKant(t, W) * kant;
-    const bx = x + side * (wegBreed(t) + 26 * s), r = 11 * s;
-    if(bx < r || bx > W - r) return;
+  const boom = (bx, y, s) => {
+    const r = 11 * s; if(bx < r || bx > W - r) return;
     svg.appendChild(svgEl("rect", {class: "wegstam", x: (bx - 1.2 * s).toFixed(1), y: (y - 8 * s).toFixed(1), width: (2.4 * s).toFixed(1), height: (8 * s).toFixed(1), rx: 1}));
     svg.appendChild(svgEl("ellipse", {class: "wegboom", cx: bx.toFixed(1), cy: (y - 8 * s - r * .9).toFixed(1), rx: (r * .8).toFixed(1), ry: r.toFixed(1)}));
+  };
+  [[.12, -1], [.3, 1], [.44, -1], [.66, 1], [.8, -1], [.97, 1.6]].forEach(([t, kant]) => {
+    const [x, y] = wegPunt(t, W), s = wegSchaal(t), side = -wegKant(t, W) * kant;
+    boom(x + side * (wegBreed(t) + 26 * s), y, s);
   });
+  // langs het lagere stuk: een boompje in elke bocht, aan de buitenkant (de keytag staat binnen de bocht)
+  tOud.forEach(t => { const [x, y] = wegPunt(t, W), k = x < W / 2 ? -1 : 1; boom(x + k * (wegBreed(t) + 14), y + 30, .9); });
   svg.appendChild(svgEl("path", {class: "weglint komt", d: wegLint(tJij, 1, W)}));
-  svg.appendChild(svgEl("path", {class: "weglint", d: wegLint(-.2, tJij, W)}));
+  svg.appendChild(svgEl("path", {class: "weglint", d: wegLint(tEind, tJij, W)}));
   svg.appendChild(svgEl("path", {class: "wegtoekomst", d: wegLijn(tJij, tVolg, W)}));
+  if(ouder.length) svg.appendChild(svgEl("path", {class: "weggelopen", d: wegLijn(tEind, -.2, W)}));
   svg.appendChild(svgEl("path", {class: "weggelopen" + (eerste ? " tekent" : ""), d: wegLijn(-.2, tJij, W), pathLength: "1"}));
   baan.appendChild(svg);
 
-  const halte = (t, tag, on, i) => {
+  const halte = (t, tag, on, i, binnen) => {
     const [x, y] = wegPunt(t, W), s = Math.max(.62, wegSchaal(t));
-    const side = wegKant(t, W), hx = Math.max(26, Math.min(W - 26, x + side * (wegBreed(t) + 16 * s)));
+    // binnen = in de holte van de bocht, iets lager en verder van het pad, zodat de keytag niet op de weg hangt
+    const side = wegKant(t, W) * (binnen ? -1 : 1), hx = Math.max(26, Math.min(W - 26, x + side * (wegBreed(t) + (binnen ? 56 : 16 * s))));
     const knop = el("button", "wegstop" + (on ? "" : " komt")); knop.type = "button";
-    knop.style.left = hx.toFixed(1) + "px"; knop.style.top = y.toFixed(1) + "px";
+    knop.style.left = hx.toFixed(1) + "px"; knop.style.top = (y + (binnen ? 34 : 0)).toFixed(1) + "px";
     const svgTag = keytagSvg(tag, on, Math.round(44 * s));
     knop.setAttribute("aria-label", svgTag.getAttribute("aria-label")); svgTag.setAttribute("aria-hidden", "true"); svgTag.classList.add("wegtag");
     if(on && tag.glow) svgTag.classList.add("wegglow");
     if(i % 2) svgTag.style.animationDelay = "-2.4s";
     knop.appendChild(svgTag); const paal = el("span", "wegpaal"); paal.style.height = Math.round(16 * s) + "px"; knop.appendChild(paal);
+    knop.dataset.kant = side < 0 ? "l" : "r";
     return knop;
+  };
+  const tikBehaald = t => () => {
+    if(t.key === since) toast(vt("Welkom · je begon op ", "Welcome · you started on ") + shortDate(since));
+    else openMijlpaal(t.years !== undefined ? addMonthsKey(since, 12 * t.years) : t.key);
   };
   behaald.forEach((t, i) => {
     const knop = halte(tStop(i), t, true, i);
-    knop.onclick = () => {
-      if(t.key === since) toast(vt("Welkom · je begon op ", "Welcome · you started on ") + shortDate(since));
-      else openMijlpaal(t.years !== undefined ? addMonthsKey(since, 12 * t.years) : t.key);
-    };
+    knop.onclick = tikBehaald(t);
+    baan.appendChild(knop);
+  });
+  // oudere keytags langs het pad naar beneden, met naam en datum ernaast
+  ouder.forEach((t, j) => {
+    const knop = halte(tOud[j], t, true, j + 1, true);
+    knop.classList.add("wegoud");
+    const lab = el("span", "wegdatum"); lab.appendChild(el("b", null, t.key === since ? vt("Je begin", "Your start") : t.label)); lab.appendChild(el("span", null, shortDate(t.key)));
+    knop.appendChild(lab);
+    knop.setAttribute("aria-label", knop.getAttribute("aria-label") + " · " + shortDate(t.key));
+    knop.onclick = tikBehaald(t);
     baan.appendChild(knop);
   });
   const links = Math.round((parseKey(volg.key) - parseKey(tk)) / 864e5);
@@ -291,6 +321,16 @@ function renderWeg(){
   jij.appendChild(wie);
   jij.appendChild(el("span", "wegorb"));
   baan.appendChild(jij);
+
+  // hint onderaan het venster: alleen als er iets te vegen valt, weg zodra je veegt
+  const hint = $("wegHint");
+  hint.textContent = vt("Veeg omlaag langs je weg", "Swipe down along your road");
+  hint.classList.toggle("hidden", !ouder.length || wegHintWeg);
+  sc.onscroll = () => {
+    rij.classList.toggle("onder", sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 4);
+    if(sc.scrollTop > 24 && !wegHintWeg){ wegHintWeg = true; hint.classList.add("hidden"); }
+  };
+  sc.onscroll();
 }
 // ander schermformaat (draaien, venster groter): het landschap opnieuw passend tekenen
 let wegResizeT = null;
