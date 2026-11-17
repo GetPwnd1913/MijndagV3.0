@@ -1333,3 +1333,16 @@
     .rondring .v,.rondring .vink{animation:none!important;stroke-dashoffset:0!important}
     .dagrondscherm{transition-duration:.01ms}
   }
+
+  /* 1-op-1 & weekdoel: tabbladen en compacte weekdoelregels */
+  .talktabs{margin:4px 0 var(--ruimte-4)}
+  .goalrow{padding:10px 0;border-top:1px solid var(--line)}
+  .goalrow .tx{flex:1;min-width:0;font-size:var(--fs-lees);word-wrap:break-word}
+  .goalrow .gtext{font-weight:600}
+  .goalcheck.done .gtext{text-decoration:line-through;color:var(--muted);font-weight:400}
+  .goalrow .gdone{display:block;color:var(--accent);font-size:var(--fs-klein);font-weight:600;margin-top:2px}
+  .goalrow .gstuck{display:block;margin:6px 0 0 34px;font-size:var(--fs-klein);text-align:left;padding-left:0}
+  .goalrow .gstuckbox .gstuck{margin-left:0}
+  .goalrow .gstuckbox{margin:8px 0 0 34px}
+  .goalrow .gstuckbox textarea{margin-top:0;min-height:0}
+  .goalrow .gstuckbox .note{margin:6px 0 0}

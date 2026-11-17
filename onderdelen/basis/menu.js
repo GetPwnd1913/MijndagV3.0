@@ -21,7 +21,7 @@ function showView(v){
   if(v === "patterns") renderPatterns();
   if(v === "sos"){ sosEdit = false; renderSos(); }
   if(v === "jft"){ jftShift = 0; renderJft(); }
-  if(v === "talk"){ renderTalk(); goalWeek = null; renderGoals(); }
+  if(v === "talk"){ goalWeek = null; renderTalkView(); }
   if(v === "steps") renderSteps();
   if(v === "meetings") renderMeetings();
   if(v === "wf") renderWf();

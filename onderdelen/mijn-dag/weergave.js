@@ -324,7 +324,7 @@ function buildQuestion(q, i){
   if(q.id === "q9"){
     tip.appendChild(document.createTextNode(vt(" Wil je het bespreken met je begeleider? Zet het dan als bespreekpunt bij ‘Voor mijn 1-op-1’ in het menu.", " Want to discuss it with your support worker? Add it as a talking point under ‘For my 1-to-1’ in the menu.")));
     const tl = el("button", "linkbtn more", vt("Naar Voor mijn 1-op-1", "Go to For my 1-to-1")); tl.type = "button"; tl.style.cssText = "display:block;margin-top:6px;font-weight:600";
-    tl.onclick = () => showView("talk"); tip.appendChild(tl);
+    tl.onclick = () => { talkTab = "punten"; showView("talk"); }; tip.appendChild(tl);
   }
   head.querySelector(".tipbtn").setAttribute("aria-expanded", "false");
   head.querySelector(".tipbtn").onclick = e => { tip.classList.toggle("hidden"); e.target.textContent = tip.classList.contains("hidden") ? vt("Hulp bij deze vraag", "Help with this question") : vt("Verberg hulp", "Hide help"); e.target.setAttribute("aria-expanded", tip.classList.contains("hidden") ? "false" : "true"); };
