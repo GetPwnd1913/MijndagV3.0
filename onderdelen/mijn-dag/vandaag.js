@@ -29,7 +29,8 @@ function dbKnopMoment(u, n, T){
 }
 function renderDbKnop(){
   const k = $("dbKnop"); if(!k) return;
-  const T = QUESTIONS.length, n = curKey === todayKey() ? QUESTIONS.filter(isDone).length : 0, klaar = n === T;
+  const tk = todayKey(), e = curKey === tk ? entry : (local.get("day:" + tk) || {});
+  const T = QUESTIONS.length, n = QUESTIONS.filter(q => isDoneIn(e, q)).length, klaar = n === T;
   const nu = homeNu(), u = nu.getHours() + nu.getMinutes() / 60;
   k.classList.toggle("klaar", klaar);
   k.classList.toggle("bezig", n > 0 && !klaar);
@@ -127,16 +128,17 @@ function renderDagboog(nu){
 }
 
 // ---------- dag-ring: ochtend, dag en avond lopen vol ----------
-// ochtend = ochtendmoment ingevuld; dag = planning afgevinkt (zonder planning: je hebt teruggekeken op je voornemen);
+// ochtend = ochtendmoment ingevuld; dag = planning van ochtend/middag afgevinkt (zonder zulke planning: je hebt teruggekeken op je voornemen);
 // avond = vragen van de dagbeschouwing. Alleen tonen, er wordt niets opgeslagen.
 let dagRingOpen = false, dagRingWasRond = null;
 function dagRingStand(){
   const tk = todayKey(), e = curKey === tk ? entry : (local.get("day:" + tk) || {});
   const o = e.ochtend || {};
   const groups = typeof planFrom === "function" ? planFrom(local.get("day:" + addDaysKey(tk, -1))) : [];
-  const keys = []; groups.forEach(g => g.items.forEach(it => keys.push(g.title + "|" + it)));
+  // alleen ochtend, middag en overig: de avondpunten (meeting, dagbeschouwing) horen bij de avond
+  const keys = []; groups.filter(g => !/avond/i.test(g.title)).forEach(g => g.items.forEach(it => keys.push(g.title + "|" + it)));
   const af = keys.filter(k => e.planDone && e.planDone[k]).length;
-  const T = QUESTIONS.length, n = curKey === tk ? QUESTIONS.filter(isDone).length : 0;
+  const T = QUESTIONS.length, n = QUESTIONS.filter(q => isDoneIn(e, q)).length;
   return {
     ochtend: o.voornemen ? 1 : 0,
     dag: keys.length ? af / keys.length : (o.gelukt ? 1 : 0),
