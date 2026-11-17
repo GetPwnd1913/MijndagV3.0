@@ -12,6 +12,7 @@ function showView(v){
   document.querySelectorAll(".komtop").forEach(n => n.classList.remove("komtop"));
   if(sv){ sv.classList.add("komtop"); clearTimeout(showView.komtopTimer); showView.komtopTimer = setTimeout(() => sv.classList.remove("komtop"), 700); }
   $("pageTitle").textContent = vt(VIEWS[v][0], VIEWS[v][1]); pasTitelAan(); requestAnimationFrame(pasTitelAan);
+  document.body.dataset.scherm = v;   // het beginscherm toont de zon helder; op andere schermen is hij zachter (app.css)
   $("bottomBar").classList.toggle("hidden", v !== "today");
   $("sosBtn").classList.toggle("hidden", v === "sos");
   document.querySelectorAll("#drawer [data-view]").forEach(b => b.classList.toggle("on", b.dataset.view === v));

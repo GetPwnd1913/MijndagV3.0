@@ -1060,3 +1060,212 @@
   svg.i *,.ic *,.jftarrow svg *{vector-effect:non-scaling-stroke}
   .meldrij{gap:var(--ruimte-2)}
   .meldrij svg.i{color:var(--warm)}
+
+  /* =====================================================================================================
+     Je dag, je weg: de hele app is de lucht. De hemel (index.html: #hemel) staat vast achter alles, kleurt mee met het moment
+     van de dag (data-tod) en met licht/donker (data-donker) en wordt gekozen via data-laag op <html> (zetLaag in vormgeving.js).
+     Kaarten zijn doorschijnend matglas erover. Voorbeeld: documentatie/ontwerp/wauw-voorbeeld.html
+     ===================================================================================================== */
+  :root{
+    --muted:#4d4b44;                                   /* donkerder dan voorheen: tekst staat nu direct op de lucht (contrast minstens 4,5:1) */
+    --lijn:rgba(29,35,33,.2);
+    --gk:rgba(255,255,255,.64); --gr:rgba(255,255,255,.78);                 /* matglas: vlak en rand */
+    --gblur:blur(16px) saturate(1.3);
+    --hemel-t:1.4s;
+  }
+  html[data-donker]{ --muted:#c6bfb3; --lijn:rgba(255,255,255,.22); --gk:rgba(16,18,36,.44); --gr:rgba(255,255,255,.17); }   /* donker glas: licht tekst blijft leesbaar op de heldere horizon */
+  html{background:var(--bg)}
+  body{background:transparent}
+  body::before{display:none}
+
+  /* ---- de lucht ---- */
+  .hemel{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
+    --lx:77%;--ly:188px;--lkleur:#ffd36a;--lglow:rgba(255,200,90,.6);--ster:0;--wolk:1}
+  .hemel .laag{position:absolute;inset:0;opacity:0;transition:opacity var(--hemel-t) var(--ease)}
+  .hemel .l-ochtend {background:linear-gradient(180deg,#f3bfc0 0%,#f9d6c0 38%,#fde8c6 100%)}
+  .hemel .l-middag  {background:linear-gradient(180deg,#a9d3f2 0%,#cfe7f5 45%,#eef6f2 100%)}
+  .hemel .l-avond   {background:linear-gradient(180deg,#f2cfd0 0%,#ecbcc4 48%,#dfb1cf 100%)}
+  .hemel .l-nacht   {background:linear-gradient(180deg,#aebbe2 0%,#c5cfec 55%,#dde3f4 100%)}
+  .hemel .l-ochtendD{background:linear-gradient(180deg,#2e2336 0%,#4a3540 55%,#5e4339 100%)}
+  .hemel .l-middagD {background:linear-gradient(180deg,#16293a 0%,#1d3446 50%,#21363a 100%)}
+  .hemel .l-avondD  {background:linear-gradient(180deg,#141d47 0%,#35387a 48%,#62467e 80%,#8f5470 100%)}
+  .hemel .l-nachtD  {background:linear-gradient(180deg,#070d24 0%,#12204a 60%,#1d2f5a 100%)}
+  html[data-laag="ochtend"] .l-ochtend,html[data-laag="middag"] .l-middag,html[data-laag="avond"] .l-avond,html[data-laag="nacht"] .l-nacht,
+  html[data-laag="ochtendD"] .l-ochtendD,html[data-laag="middagD"] .l-middagD,html[data-laag="avondD"] .l-avondD,html[data-laag="nachtD"] .l-nachtD{opacity:1}
+  /* zon of maan: per moment een vaste plek (px, zodat hij bovenin blijft op hoge schermen) */
+  html[data-laag="ochtend"] .hemel,html[data-laag="ochtendD"] .hemel{--lx:20%;--ly:262px;--lkleur:#f7a86a;--lglow:rgba(246,150,110,.6)}
+  html[data-laag="ochtendD"] .hemel{--lkleur:#e6935f;--lglow:rgba(230,130,90,.4);--ster:.25;--wolk:0}
+  html[data-laag="middagD"] .hemel{--lkleur:#e8c36a;--lglow:rgba(230,190,90,.32);--ster:.3;--wolk:0}
+  html[data-laag="avond"] .hemel{--lx:84%;--ly:268px;--lkleur:#ffc4a0;--lglow:rgba(255,160,120,.4);--wolk:.5}
+  html[data-laag="avondD"] .hemel{--lx:84%;--ly:268px;--lkleur:#ffb48a;--lglow:rgba(255,150,110,.34);--ster:.8;--wolk:0}
+  html[data-laag="nacht"] .hemel{--lx:80%;--ly:112px;--lkleur:#fff3c9;--lglow:rgba(255,255,255,.55);--wolk:.4}
+  html[data-laag="nachtD"] .hemel{--lx:80%;--ly:112px;--lkleur:#f4e6bd;--lglow:rgba(244,230,189,.22);--ster:1;--wolk:0}
+  .lichaam{position:absolute;left:var(--lx);top:var(--ly);width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;background:var(--lkleur);
+    box-shadow:0 0 0 14px color-mix(in srgb,var(--lkleur) 20%,transparent),0 0 70px 26px var(--lglow);
+    transition:left var(--hemel-t) var(--ease),top var(--hemel-t) var(--ease),background var(--hemel-t),box-shadow var(--hemel-t),opacity var(--t-traag);animation:hemelAdem 7s ease-in-out infinite}
+  html[data-laag="nacht"] .lichaam,html[data-laag="nachtD"] .lichaam{width:46px;height:46px;margin:-23px 0 0 -23px;background:transparent;box-shadow:inset -14px -5px 0 0 var(--lkleur),0 0 40px 8px var(--lglow)}
+  body:not([data-scherm="home"]) .lichaam{opacity:.4}
+  @keyframes hemelAdem{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+  .sterren{position:absolute;inset:0;opacity:var(--ster);transition:opacity var(--hemel-t)}
+  .ster{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:hemelFonkel 4s ease-in-out infinite}
+  .ster.groot{width:3px;height:3px;box-shadow:0 0 6px 1px rgba(255,255,255,.7)}
+  @keyframes hemelFonkel{0%,100%{opacity:.25}50%{opacity:1}}
+  .vallend{position:absolute;top:12%;left:70%;width:90px;height:1.5px;background:linear-gradient(90deg,transparent,#fff);opacity:0;transform:rotate(28deg)}
+  html.dagrond .vallend{animation:hemelVal 1.6s ease-out 1.4s 1 forwards}
+  @keyframes hemelVal{0%{opacity:0;transform:translate(0,0) rotate(28deg)}15%{opacity:1}100%{opacity:0;transform:translate(-120px,70px) rotate(28deg)}}
+  .wolken{position:absolute;inset:0;opacity:var(--wolk);transition:opacity var(--hemel-t)}
+  .wolk{position:absolute;height:34px;border-radius:99px;background:rgba(255,255,255,.85);filter:blur(1px);animation:hemelDrijf 70s linear infinite}
+  .wolk::before,.wolk::after{content:"";position:absolute;background:inherit;border-radius:50%}
+  .wolk::before{width:44px;height:44px;left:16px;top:-22px}.wolk::after{width:30px;height:30px;left:52px;top:-12px}
+  .wolk.w1{width:110px;top:20%;left:-130px}
+  .wolk.w2{width:80px;top:34%;left:-100px;animation-duration:95s;animation-delay:-40s;opacity:.7}
+  .wolk.w3{width:96px;top:12%;left:-120px;animation-duration:120s;animation-delay:-80s;opacity:.55}
+  @keyframes hemelDrijf{to{transform:translateX(130vw)}}
+  .heuvels{position:absolute;left:0;right:0;bottom:0;height:min(46%,360px)}
+  .heuvels svg{position:absolute;inset:0;width:100%;height:100%}
+  .heuvels path{transition:fill var(--hemel-t) var(--ease)}
+  html[data-laag="ochtend"] .h1{fill:#efb09c}html[data-laag="ochtend"] .h2{fill:#e39a89}html[data-laag="ochtend"] .h3{fill:#c97c78}
+  html[data-laag="middag"] .h1{fill:#bde0d2}html[data-laag="middag"] .h2{fill:#93c6b2}html[data-laag="middag"] .h3{fill:#6aa593}
+  html[data-laag="avond"] .h1{fill:#e8aab0}html[data-laag="avond"] .h2{fill:#d891a8}html[data-laag="avond"] .h3{fill:#bb7a9c}
+  html[data-laag="nacht"] .h1{fill:#a1b1dd}html[data-laag="nacht"] .h2{fill:#8a9bcb}html[data-laag="nacht"] .h3{fill:#7083b8}
+  html[data-laag="ochtendD"] .h1{fill:#4f3a40}html[data-laag="ochtendD"] .h2{fill:#3b2b32}html[data-laag="ochtendD"] .h3{fill:#2a1e25}
+  html[data-laag="middagD"] .h1{fill:#2a4650}html[data-laag="middagD"] .h2{fill:#1f3840}html[data-laag="middagD"] .h3{fill:#162a30}
+  html[data-laag="avondD"] .h1{fill:#4a3f7a}html[data-laag="avondD"] .h2{fill:#2b2a5e}html[data-laag="avondD"] .h3{fill:#181a43}
+  html[data-laag="nachtD"] .h1{fill:#1c2a52}html[data-laag="nachtD"] .h2{fill:#121d3f}html[data-laag="nachtD"] .h3{fill:#0a1330}
+
+  /* ---- matglas: kaarten en vlakken ---- */
+  .card,.ochrij,.meldrij,.snel,.dbdate,.tabs,.vitrine,.dbknop.klaar{background:var(--gk);border-color:var(--gr)}
+  body[data-scherm="home"] .card,body[data-scherm="home"] .ochrij,body[data-scherm="home"] .meldrij,body[data-scherm="home"] .snel,
+  body[data-scherm="home"] .dbknop.klaar{-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+  @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .card,.ochrij,.meldrij,.snel,.dbdate,.tabs,.vitrine,.dbknop.klaar{background:var(--card)}
+  }
+
+  /* ---- beginscherm: begroeting en dagboog ---- */
+  .wrap{overflow-x:clip}   /* niets op het beginscherm mag de pagina horizontaal laten scrollen */
+  .groetblok{margin:22px 2px 0}
+  .datumregel{font-size:var(--fs-label);font-weight:600;color:var(--muted);letter-spacing:.02em}
+  .groetblok .greet{display:block;margin:4px 0 0;padding:0;color:var(--ink);font-family:var(--serif);font-weight:500;letter-spacing:-.025em;line-height:1.04;
+    font-size:calc(clamp(34px,10.6vw,48px)*(1 + (var(--ts) - 1)*.5));overflow-wrap:anywhere}
+  .groetblok .greet svg{display:none}
+  .dagboog{position:relative;display:block;width:100%;height:150px;margin:6px 0 30px;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+  .boogsvg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .boogsvg path{fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round}
+  .sbspoor{stroke:var(--lijn);stroke-width:2;stroke-dasharray:2 7}
+  .sbgedaan{stroke:var(--accent);stroke-width:3.5;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 60%,transparent))}
+  .nudot{position:absolute;width:14px;height:14px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;
+    box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 50%,transparent),0 0 18px 6px color-mix(in srgb,var(--accent) 55%,transparent)}
+  .stations{position:absolute;inset:0}
+  .station{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:80px}
+  .station .punt{position:relative;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--lijn);background:var(--gk);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--ink);transition:all .5s var(--ease)}
+  .station .punt svg{width:16px;height:16px;stroke-width:2.8;opacity:0;transform:scale(.4);transition:all .5s var(--ease)}
+  .station.klaar .punt{background:var(--accent);border-color:var(--accent);color:var(--op-accent);box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 22%,transparent)}
+  .station.klaar .punt svg{opacity:1;transform:none}
+  .station.deel .punt{border-color:transparent;background:conic-gradient(var(--accent) calc(var(--f)*1turn),var(--lijn) 0)}
+  .station.deel .punt::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--card)}
+  .station .stl{font-size:var(--fs-klein);font-weight:650;color:var(--muted);white-space:nowrap}
+  .dagboog.rond .sbgedaan{stroke-width:4.5}
+  .groetblok .dagrondzin{margin:-8px 2px 14px;font-family:var(--serif);font-size:var(--fs-kop-s);color:var(--ink)}
+  .groetblok .dagringuitleg{margin:-14px 0 14px;padding:12px 14px;border-radius:18px;background:var(--gk);border:1px solid var(--gr)}
+
+  /* ---- de grote knop: dagbeschouwing ---- */
+  .dbknop{position:relative;gap:16px;padding:20px 20px 20px 18px;border:1px solid rgba(255,255,255,.28);border-radius:28px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 86%,#000),var(--accent));color:var(--op-accent);
+    box-shadow:0 1px 0 rgba(255,255,255,.25) inset,0 26px 46px -24px color-mix(in srgb,var(--accent) 90%,#000)}
+  .dbknop::after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;animation:hoofdGloed 3.4s ease-in-out infinite}
+  @keyframes hoofdGloed{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 0%,transparent)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--accent) 24%,transparent)}}
+  .dbknop .dbk-tx b{font-family:var(--serif);font-weight:600;font-size:calc(21px*var(--ts));line-height:1.15;letter-spacing:-.01em}
+  html[data-donker] .dbknop:not(.klaar){background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 34%,transparent),color-mix(in srgb,var(--accent) 16%,transparent));
+    color:var(--ink);border-color:color-mix(in srgb,var(--accent) 40%,transparent);-webkit-backdrop-filter:var(--gblur);backdrop-filter:var(--gblur)}
+  .dbknop.klaar::after{display:none}
+
+  /* ---- Jouw weg ---- */
+  .weg{margin:30px -14px 0}
+  .wegkop{padding:0 16px}
+  .weg .label{text-transform:none;letter-spacing:0;font-size:var(--fs-label);font-weight:650;color:var(--muted);margin:0}
+  .weg .skydagen{margin:4px 0 0;font-family:var(--serif);font-weight:500;letter-spacing:-.025em;line-height:1.04;color:var(--ink);
+    font-size:calc(clamp(34px,10.6vw,48px)*(1 + (var(--ts) - 1)*.5))}
+  .weg #msNext{margin-top:6px!important;font-size:var(--fs-tekst);color:var(--muted)}
+  .wegbalk{display:none!important}
+  .wegrij{position:relative;margin-top:6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 8%,#000 92%,transparent 100%)}
+  .wegrij::-webkit-scrollbar{display:none}
+  .wegbaan{position:relative}
+  .wegpad{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}
+  .wegpad path{fill:none;stroke-linecap:round}
+  .wegtoekomst{stroke:var(--lijn);stroke-width:2.5;stroke-dasharray:3 8}
+  .weggelopen{stroke:var(--accent);stroke-width:4.5;filter:drop-shadow(0 0 7px color-mix(in srgb,var(--accent) 70%,transparent))}
+  .wegstop{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
+  .wegtag{display:block;filter:drop-shadow(0 8px 8px rgba(0,0,0,.28));transform-origin:50% 0;animation:wegSlinger 6s ease-in-out infinite}
+  .wegstop:nth-child(even) .wegtag{animation-delay:-2.4s}
+  .wegglow{filter:drop-shadow(0 0 10px #d6f5c8) drop-shadow(0 0 22px rgba(160,255,130,.55))}
+  @keyframes wegSlinger{0%,100%{transform:rotate(-2.2deg)}50%{transform:rotate(2.2deg)}}
+  .wegpaal{display:block;width:2px;height:24px;background:var(--lijn)}
+  .wegnaam{margin-top:22px;font-size:var(--fs-klein);font-weight:650;white-space:nowrap}
+  .wegsub{font-size:var(--fs-bijschrift);color:var(--muted);white-space:nowrap}
+  .wegstop.komt .wegtag{filter:none;animation:none;opacity:.85}
+  .wegstop.komt .wegnaam{color:var(--muted)}
+  .wegjij{position:absolute;transform:translate(-50%,-50%);pointer-events:none}
+  .wegorb{position:relative;display:block;width:24px;height:24px;border-radius:50%;background:#fff;
+    box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 55%,transparent),0 0 34px 12px color-mix(in srgb,var(--accent) 60%,transparent)}
+  .wegorb::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px solid var(--accent);animation:wegGolf 2.6s ease-out infinite}
+  @keyframes wegGolf{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.1);opacity:0}}
+  .wegwie{position:absolute;left:50%;top:calc(34px + 44px*var(--ts));transform:translateX(-50%);white-space:nowrap;padding:6px 13px;border-radius:99px;font-size:var(--fs-klein);font-weight:700;
+    background:var(--gk);border:1px solid var(--gr);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--ink)}
+  .weg .skylinks{padding:0 16px;margin-top:4px}
+
+  /* ---- snelknoppen als tegels ---- */
+  .snelgrid{gap:12px}
+  .snelgrid .snel{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:14px;min-height:104px;padding:18px 16px;border-radius:26px;font-weight:650;line-height:1.2}
+  .snelgrid .snel .ic{width:26px;height:26px;color:var(--accent)}
+  .snelgrid .snel.sos .ic{color:var(--danger-text)}
+
+  @media (prefers-reduced-motion:reduce){
+    .lichaam,.ster,.wolk,.wegtag,.wegorb::after,.dbknop::after,.vallend{animation:none!important}
+    .hemel .laag,.sterren,.wolken,.lichaam,.heuvels path{transition-duration:.01ms!important}
+  }
+
+  /* ---- dagbeschouwing: keuze Vraag voor vraag / Alles tegelijk, en de stap-weergave ---- */
+  .dwkeuze{display:flex;gap:4px;padding:4px;margin:0 0 14px;border-radius:var(--hoek-rond);background:var(--gk);border:1px solid var(--gr)}
+  .dwkeuze button{flex:1;min-height:44px;padding:9px 10px;border:0;border-radius:var(--hoek-rond);background:none;color:var(--muted);font:inherit;font-size:var(--fs-tekst);font-weight:600}
+  .dwkeuze button.on{background:var(--accent);color:var(--op-accent)}
+  .stapkop{margin:0 2px 14px}
+  .stapteller{font-size:var(--fs-label);font-weight:650;color:var(--muted)}
+  .segmenten{display:flex;gap:5px;margin-top:10px}
+  .segmenten i{flex:1;height:5px;border-radius:99px;background:var(--lijn);transition:background .4s}
+  .segmenten i.klaar{background:var(--accent)}
+  .segmenten i.nu{background:var(--ink);box-shadow:0 0 10px color-mix(in srgb,var(--ink) 50%,transparent)}
+  #questions .stapweg{display:none!important}
+  #questions.stap .card:not(.fs){position:relative;padding:22px 20px;border-radius:28px;overflow:hidden}
+  #questions.stap .card[data-nr]:not(.fs)::before{content:attr(data-nr);position:absolute;right:8px;top:-16px;font:600 120px/1 var(--serif);color:var(--ink);opacity:.06;pointer-events:none;letter-spacing:-.04em}
+  #questions.stap .qhead .num,#questions.stap .qhead .fchev,#questions.stap .qhead .fsum{display:none}
+  #questions.stap .qtitle{font-family:var(--serif);font-weight:500;font-size:calc(clamp(26px,8vw,34px)*(1 + (var(--ts) - 1)*.5));line-height:1.12;letter-spacing:-.02em;margin-top:2px}
+  #questions.stap .card.fold{cursor:default}
+  .stapnav{display:flex;gap:10px;margin-top:14px}
+  .stapnav button{flex:1;min-height:52px}
+  .stapnav button:disabled{opacity:.4}
+
+  /* ---- Je dag is rond ---- */
+  .dagrondscherm{position:fixed;inset:0;z-index:350;overflow:auto;padding:calc(14px + env(safe-area-inset-top)) 20px 30px;color:var(--ink);opacity:0;transition:opacity .9s var(--ease)}
+  .dagrondscherm.aan{opacity:1}
+  .dagrondinhoud{position:relative;max-width:420px;margin:0 auto}
+  .dagrondsluit{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--gr);background:var(--gk);color:var(--ink);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  .dagrondmidden{text-align:center;margin-top:9vh}
+  .rondring{position:relative;width:136px;height:136px;margin:0 auto}
+  .rondring svg{width:100%;height:100%;overflow:visible}
+  .rondring .b{fill:none;stroke:var(--lijn);stroke-width:6}
+  .rondring .v{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;stroke-dasharray:352;stroke-dashoffset:352;transform:rotate(-90deg);transform-origin:50% 50%;filter:drop-shadow(0 0 10px var(--accent))}
+  .rondring .vink{fill:none;stroke:var(--ink);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:70;stroke-dashoffset:70}
+  .dagrondscherm.aan .rondring .v{animation:rondTeken 1.4s var(--ease) .3s forwards}
+  .dagrondscherm.aan .rondring .vink{animation:rondTeken .7s var(--ease) 1.4s forwards}
+  @keyframes rondTeken{to{stroke-dashoffset:0}}
+  .dagrondmidden h2{margin:30px 0 0;font:500 calc(clamp(38px,12vw,48px)*(1 + (var(--ts) - 1)*.5))/1.04 var(--serif);letter-spacing:-.025em;color:var(--ink)}
+  .dagrondmidden p{margin:12px auto 0;max-width:300px;font-size:var(--fs-lees);line-height:1.5;color:var(--muted)}
+  .dagrondknoppen{display:flex;flex-direction:column;gap:10px;margin:30px auto 0;max-width:300px}
+  .dagrondknoppen button{min-height:54px;border-radius:20px;font-size:var(--fs-lees);font-weight:650}
+  @media (prefers-reduced-motion:reduce){
+    .rondring .v,.rondring .vink{animation:none!important;stroke-dashoffset:0!important}
+    .dagrondscherm{transition-duration:.01ms}
+  }

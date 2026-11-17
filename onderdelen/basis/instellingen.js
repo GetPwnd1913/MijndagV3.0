@@ -20,6 +20,7 @@ function pasModusToe(m){
   const donker = keuze === "donker" || (keuze === "auto" && !!(MODUS_MQ && MODUS_MQ.matches));
   if(keuze === "auto") h.removeAttribute("data-modus"); else h.setAttribute("data-modus", keuze);
   if(donker) h.setAttribute("data-donker", ""); else h.removeAttribute("data-donker");
+  if(typeof zetLaag === "function") zetLaag();
   zetThemaKleur();
 }
 // kleur van de balk bovenin de telefoon: licht = de themakleur (zoals altijd), donker = de donkere achtergrond

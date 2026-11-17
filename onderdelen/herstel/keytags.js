@@ -172,3 +172,69 @@ function renderKeytags(){
     }
   } else { const emo = $("msCelEmoji"); if(emo) emo.classList.remove("hidden"); }
 }
+
+// ---------- Jouw weg (beginscherm): je clean-tijd als slingerend pad, de keytags zijn de haltes ----------
+// Alleen tonen: er wordt niets opgeslagen. De keytags zijn dezelfde tekeningen als in "Mijn keytags" (keytagSvg).
+// Haltes staan in volgorde op gelijke afstand; de lichtende bol ("Jij") staat tussen de laatst behaalde en de volgende halte
+// naar rato van het aantal dagen. Tikken op een behaalde keytag opent het mijlpaal-overzicht, op een komende toont hoeveel dagen nog.
+const WEG_AFSTAND = 150, WEG_START = 76, WEG_H = 268, WEG_Y0 = 148, WEG_AMP = 20;
+let wegSig = "";
+const wegY = x => WEG_Y0 + WEG_AMP * Math.sin(x / 105);
+function renderWeg(){
+  const box = $("weg"), baan = $("wegBaan"), rij = $("wegRij"); if(!box || !baan || !rij) return;
+  const since = settings.since, tk = todayKey();
+  const toon = !!since && tk >= since;
+  rij.classList.toggle("hidden", !toon);
+  if(!toon){ wegSig = ""; baan.innerHTML = ""; return; }
+  const list = keytagList(since).slice();
+  if(!list.some(t => t.key > tk)){   // alle tags behaald (2 jaar of meer): de volgende zwarte keytag staat in de verte
+    const last = list[list.length - 1], jr = (last.years || 2) + 1;
+    list.push(Object.assign({}, last, {big: String(jr), label: jr + vt(" jaar", " years"), name: last.name, key: addMonthsKey(since, 12 * jr), years: jr}));
+  }
+  const d = daysClean(tk);
+  const sig = [since, tk, isEn() ? "en" : "nl", list.length, list[list.length - 1].label].join("|");
+  if(sig === wegSig) return;
+  const eerste = wegSig === ""; wegSig = sig;
+  baan.innerHTML = "";
+  const breedte = WEG_START + (list.length - 1) * WEG_AFSTAND + 90;
+  baan.style.width = breedte + "px"; baan.style.height = WEG_H + "px";
+  let L = -1; list.forEach((t, i) => { if(t.key <= tk) L = i; });
+  const volg = list[L + 1] || null;
+  const dagenTot = k => Math.round((parseKey(k) - parseKey(since)) / 864e5);
+  let xNu = WEG_START + L * WEG_AFSTAND;
+  if(volg){ const a = dagenTot(list[L].key), b = dagenTot(volg.key); xNu += WEG_AFSTAND * Math.max(.18, Math.min(.82, (dagenTot(tk) - a) / ((b - a) || 1))); }
+  const pad = (a, b) => { let p = ""; for(let x = a; x <= b; x += 8) p += (p ? "L" : "M") + x + " " + wegY(x).toFixed(1); return p; };
+  const svg = svgEl("svg", {class: "wegpad", viewBox: "0 0 " + breedte + " " + WEG_H, "aria-hidden": "true"});
+  svg.appendChild(svgEl("path", {class: "wegtoekomst", d: pad(Math.round(xNu), breedte - 30)}));
+  svg.appendChild(svgEl("path", {class: "weggelopen", d: pad(20, Math.round(xNu))}));
+  baan.appendChild(svg);
+  list.forEach((t, i) => {
+    const on = t.key <= tk, x = WEG_START + i * WEG_AFSTAND;
+    const b = el("button", "wegstop" + (on ? "" : " komt")); b.type = "button";
+    b.style.left = x + "px"; b.style.top = (wegY(x) - 100) + "px";
+    const tag = keytagSvg(t, on, 44); b.setAttribute("aria-label", tag.getAttribute("aria-label")); tag.setAttribute("aria-hidden", "true"); tag.classList.add("wegtag");
+    if(on && t.glow) tag.classList.add("wegglow");
+    b.appendChild(tag); b.appendChild(el("span", "wegpaal"));
+    b.appendChild(el("span", "wegnaam", t.label));
+    const links = Math.round((parseKey(t.key) - parseKey(tk)) / 864e5);
+    b.appendChild(el("span", "wegsub", on ? t.name : (isEn() ? aantal(links, "", "", "day", "days") + " to go" : "nog " + links + (links === 1 ? " dag" : " dagen"))));
+    b.onclick = () => {
+      if(on){
+        if(t.key === since) toast(vt("Welkom · je begon op ", "Welcome · you started on ") + shortDate(since));
+        else openMijlpaal(t.years !== undefined ? addMonthsKey(since, 12 * t.years) : t.key);
+      } else toast(t.name + " · " + t.label + " · " + (isEn() ? aantal(links, "", "", "day", "days") + " to go (" : "nog " + links + (links === 1 ? " dag" : " dagen") + " (") + shortDate(t.key) + ")");
+    };
+    baan.appendChild(b);
+  });
+  const jij = el("div", "wegjij"); jij.style.left = xNu + "px"; jij.style.top = wegY(xNu) + "px";
+  jij.setAttribute("role", "img"); jij.setAttribute("aria-label", vt("Jij bent hier: dag ", "You are here: day ") + (d === null ? "" : d));
+  jij.appendChild(el("span", "wegwie", vt("Jij · dag ", "You · day ") + (d === null ? "" : d)));
+  jij.appendChild(el("span", "wegorb"));
+  baan.appendChild(jij);
+  // bij het openen loopt de weg van het begin naar jou (niet bij "minder beweging")
+  const doel = Math.max(0, xNu - rij.clientWidth * .42);
+  const stil = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(stil || !eerste){ rij.scrollLeft = doel; return; }
+  rij.scrollLeft = 0;
+  setTimeout(() => { try{ rij.scrollTo({left: Math.max(0, xNu - rij.clientWidth * .42), behavior: "smooth"}); }catch(e){ rij.scrollLeft = doel; } }, 900);
+}

@@ -78,6 +78,7 @@ $("welkomNieuw").onclick = () => { try{ localStorage.setItem(WELKOM_WEG, "1"); }
 function renderHome(){
   renderWelkomTerug();
   renderHomeKeytags();
+  if(typeof renderWeg === "function") renderWeg();
   renderDbKnop();
   renderMeldingen();
   renderIntro();
@@ -101,6 +102,7 @@ function renderDagboog(nu){
   const u = d.getHours() + d.getMinutes() / 60;
   const tod = u < 6 ? "nacht" : u < 12 ? "ochtend" : u < 18 ? "middag" : u < 22 ? "avond" : "nacht";
   document.documentElement.dataset.tod = tod;
+  if(typeof zetLaag === "function") zetLaag();
   const zon = $("skyZon"); if(!zon) return;
   const nacht = u < 6 || u >= 22;
   const t = nacht ? ((u + 24 - 22) % 24) / 8 : (u - 6) / 16;
@@ -137,10 +139,17 @@ function dagRingStand(){
 function renderDagRing(){
   const ring = $("dagRing"); if(!ring) return;
   const st = dagRingStand(), delen = [st.ochtend, st.dag, st.avond];
-  const R = 26, C = 2 * Math.PI * R, seg = C / 3, gat = 7;
-  const boog = (cls, i, f) => '<circle class="' + cls + ' d' + i + '" cx="32" cy="32" r="' + R + '" stroke-dasharray="' + ((seg - gat) * f).toFixed(2) + ' ' + C.toFixed(2) + '" stroke-dashoffset="' + (-(i * seg + gat / 2)).toFixed(2) + '"/>';
-  ring.querySelector(".drsporen").innerHTML = [0, 1, 2].map(i => boog("drspoor", i, 1)).join("");
-  ring.querySelector(".drvul").innerHTML = delen.map((f, i) => f > 0 ? boog("drdeel", i, Math.min(1, f)) : "").join("");
+  const namen = [vt("Ochtend", "Morning"), vt("Dag", "Day"), vt("Avond", "Evening")];
+  const pos = [[6, 92], [50, 12], [94, 92]];   // dezelfde punten als de boog zelf (boogPunt met t = 0, 0,5 en 1)
+  const box = $("dagStations"); box.innerHTML = "";
+  delen.forEach((f, i) => {
+    f = Math.max(0, Math.min(1, f));
+    const s = el("span", "station" + (f >= 1 ? " klaar" : f > 0 ? " deel" : ""));
+    s.style.left = pos[i][0] + "%"; s.style.top = pos[i][1] + "%"; s.style.setProperty("--f", f.toFixed(3));
+    const p = el("span", "punt"); p.appendChild(icon("check", 16)); s.appendChild(p);
+    s.appendChild(el("span", "stl", namen[i]));
+    box.appendChild(s);
+  });
   const rond = delen.every(f => f >= 1);
   ring.classList.toggle("rond", rond);
   if(rond && dagRingWasRond === false){ ring.classList.remove("netrond"); void ring.offsetWidth; ring.classList.add("netrond"); }
@@ -150,7 +159,7 @@ function renderDagRing(){
   zin.textContent = vt("Je dag is rond. Rust goed.", "Your day is complete. Rest well.");
   zin.classList.toggle("hidden", !rond);
   const u = $("dagRingUitleg"); u.innerHTML = "";
-  st.uitleg.forEach((t, i) => { const r = el("div", "drregel"); const s = el("i", "drbol d" + i); r.appendChild(s); r.appendChild(el("span", null, t)); u.appendChild(r); });
+  st.uitleg.forEach((t, i) => { const r = el("div", "drregel"); const sp = el("i", "drbol d" + i); r.appendChild(sp); r.appendChild(el("span", null, t)); u.appendChild(r); });
   u.classList.toggle("hidden", !dagRingOpen);
   ring.setAttribute("aria-expanded", dagRingOpen ? "true" : "false");
 }

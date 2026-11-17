@@ -62,7 +62,8 @@ function openSummary(e, fromHistory){
 }
 $("summaryBtn").onclick = async () => {
   const open = QUESTIONS.map((q, i) => ({q, i})).filter(o => !isDone(o.q));
-  if(open.length){ showOpenQuestions(open); return; } if(dirty){ clearTimeout(saveTimer); await flush(); } openSummary(entry, false); };
+  if(open.length){ showOpenQuestions(open); return; } if(dirty){ clearTimeout(saveTimer); await flush(); }
+  if(curKey === todayKey() && typeof toonDagRond === "function") toonDagRond(() => openSummary(entry, false)); else openSummary(entry, false); };
 $("closeSum").onclick = () => $("overlay").classList.remove("show");
 $("overlay").onclick = e => { if(e.target.id==="overlay") $("overlay").classList.remove("show"); };
 $("setOverlay").onclick = e => { if(e.target.id==="setOverlay") closeSettings(); };
@@ -76,3 +77,41 @@ $("copySum").onclick = async () => {
 };
 
 const isHeaderLine = (q, line) => (q.rows||[]).length > 1 && q.rows.some(r => headersOf(r).indexOf(line) >= 0);
+
+// ---------- "Je dag is rond": afsluitend scherm als alle vragen klaar zijn en je afrondt (alleen voor vandaag) ----------
+// De hemel gaat tijdelijk naar nacht (een kopie van #hemel in het scherm zelf, data-laag wordt na sluiten hersteld).
+function toonDagRond(opSamenvatting){
+  const oud = $("dagRondScherm"); if(oud) oud.remove();
+  const h = document.documentElement, terug = document.activeElement;
+  const ov = el("div", "dagrondscherm"); ov.id = "dagRondScherm"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-modal", "true"); ov.setAttribute("aria-labelledby", "dagRondTitel");
+  const hemel = $("hemel");
+  if(hemel){ const c = hemel.cloneNode(true); c.removeAttribute("id"); c.querySelectorAll("[id]").forEach(n => n.removeAttribute("id")); ov.appendChild(c); }
+  const inh = el("div", "dagrondinhoud");
+  const sluit = el("button", "dagrondsluit"); sluit.type = "button"; sluit.appendChild(icon("x", 22)); sluit.setAttribute("aria-label", vt("Sluiten", "Close"));
+  const mid = el("div", "dagrondmidden");
+  const ring = el("div", "rondring"); ring.setAttribute("aria-hidden", "true");
+  ring.innerHTML = '<svg viewBox="0 0 120 120"><circle class="b" cx="60" cy="60" r="56"/><circle class="v" cx="60" cy="60" r="56"/><path class="vink" d="M38 62l15 15 30-33"/></svg>';
+  const t = el("h2", null, vt("Je dag is rond.", "Your day is complete.")); t.id = "dagRondTitel";
+  const p = el("p", null, vt("Goed gedaan, je hebt alle " + QUESTIONS.length + " vragen ingevuld. Rust goed.", "Well done, you have answered all " + QUESTIONS.length + " questions. Rest well."));
+  const kn = el("div", "dagrondknoppen");
+  const b1 = el("button", "primary", vt("Bekijk je samenvatting", "View your summary")); b1.type = "button";
+  const b2 = el("button", "ghost", vt("Terug naar Vandaag", "Back to Today")); b2.type = "button";
+  kn.appendChild(b1); kn.appendChild(b2);
+  mid.appendChild(ring); mid.appendChild(t); mid.appendChild(p); mid.appendChild(kn);
+  inh.appendChild(sluit); inh.appendChild(mid); ov.appendChild(inh);
+  const donker = h.hasAttribute("data-donker");
+  const sluiten = () => {
+    document.removeEventListener("keydown", opToets);
+    ov.classList.remove("aan"); h.classList.remove("dagrond"); zetLaag();
+    setTimeout(() => ov.remove(), 700);
+    if(terug && terug.focus && document.contains(terug)) try{ terug.focus(); }catch(e){}
+  };
+  const opToets = e => { if(e.key === "Escape") sluiten(); };
+  document.addEventListener("keydown", opToets);
+  sluit.onclick = sluiten;
+  b1.onclick = () => { sluiten(); opSamenvatting(); };
+  b2.onclick = () => { sluiten(); showView("home"); };
+  document.body.appendChild(ov);
+  h.classList.add("dagrond"); h.setAttribute("data-laag", "nacht" + (donker ? "D" : ""));
+  requestAnimationFrame(() => { ov.classList.add("aan"); b1.focus(); });
+}

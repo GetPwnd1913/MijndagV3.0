@@ -63,12 +63,14 @@ function klaarKnop(q, a, card, nr){
     if(!(a.text || "").trim()) return;
     a.klaar = !a.klaar; paint(); scheduleSave(); markCard(q);
     if(a.klaar) setTimeout(() => { if(isDone(q)) setFold(card, q, true); }, 450);
+    if(a.klaar && typeof stapVolgendeNa === "function") stapVolgendeNa(card);
   };
   card._paintKlaar = paint;
   paint();
   return kb;
 }
 function setFold(card, q, on){
+  if(on && $("questions").classList.contains("stap")) on = false;   // vraag voor vraag: nooit inklappen
   card.classList.toggle("fold", on);
   const ch = card.querySelector(".fchev"); if(ch){ ch.innerHTML = ""; ch.appendChild(icon(on ? "chevR" : "chevD", 18));
     if(!ch.hasAttribute("role")) toetsKlik(ch);
@@ -552,6 +554,7 @@ function renderGreeting(){
     for(let i = 0; i < 8; i++){ const a = i * Math.PI / 4; mk("line", {x1: (16 + 9.5 * Math.cos(a)).toFixed(1), y1: (16 + 9.5 * Math.sin(a)).toFixed(1), x2: (16 + 13 * Math.cos(a)).toFixed(1), y2: (16 + 13 * Math.sin(a)).toFixed(1), stroke: "#f4b45f", "stroke-width": 2.6, "stroke-linecap": "round"}); }
   }
   g.appendChild(sv);
+  const dt = $("homeDatum"); if(dt) dt.textContent = longDay(todayKey());
   const sky = $("sky"); if(sky) sky.dataset.tod = h < 6 ? "nacht" : h < 12 ? "ochtend" : h < 18 ? "middag" : h < 22 ? "avond" : "nacht";
   if(typeof renderDagboog === "function") renderDagboog();
   const first = (settings.naam || "").trim().split(/\s+/)[0];
@@ -575,6 +578,7 @@ function render(){
   QUESTIONS.forEach((q,i)=>qs.appendChild(buildQuestion(q,i)));
   // het grote schrijfscherm (vraag 1) bestaat na opnieuw tekenen niet meer: pagina niet laten vastzitten
   if(!document.querySelector(".card.fs")) document.body.classList.remove("fsopen");
+  renderStap();
   updateProgress();
   if(typeof renderHome === "function") renderHome();
 }
@@ -588,7 +592,85 @@ function updateProgress(){
   $("progNum").textContent = n;
   $("progRing").classList.toggle("full", n === T);
   if(typeof renderDbKnop === "function") renderDbKnop();
+  renderStapKop();
 }
 
 $("prevDay").onclick = () => { const d=parseKey(curKey); d.setDate(d.getDate()-1); loadDay(keyOf(d)); window.scrollTo(0,0); };
 $("nextDay").onclick = () => { const d=parseKey(curKey); d.setDate(d.getDate()+1); const k=keyOf(d); if(k<=todayKey()){ loadDay(k); window.scrollTo(0,0);} };
+
+// ---------- dagbeschouwing: vraag voor vraag (optioneel, naast "Alles tegelijk") ----------
+// settings.dagweergave = "stap" of "lijst". Niet ingesteld: nieuwe gebruikers (nog geen opgeslagen dagen) krijgen "stap", wie al dagen heeft houdt "lijst".
+// De vraagkaarten zijn dezelfde als in de lijst (buildQuestion); er verandert niets aan het opslaan. Alleen welke kaart zichtbaar is.
+let stapNu = 0, stapDag = "";
+function stapModus(){
+  let v = settings.dagweergave;
+  if(v !== "stap" && v !== "lijst"){
+    v = local.days().some(e => e && e.updated) ? "lijst" : "stap";
+    settings.dagweergave = v; local.set("settings", settings);   // vastleggen, zodat de weergave niet verspringt zodra je de eerste antwoorden invult
+  }
+  return v;
+}
+const stapKaarten = () => Array.from($("questions").children);
+function stapEersteOpen(){
+  const k = stapKaarten(), i = k.findIndex(c => !c.classList.contains("done"));
+  return i < 0 ? Math.max(0, k.length - 1) : i;
+}
+function renderStap(){
+  const qs = $("questions"), stap = stapModus() === "stap";
+  qs.classList.toggle("stap", stap);
+  $("dwStap").classList.toggle("on", stap); $("dwStap").setAttribute("aria-pressed", stap ? "true" : "false");
+  $("dwLijst").classList.toggle("on", !stap); $("dwLijst").setAttribute("aria-pressed", stap ? "false" : "true");
+  $("stapKop").classList.toggle("hidden", !stap); $("stapNav").classList.toggle("hidden", !stap);
+  const k = stapKaarten();
+  if(!stap){ k.forEach(c => { c.classList.remove("stapweg"); c.removeAttribute("data-nr"); }); return; }
+  if(stapDag !== curKey){ stapDag = curKey; stapNu = stapEersteOpen(); }
+  stapNu = Math.max(0, Math.min(k.length - 1, stapNu));
+  k.forEach(c => c.classList.remove("fold"));   // vragen die al klaar waren, zijn bij het bouwen ingeklapt: in deze weergave nooit
+  k.forEach((c, i) => { c.classList.toggle("stapweg", i !== stapNu); if(c.dataset.q) c.dataset.nr = String(QUESTIONS.findIndex(q => q.id === c.dataset.q) + 1); else c.removeAttribute("data-nr"); });
+  renderStapKop();
+}
+function renderStapKop(){
+  const qs = $("questions"); if(!qs || !qs.classList.contains("stap")) return;
+  const k = stapKaarten(), kop = $("stapSeg"); if(!kop) return;
+  while(kop.children.length > k.length) kop.removeChild(kop.lastChild);
+  while(kop.children.length < k.length) kop.appendChild(document.createElement("i"));
+  k.forEach((c, i) => { kop.children[i].className = c.classList.contains("done") ? "klaar" : ""; if(i === stapNu) kop.children[i].classList.add("nu"); });
+  const nu = k[stapNu], vraagNr = nu && nu.dataset.q ? QUESTIONS.findIndex(q => q.id === nu.dataset.q) + 1 : 0;
+  $("stapTeller").textContent = vraagNr ? vt("Vraag " + vraagNr + " van " + QUESTIONS.length, "Question " + vraagNr + " of " + QUESTIONS.length) : vt("Ochtend", "Morning");
+  const laatste = stapNu >= k.length - 1;
+  $("stapVorige").disabled = stapNu <= 0;
+  $("stapVolgende").textContent = laatste ? vt("Afronden", "Finish") : vt("Volgende ›", "Next ›");
+}
+function stapNaar(i, zonderScroll){
+  const k = stapKaarten(); if(!k.length) return;
+  stapNu = Math.max(0, Math.min(k.length - 1, i));
+  k.forEach((c, j) => c.classList.toggle("stapweg", j !== stapNu));
+  const c = k[stapNu]; c.classList.remove("fadein"); void c.offsetWidth; c.classList.add("fadein");
+  renderStapKop();
+  if(!zonderScroll) window.scrollTo(0, 0);
+}
+function stapNaarKaart(card){ if($("questions").classList.contains("stap")){ const i = stapKaarten().indexOf(card); if(i >= 0) stapNaar(i); } }
+function stapVolgendeNa(card){   // vraag afgevinkt: rustig door naar de volgende
+  const qs = $("questions"); if(!qs.classList.contains("stap")) return;
+  const k = stapKaarten(), i = k.indexOf(card);
+  if(i >= 0 && i === stapNu && i < k.length - 1) setTimeout(() => { if(stapNu === i) stapNaar(i + 1); }, 650);
+}
+$("stapVorige").onclick = () => stapNaar(stapNu - 1);
+$("stapVolgende").onclick = () => { if(stapNu >= stapKaarten().length - 1) $("summaryBtn").click(); else stapNaar(stapNu + 1); };
+function zetDagweergave(v){ settings.dagweergave = v; stapDag = ""; renderStap(); saveSettingsNow(); window.scrollTo(0, 0); }
+$("dwStap").onclick = () => zetDagweergave("stap");
+$("dwLijst").onclick = () => zetDagweergave("lijst");
+// vegen naar links/rechts en pijltoetsen (niet in invoervelden of in een horizontaal scrollende rij)
+(function(){
+  const qs = $("questions"); let x0 = null, y0 = 0;
+  qs.addEventListener("touchstart", e => { x0 = null; if(!qs.classList.contains("stap") || e.touches.length !== 1) return;
+    if(e.target.closest("textarea,input,select,.qwrap,.chips,.fs")) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, {passive: true});
+  qs.addEventListener("touchend", e => { if(x0 === null) return; const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0; x0 = null;
+    if(Math.abs(dx) > 70 && Math.abs(dy) < 45) stapNaar(stapNu + (dx < 0 ? 1 : -1)); }, {passive: true});
+  document.addEventListener("keydown", e => {
+    if(!qs.classList.contains("stap") || $("view-today").classList.contains("hidden") || e.altKey || e.ctrlKey || e.metaKey) return;
+    if(e.target.closest && e.target.closest("textarea,input,select,[contenteditable]")) return;
+    if(e.key === "ArrowRight" && stapNu < stapKaarten().length - 1) stapNaar(stapNu + 1);
+    else if(e.key === "ArrowLeft" && stapNu > 0) stapNaar(stapNu - 1);
+  });
+})();

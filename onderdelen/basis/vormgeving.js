@@ -34,6 +34,7 @@ function showOpenQuestions(open){
     setTimeout(() => c.classList.remove("needfill"), 2600);
   });
   const first = document.querySelector('[data-q="' + open[0].q.id + '"]');
+  if(first && typeof stapNaarKaart === "function" && $("questions").classList.contains("stap")){ stapNaarKaart(first); return; }
   if(first) first.scrollIntoView({block: "center", behavior: "smooth"});
 }
 function toast(text, warn){
@@ -148,3 +149,21 @@ function flyPlane(){
   setTimeout(() => sv.remove(), 1800);
 }
 window.__flyPlane = flyPlane;
+
+// ---------- de lucht (hemel) achter de hele app ----------
+// data-laag op <html> = moment van de dag (data-tod) + "D" als de app donker staat; app.css kleurt daar de lucht, zon/maan, sterren en heuvels mee.
+function zetLaag(){
+  const h = document.documentElement;
+  h.setAttribute("data-laag", (h.getAttribute("data-tod") || "middag") + (h.hasAttribute("data-donker") ? "D" : ""));
+}
+// sterren: willekeurig maar bij elke keer hetzelfde (vaste startwaarde), dus geen flikkering bij herladen
+(function(){
+  const box = document.getElementById("sterren"); if(!box) return;
+  let z = 7; const r = () => (z = (z * 16807) % 2147483647) / 2147483647;
+  for(let i = 0; i < 70; i++){
+    const s = document.createElement("i"); s.className = "ster" + (r() > .85 ? " groot" : "");
+    s.style.left = (r() * 100) + "%"; s.style.top = (r() * 520) + "px";
+    s.style.animationDelay = (-r() * 4) + "s"; s.style.animationDuration = (3 + r() * 3) + "s";
+    box.appendChild(s);
+  }
+})();

@@ -7,7 +7,7 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8">
-<script>/* weergave zo vroeg mogelijk (geen lichte flits): zelfde regel als pasModusToe in instellingen.js; met pincode (vergrendel.js) de inhoud meteen verbergen */(function(){try{var s=JSON.parse(localStorage.getItem("dagbeschouwing:settings")||"{}"),m=s.modus,h=document.documentElement;var d=m==="donker"||(m!=="licht"&&!!window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);if(m==="licht"||m==="donker")h.setAttribute("data-modus",m);if(d)h.setAttribute("data-donker","");if(s.theme)h.setAttribute("data-theme",s.theme);if(s.taal==="en")h.setAttribute("data-taal","en");if(s.tekstgrootte==="groot"||s.tekstgrootte==="extra")h.setAttribute("data-tekst",s.tekstgrootte);var nu=new Date(),kl=/[?&]klok=(\d{1,2})(?::|%3A)(\d{2})/i.exec(location.search);var u=kl?+kl[1]+kl[2]/60:nu.getHours()+nu.getMinutes()/60;h.setAttribute("data-tod",u<6?"nacht":u<12?"ochtend":u<18?"middag":u<22?"avond":"nacht");}catch(e){}try{var l=JSON.parse(localStorage.getItem("dagbeschouwing:lock")||"null");if(l&&l.hash)document.documentElement.setAttribute("data-slot","");}catch(e){}})();</script>
+<script>/* weergave zo vroeg mogelijk (geen lichte flits): zelfde regel als pasModusToe in instellingen.js; met pincode (vergrendel.js) de inhoud meteen verbergen */(function(){try{var s=JSON.parse(localStorage.getItem("dagbeschouwing:settings")||"{}"),m=s.modus,h=document.documentElement;var d=m==="donker"||(m!=="licht"&&!!window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);if(m==="licht"||m==="donker")h.setAttribute("data-modus",m);if(d)h.setAttribute("data-donker","");if(s.theme)h.setAttribute("data-theme",s.theme);if(s.taal==="en")h.setAttribute("data-taal","en");if(s.tekstgrootte==="groot"||s.tekstgrootte==="extra")h.setAttribute("data-tekst",s.tekstgrootte);var nu=new Date(),kl=/[?&]klok=(\d{1,2})(?::|%3A)(\d{2})/i.exec(location.search);var u=kl?+kl[1]+kl[2]/60:nu.getHours()+nu.getMinutes()/60;h.setAttribute("data-tod",u<6?"nacht":u<12?"ochtend":u<18?"middag":u<22?"avond":"nacht");h.setAttribute("data-laag",h.getAttribute("data-tod")+(d?"D":""));}catch(e){}try{var l=JSON.parse(localStorage.getItem("dagbeschouwing:lock")||"null");if(l&&l.hash)document.documentElement.setAttribute("data-slot","");}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,6 +22,18 @@
 <link rel="stylesheet" href="opmaak/app.css">
 </head>
 <body>
+<div class="hemel" id="hemel" aria-hidden="true">
+  <div class="laag l-ochtend"></div><div class="laag l-middag"></div><div class="laag l-avond"></div><div class="laag l-nacht"></div>
+  <div class="laag l-ochtendD"></div><div class="laag l-middagD"></div><div class="laag l-avondD"></div><div class="laag l-nachtD"></div>
+  <div class="sterren" id="sterren"><i class="vallend"></i></div>
+  <div class="wolken"><i class="wolk w1"></i><i class="wolk w2"></i><i class="wolk w3"></i></div>
+  <div class="lichaam"></div>
+  <div class="heuvels"><svg viewBox="0 0 430 400" preserveAspectRatio="none">
+    <path class="h1" d="M0 120 C70 70 140 60 215 100 C290 140 360 80 430 90 L430 400 L0 400Z"/>
+    <path class="h2" d="M0 190 C80 140 170 150 250 185 C330 220 390 170 430 160 L430 400 L0 400Z"/>
+    <path class="h3" d="M0 270 C90 230 180 245 270 275 C350 300 400 262 430 255 L430 400 L0 400Z"/>
+  </svg></div>
+</div>
 <!-- openingsscherm: staat in de pagina zelf, zodat de animatie meteen bij het eerste beeld begint
      (niet pas als alle scripts geladen zijn). showSplash() in vormgeving.js laat hem daarna verdwijnen. -->
 <div id="splash" aria-hidden="true"><svg viewBox="0 0 512 512"><g class="sun spdag"><circle cx="256" cy="150" r="34" fill="#f4b45f"/><line x1="308.0" y1="150.0" x2="330.0" y2="150.0" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:0.90s"/><line x1="292.8" y1="186.8" x2="308.3" y2="202.3" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:0.96s"/><line x1="256.0" y1="202.0" x2="256.0" y2="224.0" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.02s"/><line x1="219.2" y1="186.8" x2="203.7" y2="202.3" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.08s"/><line x1="204.0" y1="150.0" x2="182.0" y2="150.0" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.14s"/><line x1="219.2" y1="113.2" x2="203.7" y2="97.7" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.20s"/><line x1="256.0" y1="98.0" x2="256.0" y2="76.0" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.26s"/><line x1="292.8" y1="113.2" x2="308.3" y2="97.7" stroke="#f4b45f" stroke-width="14" stroke-linecap="round" class="ray" style="animation-delay:1.32s"/></g><g class="sun spnacht"><path d="M276 104a52 52 0 1 0 30 92a42 42 0 0 1-30-92z" fill="#f4b45f"/><circle cx="338" cy="96" r="6" fill="#f4b45f" class="ray" style="animation-delay:0.95s"/><circle cx="372" cy="150" r="4.5" fill="#f4b45f" class="ray" style="animation-delay:1.07s"/><circle cx="182" cy="108" r="5" fill="#f4b45f" class="ray" style="animation-delay:1.19s"/><circle cx="150" cy="168" r="3.5" fill="#f4b45f" class="ray" style="animation-delay:1.31s"/></g><g class="book" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"><path d="M90 250h96a70 70 0 0 1 70 70v130a44 44 0 0 0-44-44H90z"/><path d="M422 250h-96a70 70 0 0 0-70 70v130a44 44 0 0 1 44-44h122z"/></g></svg><div class="nm"><span class="spnl">Mijn dag</span><span class="spen">My day</span></div></div>
@@ -36,35 +48,16 @@
   </header>
 
   <section id="view-home" class="hidden">
-    <div class="sky" id="sky"><div class="skysterren" aria-hidden="true"></div>
-    <div class="greet" id="greet"></div>
-    <div class="skyscene" aria-hidden="true">
-      <svg class="skyboog" viewBox="0 0 100 100" preserveAspectRatio="none"><path class="sbspoor" id="boogSpoor"/><path class="sbgedaan" id="boogGedaan"/></svg>
-      <div class="skyhill"></div><div class="skyhill h2"></div>
-      <div class="skyzon" id="skyZon"></div>
-    </div>
-    <div class="skypanel">
-      <div class="skytop">
-        <div class="skytop-tx">
-          <div class="skydagen" id="homeDagen"></div>
-          <div class="dagrondzin hidden" id="dagRondZin"></div>
-        </div>
-        <button type="button" class="dagring" id="dagRing" aria-expanded="false">
-          <svg viewBox="0 0 64 64" aria-hidden="true"><g class="drsporen"></g><g class="drvul"></g><path class="drvink" d="M24 33l6 6 11-13"/></svg>
-        </button>
-      </div>
+    <div class="groetblok" id="sky">
+      <div class="datumregel" id="homeDatum"></div>
+      <div class="greet" id="greet"></div>
+      <button type="button" class="dagboog" id="dagRing" aria-expanded="false">
+        <svg class="boogsvg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path class="sbspoor" id="boogSpoor"/><path class="sbgedaan" id="boogGedaan"/></svg>
+        <span class="nudot" id="skyZon"></span>
+        <span class="stations" id="dagStations"></span>
+      </button>
+      <div class="dagrondzin hidden" id="dagRondZin"></div>
       <div class="dagringuitleg hidden" id="dagRingUitleg"></div>
-      <div id="msBox" class="hidden">
-        <div class="note" id="msNext" style="margin:0"></div>
-        <div class="bar" style="margin-top:6px"><i id="msBar"></i></div>
-        <button class="linkbtn" id="msDoneBtn" type="button" style="margin-top:8px"></button>
-        <div id="msDone" class="hidden" style="margin-top:6px"></div>
-      </div>
-      <div class="skylinks">
-        <button class="linkbtn" id="ktToggle" type="button"></button>
-        <button class="linkbtn" id="openSettings" type="button">Gegevens instellen</button>
-      </div>
-    </div>
     </div>
 
     <div class="card hidden welkomterug" id="welkomTerug">
@@ -95,6 +88,24 @@
       <span class="dbk-tx"><b id="dbKnopTitel"></b><small id="dbKnopSub"></small><span class="bar"><i id="dbKnopBar"></i></span></span>
       <span class="dbk-pijl" aria-hidden="true">›</span>
     </button>
+
+    <div class="weg" id="weg">
+      <div class="wegkop">
+        <div class="label" data-en="Your road">Jouw weg</div>
+        <div class="skydagen" id="homeDagen"></div>
+        <div id="msBox" class="hidden">
+          <div class="note" id="msNext" style="margin:0"></div>
+          <div class="bar wegbalk"><i id="msBar"></i></div>
+          <button class="linkbtn" id="msDoneBtn" type="button" style="margin-top:8px"></button>
+          <div id="msDone" class="hidden" style="margin-top:6px"></div>
+        </div>
+      </div>
+      <div class="wegrij" id="wegRij" tabindex="0" role="group" aria-label="Jouw weg: je keytags" data-en-aria="Your road: your keytags"><div class="wegbaan" id="wegBaan"></div></div>
+      <div class="skylinks">
+        <button class="linkbtn" id="ktToggle" type="button"></button>
+        <button class="linkbtn" id="openSettings" type="button">Gegevens instellen</button>
+      </div>
+    </div>
 
     <div id="homeVandaag">
       <div class="homekop" id="homeVandaagKop" data-en="Today">Vandaag</div>
@@ -130,7 +141,16 @@
       <button type="button" class="infoknop hidden" id="introKnop" aria-label="Uitleg" data-en-aria="Explanation" aria-expanded="false">i</button>
     </div>
 
+    <div class="dwkeuze" id="dwKeuze" role="group" aria-label="Weergave van de vragen" data-en-aria="How the questions are shown">
+      <button type="button" id="dwStap" aria-pressed="false" data-en="One question at a time">Vraag voor vraag</button>
+      <button type="button" id="dwLijst" aria-pressed="false" data-en="All at once">Alles tegelijk</button>
+    </div>
+    <div class="stapkop hidden" id="stapKop"><div class="stapteller" id="stapTeller" aria-live="polite"></div><div class="segmenten" id="stapSeg" aria-hidden="true"></div></div>
     <div id="questions"></div>
+    <div class="stapnav hidden" id="stapNav">
+      <button type="button" class="ghost" id="stapVorige" data-en="‹ Previous">‹ Vorige</button>
+      <button type="button" class="primary" id="stapVolgende" data-en="Next ›">Volgende ›</button>
+    </div>
   </section>
 
   <section id="view-jft" class="hidden">
