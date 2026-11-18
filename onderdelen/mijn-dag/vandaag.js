@@ -153,7 +153,10 @@ function dagRingStand(){
 }
 function renderDagRing(){
   const ring = $("dagRing"); if(!ring) return;
-  const st = dagRingStand(), delen = [st.ochtend, st.dag, st.avond];
+  const st = dagRingStand();
+  // een deel van de dag dat al voorbij is, wordt ook afgevinkt: ochtend na 12:00, dag na 18:00, avond na 22:00
+  const uur = homeNu().getHours(), voorbij = [uur >= 12, uur >= 18, uur >= 22];
+  const delen = [st.ochtend, st.dag, st.avond].map((f, i) => voorbij[i] ? 1 : f);
   const namen = [vt("Ochtend", "Morning"), vt("Dag", "Day"), vt("Avond", "Evening")];
   const pos = [[6, 92], [50, 12], [94, 92]];   // dezelfde punten als de boog zelf (boogPunt met t = 0, 0,5 en 1)
   const box = $("dagStations"); box.innerHTML = "";
