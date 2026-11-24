@@ -238,6 +238,14 @@ function buildRows(q, ta){
       const custom = customOf(q, row);
       const buiten = gekozenBuitenLijst(ta.value, q, row);
       itemsOf(q, row).concat(buiten).forEach(item => {
+        // groepjes binnen één rij (bijv. goed / zwaar bij vraag 12): kopje boven het eerste knopje van elk groepje
+        const grp = (row.groups||[]).find(g => g.items[0] === item);
+        if(grp){
+          const gl = document.createElement("div"); gl.className = "note groep";
+          gl.style.cssText = "flex-basis:100%;margin:" + (grp === row.groups[0] ? "0" : "8px") + " 0 0;font-weight:600";
+          gl.textContent = vt(grp.label, grp.labelEn || grp.label);
+          wrapEl.appendChild(gl);
+        }
         const b = document.createElement("button"); b.type = "button"; b.className = "chip " + (row.cls||""); b.textContent = vItem(item);
         const mine = custom.indexOf(item) >= 0;
         if(dynItems(q).indexOf(item) >= 0) b.classList.add("cleanchip");

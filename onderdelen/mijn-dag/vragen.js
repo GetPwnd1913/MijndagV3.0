@@ -11,6 +11,10 @@ const COPING = ["mijn sponsor gebeld","iemand anders gebeld","erover gepraat","n
 const COPING_EN = ["called my sponsor","called someone else","talked about it","went to a meeting","went outside","found a distraction","left the situation","prayed or meditated","played the tape through to the end","ate or drank something","waited until it passed","read literature"];
 const TRIGGERS = ["een plek","bepaalde mensen","geld","stress","verveling","eenzaamheid","boosheid","vermoeidheid","honger","muziek","social media","middelen zien of ruiken","een herinnering","een ruzie"];
 const TRIGGERS_EN = ["a place","certain people","money","stress","boredom","loneliness","anger","tiredness","hunger","music","social media","seeing or smelling substances","a memory","an argument"];
+const SCORE_GOED = ["een rustige dag","goede gesprekken","ik ben nuchter/clean gebleven","ik heb veel gedaan voor mijn herstel","ik voelde me goed","ik ben naar een meeting gegaan","ik heb mijn sponsor gesproken","ik heb iemand geholpen","ik heb mijn plan gevolgd","ik was eerlijk","ik heb goed geslapen","ik heb gesport of bewogen","tijd met familie of vrienden","ik was dankbaar","ik heb gebeden of gemediteerd"];
+const SCORE_GOED_EN = ["a quiet day","good conversations","I stayed sober/clean","I did a lot for my recovery","I felt good","I went to a meeting","I spoke to my sponsor","I helped someone","I followed my plan","I was honest","I slept well","I exercised or moved","time with family or friends","I was grateful","I prayed or meditated"];
+const SCORE_ZWAAR = ["stress","cravings","een conflict","ik was moe","ik voelde me eenzaam","ik was boos","ik was verdrietig","ik was angstig of onrustig","ik had pijn of was ziek","ik heb slecht geslapen","ik had het druk","ik ben niet naar een meeting gegaan","ik heb mijn plan niet gevolgd"];
+const SCORE_ZWAAR_EN = ["stress","cravings","a conflict","I was tired","I felt lonely","I was angry","I was sad","I was anxious or restless","I was in pain or ill","I slept badly","I was busy","I didn't go to a meeting","I didn't follow my plan"];
 
 // Each row: label (the question shown), lead (start of the sentence), items. Tapping builds one sentence per row.
 const QUESTIONS = [
@@ -133,8 +137,11 @@ const QUESTIONS = [
    tip:"Kies een cijfer van 1 tot 10 en leg uit waarom. Wat maakte de dag goed of zwaar?",
    tipEn:"Choose a score from 1 to 10 and explain why. What made the day good or hard?",
    rows:[
-     {label:"Waarom dit cijfer?", labelEn:"Why this score?", lead:"Het cijfer komt door:", items:["een rustige dag","goede gesprekken","ik ben nuchter/clean gebleven","ik heb veel gedaan voor mijn herstel","stress","cravings","een conflict","ik was moe","ik voelde me goed"],
-      itemsEn:["a quiet day","good conversations","I stayed sober/clean","I did a lot for my recovery","stress","cravings","a conflict","I was tired","I felt good"]}
+     {label:"Waarom dit cijfer?", labelEn:"Why this score?", lead:"Het cijfer komt door:",
+      // de knopjes staan in twee groepjes op het scherm; het antwoord blijft één lijstje (items = goed + zwaar)
+      groups:[{label:"Wat maakte de dag goed?", labelEn:"What made the day good?", items:SCORE_GOED, itemsEn:SCORE_GOED_EN},
+              {label:"Wat maakte de dag zwaar?", labelEn:"What made the day hard?", items:SCORE_ZWAAR, itemsEn:SCORE_ZWAAR_EN}],
+      items:SCORE_GOED.concat(SCORE_ZWAAR), itemsEn:SCORE_GOED_EN.concat(SCORE_ZWAAR_EN)}
    ]}
 ];
 
