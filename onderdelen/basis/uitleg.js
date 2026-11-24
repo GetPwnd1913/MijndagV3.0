@@ -94,6 +94,7 @@ function toonUitlegAlsNieuw(){
   const kijk = () => {
     if(document.getElementById("splash") && n++ < 20){ setTimeout(kijk, 250); return; }
     if(uitlegNodig()) openUitleg();
+    else if(typeof nieuwToonWanneerVrij === "function") nieuwToonWanneerVrij();   // "Wat is er nieuw?" (nieuw.js)
   };
   kijk();
 }
