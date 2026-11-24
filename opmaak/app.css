@@ -1363,3 +1363,56 @@
   .goalrow .gstuckbox{margin:8px 0 0 34px}
   .goalrow .gstuckbox textarea{margin-top:0;min-height:0}
   .goalrow .gstuckbox .note{margin:6px 0 0}
+  /* ---------- terugvalpreventieplan (noodplan): stoplicht groen / oranje / rood ---------- */
+  :root{--tv-groen:#3b8a57;--tv-oranje:#d27a1f;--tv-rood:#c62828}
+  html[data-donker]{--tv-groen:#6cc08a;--tv-oranje:#efa75a;--tv-rood:#ec6b6b}
+  [data-z="groen"]{--z:var(--tv-groen)} [data-z="oranje"]{--z:var(--tv-oranje)} [data-z="rood"]{--z:var(--tv-rood)}
+  .tvdot{display:inline-block;flex:none;width:12px;height:12px;border-radius:50%;background:var(--z,var(--accent))}
+  .tvkies{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--ruimte-2);margin-top:14px}
+  .tvknop{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:var(--hoek-xl);padding:14px 6px 12px;font:inherit;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:96px;cursor:pointer;transition:background var(--t-snel),border-color var(--t-snel),box-shadow var(--t-snel),transform var(--t-snel)}
+  .tvknop .tvdot{width:26px;height:26px;margin-bottom:4px;box-shadow:0 0 0 5px color-mix(in srgb,var(--z) 16%,transparent)}
+  .tvknop b{font-size:var(--fs-tekst);font-weight:650}
+  .tvknop small{font-size:var(--fs-klein);color:var(--muted);line-height:1.2;text-align:center}
+  .tvknop:active{transform:scale(.97)}
+  .tvknop.on{border-color:var(--z);background:color-mix(in srgb,var(--z) 13%,var(--card));box-shadow:0 0 0 3px color-mix(in srgb,var(--z) 22%,transparent)}
+  .tvknop.on small{color:var(--ink)}
+  .tvpaneel{margin-top:14px;border-radius:var(--hoek-xl);padding:14px 16px 12px;background:color-mix(in srgb,var(--z) 8%,var(--card));border:1px solid color-mix(in srgb,var(--z) 28%,var(--line));border-left:6px solid var(--z)}
+  .tvkop{font-weight:650;font-size:var(--fs-tekst);margin:16px 0 6px}
+  .tvpaneel > .tvkop:first-child,.tvbel:first-child .tvkop{margin-top:2px}
+  .tvsub{font-size:var(--fs-klein);color:var(--muted);margin:10px 0 6px;font-weight:600}
+  .tvtags{display:flex;flex-wrap:wrap;gap:6px}
+  .tvtag{background:var(--card);border:1px solid color-mix(in srgb,var(--z,var(--accent)) 35%,var(--line));border-radius:var(--hoek-rond);padding:5px 12px;font-size:var(--fs-label);line-height:1.3}
+  .tvpaneel .soslist .num,.tvzone .soslist .num{background:color-mix(in srgb,var(--z) 22%,var(--card));color:var(--ink)}
+  .tvpaneel .soslist li{border-top-color:color-mix(in srgb,var(--z) 18%,var(--line))}
+  .tvbel{display:flex;flex-direction:column;gap:var(--ruimte-2)}
+  .tvbel .tvkop{margin-bottom:0}
+  .tvbelknop{display:flex;align-items:center;justify-content:center;text-decoration:none;min-height:48px;background:var(--tv-rood);border-color:var(--tv-rood);color:#fff}
+  html[data-donker] .tvbelknop{color:#1b1d25}
+  .tvtoch{margin-top:14px;border-top:1px solid color-mix(in srgb,var(--z) 18%,var(--line));padding-top:10px}
+  .tvtoch summary{cursor:pointer;font-weight:650;color:var(--ink)}
+  .tvnotitie{white-space:pre-wrap;margin-top:12px;font-size:var(--fs-tekst);line-height:1.5;padding:10px 12px;border-radius:var(--hoek-m);background:color-mix(in srgb,var(--z,var(--accent)) 7%,var(--card))}
+  .tvlinks{display:flex;justify-content:space-between;gap:12px;margin-top:12px}
+  .tvbalk{display:flex;gap:5px;margin:12px 0 2px}
+  .tvbalk i{flex:1;height:7px;border-radius:4px;background:var(--line);transition:background var(--t-snel)}
+  .tvbalk i.on{background:var(--z,var(--accent))}
+  .tvbalk i.nu{outline:2px solid var(--ink);outline-offset:2px}
+  .tvbalk i[role=button]{cursor:pointer}
+  .tvterug{display:inline-flex;align-items:center;gap:2px;margin:0 0 10px}
+  .tvstapkop{font-size:var(--fs-klein);color:var(--muted);font-weight:600}
+  .tvstap{border-top:6px solid var(--z,var(--accent));margin-top:12px}
+  .tvstap .tvtitel{font-size:var(--fs-kop-s);margin-top:6px}
+  .tvstap .chip.on{background:color-mix(in srgb,var(--z,var(--accent)) 20%,var(--card));border-color:var(--z,var(--accent));color:var(--ink)}
+  .tvstap:not([data-z]) .chip.on{background:var(--accent);border-color:var(--accent);color:var(--op-accent)}
+  .tvkicker{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-klein);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .tvzone{border-left:6px solid var(--z,var(--line))}
+  .tvzonekop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px}
+  .tvzone .qtitle{margin-bottom:2px}
+  .patkleur{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--ruimte-2);margin-top:12px}
+  .patkleurtel{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 4px;border-radius:var(--hoek-l);background:color-mix(in srgb,var(--z) 10%,var(--card))}
+  .patkleurtel b{font-size:var(--fs-kop-s);font-variant-numeric:tabular-nums}
+  .patkleurtel small{font-size:var(--fs-klein);color:var(--muted);text-align:center}
+  .patstrook{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:5px;margin-top:14px}
+  .patstrook i{aspect-ratio:1;border-radius:50%;background:var(--line)}
+  .patstrook i[data-z]{background:var(--z)}
+  .tvsein{border-left:6px solid var(--z);background:color-mix(in srgb,var(--z) 8%,var(--card))}
+  .tvsein .qtitle{margin-top:6px}

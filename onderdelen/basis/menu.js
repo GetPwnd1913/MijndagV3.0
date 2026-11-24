@@ -19,7 +19,7 @@ function showView(v){
   closeMenu(); window.scrollTo(0,0);
   if(v === "hist" || v === "month") renderHistory();
   if(v === "patterns") renderPatterns();
-  if(v === "sos"){ sosEdit = false; renderSos(); }
+  if(v === "sos"){ sosEdit = false; tvStap = null; tvOverzicht = false; renderSos(); }
   if(v === "jft"){ jftShift = 0; renderJft(); }
   if(v === "talk"){ goalWeek = null; renderTalkView(); }
   if(v === "steps") renderSteps();

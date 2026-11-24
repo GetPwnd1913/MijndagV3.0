@@ -94,6 +94,7 @@ function renderHome(){
   renderHomeKeytags();
   if(typeof renderWeg === "function") renderWeg();
   renderDbKnop();
+  if(typeof renderTvSein === "function") renderTvSein();
   renderMeldingen();
   renderIntro();
 }

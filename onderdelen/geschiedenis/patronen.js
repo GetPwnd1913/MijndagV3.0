@@ -20,6 +20,35 @@ function patVan(tk){
   return "0000-00-00";
 }
 
+// stoplicht uit het noodplan (settings.kleuren): hoe vaak groen, oranje, rood + de laatste 4 weken als bolletjes
+function patKleurKaart(van, tk){
+  const kl = settings.kleuren || {};
+  const inPer = Object.keys(kl).filter(d => d >= van && d <= tk && TV_ZONES[kl[d]]);
+  if(!inPer.length) return null;
+  const c = el("div", "card"); c.appendChild(el("div", "qtitle", vt("Waar stond ik?", "Where was I?")));
+  const tel = el("div", "patkleur");
+  Object.keys(TV_ZONES).forEach(z => {
+    const n = inPer.filter(d => kl[d] === z).length;
+    const t = el("div", "patkleurtel"); t.dataset.z = z;
+    t.appendChild(el("span", "tvdot")); t.appendChild(el("b", null, String(n)));
+    t.appendChild(el("small", null, isEn() ? (n === 1 ? "day " : "days ") + TV_ZONES[z].en.toLowerCase() : (n === 1 ? "dag " : "dagen ") + TV_ZONES[z].nl.toLowerCase()));
+    tel.appendChild(t);
+  });
+  c.appendChild(tel);
+  // laatste 28 dagen, van oud naar nieuw
+  const strook = el("div", "patstrook");
+  for(let i = 27; i >= 0; i--){
+    const d = addDaysKey(tk, -i), z = kl[d];
+    const b = el("i"); if(TV_ZONES[z]) b.dataset.z = z;
+    b.title = parseKey(d).toLocaleDateString(locale(), {weekday: "short", day: "numeric", month: "short"}) + (TV_ZONES[z] ? ": " + vt(TV_ZONES[z].nl, TV_ZONES[z].en) : "");
+    strook.appendChild(b);
+  }
+  c.appendChild(strook);
+  const lg = note(vt("De laatste 4 weken, van oud naar nieuw. Je kiest je kleur in het noodplan bij ‘Waar sta ik nu?’.", "The last 4 weeks, from old to new. You choose your colour in the emergency plan under ‘Where am I right now?’."));
+  c.appendChild(lg);
+  return c;
+}
+
 async function renderPatterns(){
   const box = $("patBox"); if(!box) return;
   box.innerHTML = '<div class="empty">' + vt("Laden…", "Loading…") + '</div>';
@@ -39,6 +68,7 @@ async function renderPatterns(){
   const sub = note(isEn() ? aantal(days.length, "", "", "day", "days") + " filled in in this period." : days.length + (days.length === 1 ? " dag" : " dagen") + " ingevuld in deze periode.");
   sub.style.cssText = "margin-top:10px;font-size:calc(14px*var(--ts))"; top.appendChild(sub);
   box.appendChild(top);
+  { const k = patKleurKaart(van, tk); if(k) box.appendChild(k); }
 
   if(days.length < PAT_MIN){
     box.appendChild(emptyState("target", vt("Nog even volhouden", "Keep going for a bit"),
