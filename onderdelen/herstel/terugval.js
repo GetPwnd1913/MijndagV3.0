@@ -185,6 +185,11 @@ function tvPaneel(z){
       d.appendChild(tvAfvinkLijst(ug)); p.appendChild(d);
     }
   }
+  if(z !== "groen" && typeof potCard === "function"){
+    const pk = el("button", "linkbtn tvpotlink", vt("Schud je pot met mooie momenten", "Shake your jar of good moments")); pk.type = "button";
+    pk.onclick = () => { const pc = $("sosBox").querySelector(".potcard"); if(!pc) return; const k = pc.querySelector(".primary:not(.hidden)"); if(k) k.click(); pc.scrollIntoView({block: "start", behavior: "smooth"}); };
+    p.appendChild(pk);
+  }
   const r = el("div", "tvlinks");
   const a = el("button", "linkbtn", vt("Hele plan bekijken", "View my whole plan")); a.type = "button"; a.onclick = () => { tvOverzicht = true; tvStap = null; renderSos(); window.scrollTo(0, 0); };
   const e = el("button", "linkbtn", vt("Aanpassen", "Edit")); e.type = "button"; e.onclick = () => tvNaarStap(si);

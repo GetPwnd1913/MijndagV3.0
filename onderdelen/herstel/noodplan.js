@@ -145,6 +145,7 @@ function renderSos(){
     t.style.marginTop = "6px"; c.appendChild(t);
     const b = el("button", "primary", vt("Mijn noodplan maken", "Make my emergency plan")); b.type = "button"; b.style.marginTop = "12px"; b.onclick = startSosEdit;
     c.appendChild(b); box.appendChild(c);
+    box.appendChild(potCard());
     box.appendChild(tvPlanCard());
     const nm0 = nextMeetingCard(); if(nm0) box.appendChild(nm0);
   } else {
@@ -168,6 +169,7 @@ function renderSos(){
       const t = el("div", null, reason); t.style.cssText = "white-space:pre-wrap;margin-top:8px;font-size:calc(17px*var(--ts))"; c.appendChild(t);
       box.appendChild(c);
     }
+    box.appendChild(potCard());
     box.appendChild(tvPlanCard());
     const b = el("button", "ghost", vt("Noodplan aanpassen", "Edit emergency plan")); b.type = "button"; b.onclick = startSosEdit;
     const nm = nextMeetingCard(); if(nm) box.appendChild(nm);
