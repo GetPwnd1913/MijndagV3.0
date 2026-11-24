@@ -402,6 +402,12 @@ function buildQuestion(q, i){
       detail.appendChild(s);
     }
     detail.appendChild(buildRows(q, ta));
+    if((q.id === "q3" || q.id === "q5" || q.id === "q6") && typeof gsVanuitDag === "function"){
+      const g = el("button", "linkbtn more", vt("Maak hier een G-schema van", "Turn this into an ABC diary")); g.type = "button";
+      g.style.cssText = "display:block;margin-top:12px;font-weight:600";
+      g.onclick = () => gsVanuitDag(q);
+      detail.appendChild(g);
+    }
     card.appendChild(detail);
     card.appendChild(ta);
     attachView(q, ta, card);

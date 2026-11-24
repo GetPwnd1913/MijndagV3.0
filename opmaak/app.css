@@ -993,7 +993,7 @@
      Sierletter (Fraunces): schermtitel, begroeting, sectiekop, kaartkop, datums en bemoedigende zinnen.
      Gewone letter (Figtree): vragen, tekst, knoppen. Bijschriften: klein en gedempt (.note).
      Kaartkop = het kopje bovenaan een kaart (niet de vraagtitels en niet de afvinkregels). */
-  .card > .qtitle,.card > div:not([class]) > div.qtitle,.plankop > .qtitle,.qtitle.ktti,.mgroup > .qtitle,.potkop .qtitle{
+  .card > .qtitle,.card > div:not([class]) > div.qtitle,.plankop > .qtitle,.qtitle.ktti,.mgroup > .qtitle,.potkop .qtitle,.wbkoprij .qtitle{
     font-family:var(--serif);font-optical-sizing:auto;font-variant-numeric:lining-nums proportional-nums;
     font-weight:600;font-size:var(--fs-kaartkop);letter-spacing:-.01em;line-height:1.25}
   .plankop > .qtitle{font-size:var(--fs-lees)}   /* past naast "0 van 4 gedaan" op één regel */
@@ -1435,3 +1435,136 @@
   @keyframes potIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.potglas.schud,.potmoment{animation:none}}
   .tvpotlink{display:block;margin-top:12px}
+  /* ---------- mijn werkboek ---------- */
+  .wblijst{padding:6px 0}
+  .wbrij{display:flex;align-items:center;gap:14px;width:100%;border:0;background:none;color:var(--ink);font:inherit;text-align:left;padding:14px var(--ruimte-4);cursor:pointer}
+  .wbrij + .wbrij{border-top:1px solid var(--line)}
+  .wbic{flex:none;width:26px;height:26px;border-radius:50%;border:2.5px solid var(--k);display:flex;align-items:center;justify-content:center;color:#fff}
+  .wbic.klaar{background:var(--k)}
+  .wbic .i{stroke:currentColor;stroke-width:3;fill:none}
+  .wbtx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .wbtx b{font-weight:650;font-size:var(--fs-tekst)}
+  .wbtx small{font-size:var(--fs-klein);color:var(--muted);line-height:1.35}
+  .wbpijl{flex:none;color:var(--muted);font-size:22px}
+  .wbweg{display:block;margin-top:16px;color:var(--danger-text,var(--danger))}
+  .gskaart{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+  .gsdatum{font-size:var(--fs-klein);color:var(--muted);font-weight:600}
+  .gstitel{font-family:var(--serif);font-size:var(--fs-kop-s);font-weight:600;margin:2px 0 8px;line-height:1.3}
+  .gsdeel{padding:16px 0 4px}
+  .gsdeel + .gsdeel{border-top:1px solid var(--line);margin-top:12px}
+  .gskop{display:flex;gap:12px;align-items:flex-start}
+  .gskop b{display:block;font-weight:650;font-size:var(--fs-tekst)}
+  .gskop small{display:block;font-size:var(--fs-klein);color:var(--muted);margin-top:1px;line-height:1.35}
+  .gsletter{flex:none;width:30px;height:30px;border-radius:var(--hoek-s);background:var(--accent-soft);color:var(--accent);font-weight:700;display:flex;align-items:center;justify-content:center}
+  .gsletter.plus{background:var(--accent);color:var(--op-accent)}
+  .gsdeel .label{display:none}
+  .gsdeel .chips{margin-top:10px}
+  .gsdeel textarea{margin-top:10px}
+  .balansvak{border-top:6px solid var(--z,var(--muted))}
+  .balansvak .chip.on{background:color-mix(in srgb,var(--z,var(--muted)) 20%,var(--card));border-color:var(--z,var(--muted));color:var(--ink)}
+  .nwgroep .nwkop{display:flex;align-items:center;gap:8px}
+  .nwgroep .nwkop b{flex:1;font-size:var(--fs-tekst)}
+  .nwaantal{font-size:var(--fs-klein);color:var(--muted);font-weight:600}
+  .nwgroep{border-left:6px solid var(--z)}
+  .nwpersoon{display:flex;align-items:center;gap:12px;padding:12px 0 2px}
+  .nwpersoon + .nwpersoon{border-top:1px solid var(--line);margin-top:10px}
+  .nwav{flex:none;width:38px;height:38px;border-radius:50%;background:color-mix(in srgb,var(--z) 18%,var(--card));color:var(--ink);font-weight:700;display:flex;align-items:center;justify-content:center}
+  .nwtx{flex:1;min-width:0;display:flex;flex-direction:column}
+  .nwtx b{font-weight:650}
+  .nwtx small{font-size:var(--fs-klein);color:var(--muted)}
+  .nwacties{display:flex;align-items:center;gap:10px;flex:none}
+  .nwin{font-size:var(--fs-klein);color:var(--tv-groen);font-weight:600}
+  .nwsoort .tvknop{min-height:64px}
+  .nwform .sosinp{width:100%;box-sizing:border-box}
+  /* ---------- mijn werkboek v2: groepjes, tegels, voortgang ---------- */
+  .wbbalk{display:flex;gap:5px;margin-top:14px}
+  .wbbalk i{flex:1;height:8px;border-radius:4px;background:var(--line)}
+  .wbbalk i.half{background:color-mix(in srgb,var(--k) 45%,var(--line))}
+  .wbbalk i.vol{background:var(--k)}
+  .wbbalktx{font-size:var(--fs-klein);color:var(--muted);margin-top:8px;font-weight:600}
+  .wbgroep{font-size:var(--fs-klein);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin:20px 6px 8px}
+  .wbtegel{flex:none;width:44px;height:44px;border-radius:14px;background:color-mix(in srgb,var(--k) 15%,var(--card));color:var(--k);display:flex;align-items:center;justify-content:center}
+  .wbtegel .i{stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .wbmeter{display:block;height:4px;border-radius:2px;background:var(--line);margin-top:7px;overflow:hidden;max-width:180px}
+  .wbmeter i{display:block;height:100%;border-radius:2px}
+  .wbklaar{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff}
+  .wbklaar .i{stroke:currentColor;stroke-width:3;fill:none}
+  .wbkoprij{display:flex;align-items:center;gap:14px}
+  .wbkoprij .qtitle{margin:0}
+  /* G-schema */
+  .gskaarttop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .gsstippen{display:flex;gap:4px}
+  .gsstippen i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+  .gsstippen i.on{background:var(--accent)}
+  .gsletter.groot{width:44px;height:44px;border-radius:14px;font-size:var(--fs-tekst)}
+  .gsdeeltitel{font-family:var(--serif);font-size:var(--fs-kop-s)!important;font-weight:600}
+  .gsstap{border-top:6px solid var(--accent);margin-top:12px}
+  .gsstap .tip{margin-top:14px}
+  .gsstap .wbchips{margin-top:6px}
+  .gsstap textarea{margin-top:12px}
+  .gsbalk i.on{background:var(--accent)}
+  .chip.sterkte{min-width:44px;padding-left:10px;padding-right:10px}
+  .gsketen{margin-top:12px;position:relative}
+  .gsschakel{display:flex;gap:12px;position:relative;padding-bottom:18px}
+  .gsschakel:not(:last-child)::before{content:"";position:absolute;left:14px;top:32px;bottom:2px;width:2px;background:color-mix(in srgb,var(--accent) 30%,var(--line))}
+  .gsschakel .gsletter{position:relative;z-index:1}
+  .gsschakel.plus .gsinh{background:color-mix(in srgb,var(--accent) 9%,var(--card));border-radius:var(--hoek-l);padding:10px 12px;margin-top:-4px}
+  .gsinh{flex:1;min-width:0}
+  .gsinhkop{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:30px}
+  .gsinhkop b{font-weight:650}
+  .gsinh .tvtags{margin-top:4px}
+  .gstekst{white-space:pre-wrap;margin-top:6px;line-height:1.5}
+  .gsleeg{color:var(--muted)}
+  .gssterkte{height:6px;border-radius:3px;background:var(--line);margin-top:10px;max-width:220px;overflow:hidden}
+  .gssterkte i{display:block;height:100%;background:linear-gradient(90deg,var(--tv-groen),var(--tv-oranje),var(--tv-rood))}
+  .gssterktetx{display:block;font-size:var(--fs-klein);color:var(--muted);margin-top:3px}
+  /* beslisbalans */
+  .balansschaal{text-align:center}
+  .balansschaal .qtitle{text-align:left}
+  .balanssvg svg{width:100%;max-width:300px;height:auto;display:block;margin:8px auto 0}
+  .balanssvg .voet,.balanssvg .arm,.balanssvg .draad{fill:none;stroke:var(--muted);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .balanssvg .draad{stroke-width:1.4;opacity:.7}
+  .balanssvg .schaal.links{fill:var(--tv-oranje)} .balanssvg .schaal.rechts{fill:var(--tv-groen)}
+  .balanssvg .as{fill:var(--ink)}
+  .balanssvg .getal{font:700 18px var(--sans,inherit);fill:var(--ink);text-anchor:middle}
+  .balanslabels{display:flex;justify-content:space-between;gap:12px;font-size:var(--fs-klein);font-weight:600;color:var(--muted);max-width:320px;margin:2px auto 0}
+  .balanslabels span:first-child{color:var(--tv-oranje)} .balanslabels span:last-child{color:var(--tv-groen)}
+  .balansschaal .note{text-align:left}
+  .balanskant{display:inline-block;font-size:var(--fs-klein);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:2px}
+  /* netwerkkaart */
+  .nwkaart svg{width:100%;max-width:340px;height:auto;display:block;margin:0 auto}
+  .nwkaart .ring{fill:none;stroke:var(--line);stroke-width:1.5}
+  .nwkaart .ring.r0{fill:color-mix(in srgb,var(--accent) 3%,transparent)} .nwkaart .ring.r1{fill:color-mix(in srgb,var(--accent) 5%,transparent)} .nwkaart .ring.r2{fill:color-mix(in srgb,var(--accent) 8%,transparent)}
+  .nwkaart .ringtx{font-size:9.5px;fill:var(--muted);text-anchor:middle;font-weight:600;letter-spacing:.3px}
+  .nwkaart .ik{fill:var(--accent)} .nwkaart .iktx{fill:var(--op-accent);font-weight:700;font-size:13px;text-anchor:middle}
+  .nwkaart .nwstip circle{fill:var(--z);stroke:var(--card);stroke-width:2.5}
+  .nwkaart .nwstip .init{fill:#fff;font-weight:700;font-size:13px;text-anchor:middle}
+  html[data-donker] .nwkaart .nwstip .init{fill:#1b1d25}
+  .nwkaart .nwstip .naam{fill:var(--ink);font-size:10px;text-anchor:middle;font-weight:600}
+  .nwlegenda{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 16px;margin-top:6px;font-size:var(--fs-klein);color:var(--muted);font-weight:600}
+  .nwlegenda span{display:inline-flex;align-items:center;gap:6px}
+  .nwlegenda .tvdot{width:10px;height:10px}
+  .nwpersoon{align-items:flex-start}
+  .nwtx small{line-height:1.4}
+  .nwtel{font-variant-numeric:tabular-nums;letter-spacing:.2px}
+  .nwnood{display:block;text-align:left;margin-top:4px;font-size:var(--fs-klein);min-height:0}
+  .nwin{display:inline-flex;align-items:center;gap:2px;margin-top:4px}
+  .nwin .i{stroke:currentColor;stroke-width:3;fill:none}
+  .nwacties{align-self:center}
+  .nwbel{display:inline-flex;align-items:center;text-decoration:none;padding:6px 14px;min-height:36px;color:var(--ink)}
+  /* plezierlijst */
+  .plkies{background:color-mix(in srgb,#e0a33a 12%,var(--card));border-color:transparent}
+  .plkeuze{font-family:var(--serif);font-size:calc(var(--fs-kop-s) * 1.25);font-weight:600;margin-top:10px;line-height:1.25;animation:potIn .45s var(--ease) both}
+  /* nee zeggen */
+  .neetips .soslist li{cursor:default}
+  .neekaart{background:color-mix(in srgb,var(--tv-rood) 6%,var(--card))}
+  .neevraag,.neeantwoord{margin-top:12px;border-radius:var(--hoek-l);padding:12px 14px;animation:potIn .4s var(--ease) both}
+  .neevraag{background:var(--card);border:1px solid var(--line)}
+  .neeantwoord{background:color-mix(in srgb,var(--tv-groen) 12%,var(--card));border-left:4px solid var(--tv-groen)}
+  .neevraag small,.neeantwoord small{display:block;font-size:var(--fs-klein);color:var(--muted);font-weight:600}
+  .neevraag b,.neeantwoord b{display:block;font-family:var(--serif);font-size:var(--fs-kop-s);font-weight:600;margin-top:2px;line-height:1.3}
+  /* terugvalplan: nog te doen */
+  .tvtodo{padding-top:12px}
+  .tvtodokop{font-size:var(--fs-klein);font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:0 var(--ruimte-4) 2px}
+  .tvtodonr{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--z,var(--line));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:var(--fs-klein);color:var(--muted)}
+  @media (prefers-reduced-motion:reduce){.plkeuze,.neevraag,.neeantwoord{animation:none}}

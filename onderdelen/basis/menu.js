@@ -1,6 +1,6 @@
 // © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- menu & pagina's ----------
-const VIEWS = {home:["Vandaag","Today"], today:["Dagbeschouwing","Daily reflection"], jft:["Alleen voor vandaag","Just for Today"], hist:["Eerdere dagen","Earlier days"], month:["Maandoverzicht","Month overview"], patterns:["Mijn patronen","My patterns"], review:["Weekterugblik","Week in review"], talk:["1-op-1 & weekdoel","1-to-1 & weekly goal"], wf:["Weekformulieren","Weekly forms"], meetings:["Meetings","Meetings"], steps:["Stappenwerk","Step work"], sos:["Noodplan","Emergency plan"], backup:["Back-up","Backup"]};
+const VIEWS = {home:["Vandaag","Today"], today:["Dagbeschouwing","Daily reflection"], jft:["Alleen voor vandaag","Just for Today"], hist:["Eerdere dagen","Earlier days"], month:["Maandoverzicht","Month overview"], patterns:["Mijn patronen","My patterns"], review:["Weekterugblik","Week in review"], talk:["1-op-1 & weekdoel","1-to-1 & weekly goal"], wf:["Weekformulieren","Weekly forms"], meetings:["Meetings","Meetings"], steps:["Stappenwerk","Step work"], sos:["Noodplan","Emergency plan"], werkboek:["Mijn werkboek","My workbook"], backup:["Back-up","Backup"]};
 function menuModusTekst(){ $("menuModusTx").textContent = vt("Weergave: ", "Appearance: ") + modusNaam(settings.modus); }
 function openMenu(){ menuModusTekst(); const d = daysClean(todayKey()); $("drawerSub").textContent = d === null ? vt("Dagbeschouwing", "Daily reflection") : aantal(d, "dag", "dagen", "day", "days") + " clean"; $("drawer").classList.add("open"); $("drawerBg").classList.add("show"); }
 function closeMenu(){ $("drawer").classList.remove("open"); $("drawerBg").classList.remove("show"); }
@@ -19,7 +19,8 @@ function showView(v){
   closeMenu(); window.scrollTo(0,0);
   if(v === "hist" || v === "month") renderHistory();
   if(v === "patterns") renderPatterns();
-  if(v === "sos"){ sosEdit = false; tvStap = null; tvOverzicht = false; renderSos(); }
+  if(v === "sos"){ sosEdit = false; renderSos(); }
+  if(v === "werkboek") renderWerkboek();
   if(v === "jft"){ jftShift = 0; renderJft(); }
   if(v === "talk"){ goalWeek = null; renderTalkView(); }
   if(v === "steps") renderSteps();

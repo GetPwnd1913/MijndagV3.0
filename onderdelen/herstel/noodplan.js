@@ -101,9 +101,6 @@ function quotesCard(){
 function renderSos(){
   const box = $("sosBox"); box.innerHTML = "";
   if(sosEdit) return renderSosEdit(box);
-  // terugvalpreventieplan (terugval.js): een opdracht of het hele plan
-  if(tvStap !== null) return renderTvStap(box);
-  if(tvOverzicht) return renderTvOverzicht(box);
   const sos = settings.sos || {};
   const steps = sos.steps || [], contacts = sos.contacts || [], reason = (sos.reason || "").trim();
 
@@ -146,7 +143,6 @@ function renderSos(){
     const b = el("button", "primary", vt("Mijn noodplan maken", "Make my emergency plan")); b.type = "button"; b.style.marginTop = "12px"; b.onclick = startSosEdit;
     c.appendChild(b); box.appendChild(c);
     box.appendChild(potCard());
-    box.appendChild(tvPlanCard());
     const nm0 = nextMeetingCard(); if(nm0) box.appendChild(nm0);
   } else {
     if(steps.length){
@@ -170,7 +166,6 @@ function renderSos(){
       box.appendChild(c);
     }
     box.appendChild(potCard());
-    box.appendChild(tvPlanCard());
     const b = el("button", "ghost", vt("Noodplan aanpassen", "Edit emergency plan")); b.type = "button"; b.onclick = startSosEdit;
     const nm = nextMeetingCard(); if(nm) box.appendChild(nm);
     const row = el("div", "row"); row.style.justifyContent = "flex-start"; row.appendChild(b); box.appendChild(row);
