@@ -4,8 +4,12 @@
 // Verschijnt elke keer, tot je "Niet meer laten zien" aanvinkt: dan staat settings.nieuwGezien = NIEUW_VERSIE.
 // Bij een volgende update met nieuws: NIEUW_VERSIE en NIEUW_ITEMS aanpassen, dan komt het venster weer.
 // Op een nieuw toestel komt eerst de uitleg (uitleg.js); dan niet ook nog dit venster.
-const NIEUW_VERSIE = "2026-11-25";
+const NIEUW_VERSIE = "2026-11-25-2";
 const NIEUW_ITEMS = [
+  {icoon: "book", kleur: "var(--tv-groen)", naar: "werkboek",
+   t: "Mooie bestanden van je werkboek", te: "Nice files from your workbook",
+   u: "De Word- en PDF-bestanden van je werkboek zien er nu net zo uit als je dagbeschouwing: een gekleurde kop, per stap een eigen blok en witte vakken met wat je hebt ingevuld. Handig om te bespreken met je begeleider.",
+   ue: "The Word and PDF files from your workbook now look just like your daily reflection: a coloured header, a block for each step and white boxes with what you filled in. Handy to talk through with your support worker."},
   {icoon: "gschema", kleur: "var(--accent)", naar: "werkboek",
    t: "Mijn werkboek", te: "My workbook",
    u: "Nieuw in het menu: zes opdrachten zoals je ze in de verslavingszorg meekrijgt. Terugvalpreventieplan, Nee zeggen, G-schema, Beslisbalans, Netwerkkaart en Plezierlijst. Je kunt ze downloaden als Word of PDF.",
@@ -25,11 +29,7 @@ const NIEUW_ITEMS = [
   {icoon: "target", kleur: "var(--tv-groen)", naar: "patterns",
    t: "Waar stond ik?", te: "Where was I?",
    u: "In Mijn patronen zie je hoe vaak je groen, oranje of rood was, met bolletjes voor de laatste 4 weken.",
-   ue: "In My patterns you see how often you were green, orange or red, with dots for the last 4 weeks."},
-  {icoon: "star", kleur: "#e0a33a", naar: "today",
-   t: "Meer keuzes in je dagbeschouwing", te: "More choices in your daily reflection",
-   u: "Bij ‘Waarom dit cijfer?’ staan 19 nieuwe keuzes, verdeeld in wat de dag goed en wat de dag zwaar maakte. En bij een conflict, craving of trigger maak je met één tik een G-schema.",
-   ue: "Under ‘Why this score?’ there are 19 new choices, split into what made the day good and what made it hard. And with a conflict, craving or trigger you can make an ABC diary in one tap."}
+   ue: "In My patterns you see how often you were green, orange or red, with dots for the last 4 weeks."}
 ];
 const nieuwNodig = () => settings.nieuwGezien !== NIEUW_VERSIE;
 async function nieuwNietMeer(){
