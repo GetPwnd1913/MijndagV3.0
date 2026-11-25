@@ -300,13 +300,7 @@ function renderGs(box){
   const k2 = el("div", "card");
   k2.appendChild(el("div", "qtitle", vt("Bespreken of bewaren", "Discuss or keep")));
   const n = note(vt("Neem dit mee naar je 1-op-1 of bespreek het met je sponsor.", "Take this to your 1-to-1 or talk it through with your sponsor.")); n.style.marginTop = "4px"; k2.appendChild(n);
-  k2.appendChild(wbDownloadKnoppen(() => ({titel: vt("G-schema", "ABC diary"), intro: wbDatum(g.date), secties: GS_DELEN.map((d, i) => {
-    const kz = g.keuzes || {}, rijen = [];
-    if((kz[d.k] || []).length) rijen.push({label: "", items: kz[d.k].map(x => cap(wbT(x)))});
-    if(d.k === "gevoelens" && (kz.sterkte || []).length) rijen.push({label: vt("Hoe sterk", "How strong"), items: [wbT(kz.sterkte[0])]});
-    if(d.chips2 && (kz.volgende || []).length) rijen.push({label: vt("Volgende keer", "Next time"), items: kz.volgende.map(x => cap(wbT(x)))});
-    return {kop: d.plus ? vt("Tot slot", "Finally") : "G" + (i + 1) + " · " + vt(d.t, d.te), titel: vt(d.v, d.ve), rijen, notitie: (g[d.k] || "").trim()};
-  }).filter(s => s.rijen.length || s.notitie)})));
+  k2.appendChild(wbDownloadKnoppen(() => gsDoc(g)));
   const weg = el("button", "linkbtn wbweg", vt("Dit G-schema weggooien", "Delete this ABC diary")); weg.type = "button";
   weg.onclick = async () => {
     if(!(await confirmDialog(vt("G-schema weggooien?", "Delete ABC diary?"), vt("Dit G-schema verdwijnt helemaal.", "This ABC diary will be removed completely."), vt("Weggooien", "Delete")))) return;
@@ -332,10 +326,10 @@ const BALANS_VAKKEN = [
   {k: "vclean", t: "Voordelen van clean blijven", te: "Pros of staying clean", v: "Wat levert clean zijn me op?", ve: "What does being clean give me?", z: "groen", kant: "clean"},
   {k: "nclean", t: "Nadelen van clean blijven", te: "Cons of staying clean", v: "Wat is er moeilijk aan?", ve: "What is hard about it?", z: "oranje", kant: "gebruik"}
 ];
+const balansTel = () => { const it = wbItems("balans"), tel = k => (it[k] || []).length; return {links: tel("vgebruik") + tel("nclean"), rechts: tel("ngebruik") + tel("vclean")}; };
 // weegschaal: links wat naar gebruiken trekt, rechts wat naar clean blijven trekt
 function balansWeegschaal(){
-  const it = wbItems("balans"), tel = k => (it[k] || []).length;
-  const links = tel("vgebruik") + tel("nclean"), rechts = tel("ngebruik") + tel("vclean"), som = links + rechts;
+  const {links, rechts} = balansTel(), som = links + rechts;
   const c = el("div", "card balansschaal");
   c.appendChild(el("div", "qtitle", vt("Mijn weegschaal", "My scales")));
   const hoek = som ? Math.max(-14, Math.min(14, (links - rechts) / som * 22)) : 0;
@@ -367,11 +361,7 @@ function renderBalans(box){
   const c = el("div", "card");
   c.appendChild(el("div", "qtitle", vt("Wat weegt voor mij het zwaarst?", "What matters most to me?")));
   c.appendChild(wbTekstveld((wbLees().balans || {}).notitie, "Schrijf het in je eigen woorden…", "Write it in your own words…", v => { const d = wbData(); d.balans.notitie = v; tvBewaar(); }, vt("Wat weegt voor mij het zwaarst?", "What matters most to me?")));
-  c.appendChild(wbDownloadKnoppen(() => {
-    const it = wbItems("balans"), nt = ((wbLees().balans || {}).notitie || "").trim();
-    return {titel: vt("Beslisbalans", "Decision balance"), secties: BALANS_VAKKEN.filter(v => (it[v.k] || []).length).map(v => ({z: v.z, kop: vt(v.t, v.te), titel: vt(v.v, v.ve), rijen: [{label: "", items: it[v.k].map(x => cap(wbT(x)))}], notitie: ""}))
-      .concat(nt ? [{kop: vt("Tot slot", "Finally"), titel: vt("Wat weegt voor mij het zwaarst?", "What matters most to me?"), rijen: [], notitie: nt}] : [])};
-  }));
+  c.appendChild(wbDownloadKnoppen(balansDoc));
   box.appendChild(c);
 }
 
@@ -452,8 +442,7 @@ function renderNetwerk(box){
   if(l.length){
     const c = el("div", "card");
     c.appendChild(el("div", "qtitle", vt("Bespreken of bewaren", "Discuss or keep")));
-    c.appendChild(wbDownloadKnoppen(() => ({titel: vt("Netwerkkaart", "Network map"), secties: NW_SOORTEN.map(s => ({z: s.z, kop: vt(s.t, s.te), titel: vt(s.u, s.ue),
-      rijen: [{label: "", items: (wbLees().netwerk || []).filter(p => p.soort === s.k).map(p => p.naam + (p.rol ? " (" + wbT(p.rol) + ")" : "") + (p.tel ? "  " + fmtPhone(p.tel) : ""))}].filter(r => r.items.length), notitie: ""})).filter(s => s.rijen.length)})));
+    c.appendChild(wbDownloadKnoppen(nwDoc));
     box.appendChild(c);
   }
 }
@@ -533,7 +522,7 @@ function renderPlezier(box){
   if(plAlles().length){
     const c = el("div", "card");
     c.appendChild(el("div", "qtitle", vt("Bespreken of bewaren", "Discuss or keep")));
-    c.appendChild(wbDownloadKnoppen(() => ({titel: vt("Plezierlijst", "Fun list"), secties: PL_VAKKEN.filter(v => (wbItems("plezier")[v.k] || []).length).map(v => ({hex: "E0A33A", kop: vt("Plezierlijst", "Fun list"), titel: vt(v.t, v.te), rijen: [{label: "", items: wbItems("plezier")[v.k].map(x => cap(wbT(x)))}], notitie: ""}))})));
+    c.appendChild(wbDownloadKnoppen(plDoc));
     box.appendChild(c);
   }
 }
@@ -572,10 +561,47 @@ function renderNee(box){
   if((wbItems("nee").zinnen || []).length){
     const c = el("div", "card");
     c.appendChild(el("div", "qtitle", vt("Bespreken of bewaren", "Discuss or keep")));
-    c.appendChild(wbDownloadKnoppen(() => ({titel: vt("Nee zeggen", "Saying no"), secties: [
-      {z: "oranje", kop: vt("Situaties", "Situations"), titel: vt("Wanneer kan het gebeuren?", "When could it happen?"), rijen: [{label: "", items: (wbItems("nee").situaties || []).map(x => cap(wbT(x)))}].filter(r => r.items.length), notitie: ""},
-      {z: "groen", kop: vt("Mijn zinnen", "My sentences"), titel: vt("Wat zeg ik dan?", "What do I say?"), rijen: [{label: "", items: (wbItems("nee").zinnen || []).map(x => wbT(x))}], notitie: ""},
-      {kop: vt("Tips", "Tips"), titel: vt("Zo zeg je nee", "How to say no"), rijen: [{label: "", items: NEE_TIPS.map(x => vt(x[0], x[1]))}], notitie: ""}].filter(s => s.rijen.length)})));
+    c.appendChild(wbDownloadKnoppen(neeDoc));
     box.appendChild(c);
   }
 }
+
+// ---- inhoud van de bestanden (Word/PDF); de opmaak staat in werkboek-export.js ----
+const wbUit = id => { const o = WB_OPDRACHTEN.find(x => x.id === id); return vt(o.uit, o.uitEn); };
+const wbLijstje = l => (l || []).map(x => cap(wbT(x)));
+function gsDoc(g){
+  const kz = g.keuzes || {};
+  return {titel: vt("G-schema", "ABC diary"), intro: wbUit("gschema"), tegel: [vt("MOMENT", "MOMENT"), shortDate(g.date)], secties: GS_DELEN.map((d, i) => {
+    const rijen = [];
+    if((kz[d.k] || []).length) rijen.push({label: "", items: wbLijstje(kz[d.k])});
+    if(d.k === "gevoelens" && (kz.sterkte || []).length) rijen.push({label: vt("Hoe sterk", "How strong"), items: [wbT(kz.sterkte[0])]});
+    if(d.chips2 && (kz.volgende || []).length) rijen.push({label: vt("Volgende keer", "Next time"), items: wbLijstje(kz.volgende)});
+    return {nr: i + 1, kop: d.plus ? vt("Tot slot", "Finally") : "G" + (i + 1) + " · " + vt(d.t, d.te), titel: vt(d.v, d.ve), rijen, notitie: (g[d.k] || "").trim()};
+  }).filter(s => s.rijen.length || s.notitie)};
+}
+function balansDoc(){
+  const it = wbItems("balans"), nt = ((wbLees().balans || {}).notitie || "").trim(), t = balansTel();
+  return {titel: vt("Beslisbalans", "Decision balance"), intro: wbUit("balans"),
+    tegel: [vt("WEEGSCHAAL", "SCALES"), vt("Gebruiken " + t.links + " · Clean " + t.rechts, "Using " + t.links + " · Clean " + t.rechts)],
+    secties: BALANS_VAKKEN.map(v => ({z: v.z, half: true, kop: v.kant === "clean" ? vt("Trekt naar clean blijven", "Pulls towards staying clean") : vt("Trekt naar gebruiken", "Pulls towards using"), titel: vt(v.t, v.te), uitleg: vt(v.v, v.ve), rijen: [{label: "", items: wbLijstje(it[v.k])}]}))
+      .concat(nt ? [{kop: vt("Tot slot", "Finally"), titel: vt("Wat weegt voor mij het zwaarst?", "What matters most to me?"), notitie: nt}] : [])};
+}
+function nwDoc(){
+  const l = wbLees().netwerk || [], afst = k => { const a = NW_AFSTAND.find(x => x.k === k); return a ? vt(a.t, a.te) : ""; };
+  return {titel: vt("Netwerkkaart", "Network map"), intro: wbUit("netwerk"), tegel: [vt("MENSEN", "PEOPLE"), String(l.length)],
+    secties: NW_SOORTEN.map(s => ({z: s.z, kop: vt(s.t, s.te), titel: vt(s.u, s.ue), tabel: {kop: [vt("Naam", "Name"), vt("Wie is het?", "Who is it?"), vt("Afstand", "Distance"), vt("Telefoon", "Phone")], breed: [0.3, 0.26, 0.2, 0.24],
+      rijen: l.filter(p => p.soort === s.k).map(p => [p.naam || "", p.rol ? cap(wbT(p.rol)) : "", afst(p.afstand), p.tel ? fmtPhone(p.tel) : ""])}})).filter(s => s.tabel.rijen.length)};
+}
+function plDoc(){
+  const it = wbItems("plezier");
+  return {titel: vt("Plezierlijst", "Fun list"), intro: wbUit("plezier"), tegel: [vt("IDEEËN", "IDEAS"), String(plAlles().length)],
+    secties: PL_VAKKEN.filter(v => (it[v.k] || []).length).map(v => ({hex: "E0A33A", half: true, kop: vt("Plezierlijst", "Fun list"), titel: vt(v.t, v.te), rijen: [{label: "", items: wbLijstje(it[v.k])}]}))};
+}
+function neeDoc(){
+  const it = wbItems("nee");
+  return {titel: vt("Nee zeggen", "Saying no"), intro: wbUit("nee"), tegel: [vt("MIJN ZINNEN", "MY SENTENCES"), String((it.zinnen || []).length)], secties: [
+    {z: "oranje", half: true, nr: 1, kop: vt("Situaties", "Situations"), titel: vt("Wanneer kan het gebeuren?", "When could it happen?"), rijen: [{label: "", items: wbLijstje(it.situaties)}]},
+    {z: "groen", half: true, nr: 2, kop: vt("Mijn zinnen", "My sentences"), titel: vt("Wat zeg ik dan?", "What do I say?"), rijen: [{label: "", items: (it.zinnen || []).map(x => wbT(x))}]},
+    {kop: vt("Tips", "Tips"), titel: vt("Zo zeg je nee", "How to say no"), rijen: [{label: "", items: NEE_TIPS.map(x => vt(x[0], x[1]))}]}]};
+}
+window.__wbDocs = {tvDoc: () => tvDoc(), gsDoc: g => gsDoc(g), balansDoc: () => balansDoc(), nwDoc: () => nwDoc(), plDoc: () => plDoc(), neeDoc: () => neeDoc()};

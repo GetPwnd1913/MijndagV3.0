@@ -321,7 +321,7 @@ function renderTvOverzicht(box){
   const kop = el("div", "card tvkopkaart");
   kop.appendChild(el("div", "qtitle", vt("Mijn terugvalpreventieplan", "My relapse prevention plan")));
   tvVoortgang(kop);
-  if(TV_STAPPEN.some(tvStapGevuld)) kop.appendChild(wbDownloadKnoppen(() => ({titel: vt("Terugvalpreventieplan", "Relapse prevention plan"), intro: TV_INTRO(), stoplicht: true, secties: tvExportSecties()})));
+  if(TV_STAPPEN.some(tvStapGevuld)) kop.appendChild(wbDownloadKnoppen(tvDoc));
   box.appendChild(kop);
   // nog niet ingevulde opdrachten compact in één lijstje, daarna de ingevulde als kaart
   const todo = TV_STAPPEN.map((s, i) => [s, i]).filter(([s]) => !tvStapGevuld(s));
@@ -415,128 +415,23 @@ function renderTvSein(){
   row.appendChild(b); row.appendChild(n); c.appendChild(row);
 }
 
-// ---- plan downloaden als Word of PDF (zelfde stijl als de dagbeschouwing) ----
-const TV_HEX = {groen: "3B8A57", oranje: "D27A1F", rood: "C62828"};
-const tvRgb = hex => [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+// ---- plan als Word of PDF (opmaak in werkboek-export.js) ----
 function tvExportSecties(){
   const out = [];
   TV_STAPPEN.forEach((s, i) => {
     if(!tvStapGevuld(s)) return;
-    out.push({z: s.zone || null, kop: s.zone ? vt(TV_ZONES[s.zone].nl + " · " + TV_ZONES[s.zone].kop, TV_ZONES[s.zone].en + " · " + TV_ZONES[s.zone].kopEn) : vt("Opdracht " + (i + 1), "Assignment " + (i + 1)),
-      titel: vt(s.t, s.te), rijen: s.rows.map(r => ({label: vt(r.l, r.le), items: tvGet(r.k).map(x => tvCap(tvT(x)))})).filter(r => r.items.length), notitie: tvNote(s.id)});
+    out.push({z: s.zone || null, nr: i + 1, kop: s.zone ? vt("Stap " + (i + 1) + " · " + TV_ZONES[s.zone].nl + " · " + TV_ZONES[s.zone].kop, "Step " + (i + 1) + " · " + TV_ZONES[s.zone].en + " · " + TV_ZONES[s.zone].kopEn) : vt("Stap " + (i + 1), "Step " + (i + 1)),
+      titel: vt(s.t, s.te), uitleg: vt(s.tip, s.tipEn), rijen: s.rows.map(r => ({label: vt(r.l, r.le), items: tvGet(r.k).map(x => tvCap(tvT(x)))})).filter(r => r.items.length), notitie: tvNote(s.id)});
   });
   const cs = ((settings.sos || {}).contacts || []).filter(c => c.name || c.phone);
-  if(cs.length) out.push({z: null, kop: vt("Noodplan", "Emergency plan"), titel: vt("Wie kan ik bellen?", "Who can I call?"), rijen: [{label: "", items: cs.map(c => (c.name || "") + (c.phone ? "  " + fmtPhone(c.phone) : ""))}], notitie: ""});
+  if(cs.length) out.push({kop: vt("Uit mijn noodplan", "From my emergency plan"), titel: vt("Wie kan ik bellen?", "Who can I call?"),
+    tabel: {kop: [vt("Wie?", "Who?"), vt("Telefoonnummer", "Phone number")], breed: [0.55, 0.45], rijen: cs.map(c => [c.name || "", c.phone ? fmtPhone(c.phone) : ""])}});
   const reden = ((settings.sos || {}).reason || "").trim();
-  if(reden) out.push({z: null, kop: vt("Noodplan", "Emergency plan"), titel: vt("Waarom ik clean blijf", "Why I stay clean"), rijen: [], notitie: reden});
+  if(reden) out.push({kop: vt("Uit mijn noodplan", "From my emergency plan"), titel: vt("Waarom ik clean blijf", "Why I stay clean"), notitie: reden});
   return out;
 }
-const tvBestand = (titel, ext) => titel + ((settings.naam || "").trim() ? " " + settings.naam.trim() : "") + " " + todayKey() + "." + ext;
-const TV_INTRO = () => vt("Dit plan helpt je om op tijd te zien hoe het met je gaat. Groen: het gaat goed. Oranje: let op, de eerste signalen. Rood: gevaar, nu handelen.", "This plan helps you notice in time how you are doing. Green: doing well. Orange: watch out, the first signs. Red: danger, act now.");
-function tvWordXml(doc){
-  const TH = exportTheme(), GRAY = "6B7370", INK = "1F2A28";
-  const r = (t, o) => { o = o || {}; return '<w:r><w:rPr>' + (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '') + (o.caps ? '<w:caps/>' : '') + '<w:color w:val="' + (o.c || INK) + '"/>' + (o.sz ? '<w:sz w:val="' + o.sz + '"/><w:szCs w:val="' + o.sz + '"/>' : '') + '</w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>'; };
-  const p = (runs, o) => { o = o || {}; return '<w:p><w:pPr>' + (o.keep ? '<w:keepNext/>' : '') + (o.top ? '<w:pBdr><w:top w:val="single" w:sz="4" w:space="12" w:color="E3DED3"/></w:pBdr>' : '') + '<w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after == null ? 60 : o.after) + '"/>' + (o.ind ? '<w:ind w:left="' + o.ind + '"' + (o.hang ? ' w:hanging="' + o.hang + '"' : '') + '/>' : '') + '</w:pPr>' + runs + '</w:p>'; };
-  let body = p(r(doc.titel, {b: 1, sz: 48, c: TH.hex}), {after: 40});
-  body += p(r(((settings.naam || "").trim() ? settings.naam.trim() + "  ·  " : "") + cap(longDate2(todayKey())), {sz: 22, c: GRAY}), {after: 200});
-  if(doc.intro) body += p(r(doc.intro, {i: 1, sz: 19, c: GRAY}), {after: 120});
-  doc.secties.forEach(s => {
-    const kleur = s.z ? TV_HEX[s.z] : (s.hex || TH.hex);
-    body += p((s.z ? r("●  ", {sz: 22, c: kleur}) : "") + r(s.kop, {b: 1, sz: 16, c: kleur, caps: 1}), {keep: 1, top: 1, before: 280, after: 20});
-    body += p(r(s.titel, {b: 1, sz: 24}), {keep: 1, after: 80});
-    s.rijen.forEach(rij => {
-      if(rij.label) body += p(r(rij.label, {b: 1, sz: 18, c: GRAY}), {keep: 1, ind: 200, before: 80, after: 30});
-      rij.items.forEach(t => { body += p(r("•", {b: 1, c: kleur, sz: 22}) + r("  " + t, {sz: 21}), {ind: 480, hang: 260, after: 20}); });
-    });
-    if(s.notitie) s.notitie.split("\n").forEach(l => { body += p(r(l, {sz: 21, i: s.rijen.length ? 1 : 0}), {ind: 200, before: 60, after: 20}); });
-  });
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><w:body>' + body +
-    '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
-}
-function tvWordFooter(doc){
-  const rr = t => '<w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>';
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:jc w:val="center"/></w:pPr>' + rr(vt("Mijn dag  ·  ", "My day  ·  ") + doc.titel) + '</w:p></w:ftr>';
-}
-window.__tvDocParts = doc => Object.assign({}, DOCX_PARTS, {"word/document.xml": tvWordXml(doc), "word/footer1.xml": tvWordFooter(doc)});
-function tvPdf(doc){
-  const W = 595.28, H = 841.89, M = 50, CW = W - 2 * M, IND = 18, BOTTOM = 58;
-  const TH = exportTheme(), INK = [0.12, 0.16, 0.16], MUT = [0.44, 0.47, 0.46], LINE = [0.87, 0.85, 0.81], WHITE = [1, 1, 1];
-  const f = v => v.toFixed(2), col = c => c.map(v => v.toFixed(3)).join(" ");
-  const pages = []; let ops = [], y = 0;
-  const txt = (s, x, yy, size, font, c) => ops.push(col(c || INK) + " rg BT /" + font + " " + size + " Tf " + f(x) + " " + f(yy) + " Td (" + pesc(s) + ") Tj ET");
-  const hline = (x1, x2, yy, c) => ops.push(col(c) + " RG 0.7 w " + f(x1) + " " + f(yy) + " m " + f(x2) + " " + f(yy) + " l S");
-  const vorm = () => pdfShapes(ops);
-  const newPage = first => {
-    ops = []; pages.push(ops);
-    if(first){ y = H - M; return; }
-    txt(cp1252(doc.titel), M, H - 34, 8.5, "F1", MUT); hline(M, M + CW, H - 42, LINE); y = H - 64;
-  };
-  newPage(true);
-  // kop
-  const bandH = 76, sh = vorm();
-  sh.rrect(M, y - bandH, CW, bandH, 12, TH.rgb);
-  txt(cp1252(doc.titel), M + 22, y - 34, 22, "F2", WHITE);
-  txt(cp1252(((settings.naam || "").trim() ? settings.naam.trim() + "  ·  " : "") + cap(longDate2(todayKey()))), M + 22, y - 55, 11, "F1", WHITE);
-  pdfLogo(ops, M + CW - 16 - 50, y - (bandH - 50) / 2, 50, sh.rrect, sh.circle);
-  y -= bandH + 16;
-  // stoplicht-uitleg: drie bolletjes
-  const bw = CW / 3;
-  if(doc.stoplicht) Object.keys(TV_ZONES).forEach((z, i) => {
-    const x = M + i * bw; sh.circle(x + 8, y - 8, 6, tvRgb(TV_HEX[z]));
-    txt(cp1252(vt(TV_ZONES[z].nl + ": " + TV_ZONES[z].kop.toLowerCase(), TV_ZONES[z].en + ": " + TV_ZONES[z].kopEn.toLowerCase())), x + 20, y - 11.5, 10, "F2", INK);
-  });
-  if(doc.stoplicht) y -= 26;
-  if(doc.intro) wrap(doc.intro, 9.5, false, CW).forEach(l => { txt(l, M, y - 9.5, 9.5, "F3", MUT); y -= 13; });
-  y -= 8;
-  const ruimte = n => { if(y - n < BOTTOM) newPage(false); };
-  doc.secties.forEach(s => {
-    const kleur = s.z ? tvRgb(TV_HEX[s.z]) : (s.hex ? tvRgb(s.hex) : TH.rgb);
-    const tl = wrap(s.titel, 12.5, true, CW);
-    ruimte(44 + tl.length * 16);
-    hline(M, M + CW, y, LINE); y -= 18;
-    if(s.z) vorm().circle(M + 5, y - 4.5, 5, kleur);
-    txt(cp1252(s.kop.toUpperCase()), M + (s.z ? 16 : 0), y - 7.5, 8, "F2", kleur); y -= 18;
-    tl.forEach(l => { txt(l, M, y - 12.5, 12.5, "F2", INK); y -= 16; });
-    y -= 2;
-    s.rijen.forEach(rij => {
-      if(rij.label){ ruimte(30); y -= 4; wrap(rij.label, 9.5, true, CW - IND).forEach(l => { txt(l, M + IND, y - 9.5, 9.5, "F2", MUT); y -= 13; }); }
-      rij.items.forEach(t => wrap(t, 10.5, false, CW - IND - 14).forEach((l, j) => {
-        ruimte(14);
-        if(j === 0) txt(cp1252("•"), M + IND + 2, y - 10.5, 10.5, "F2", kleur);
-        txt(l, M + IND + 14, y - 10.5, 10.5, "F1", INK); y -= 14;
-      }));
-    });
-    if(s.notitie){ y -= 4; wrap(s.notitie, 10.5, false, CW - IND).forEach(l => { ruimte(14); txt(l, M + IND, y - 10.5, 10.5, s.rijen.length ? "F3" : "F1", INK); y -= 14; }); }
-    y -= 8;
-  });
-  pages.forEach((p, i) => {
-    ops = p;
-    txt(cp1252(vt("Mijn dag", "My day")), M, 30, 8, "F1", MUT);
-    const pg = cp1252(vt("Pagina ", "Page ") + (i + 1) + vt(" van ", " of ") + pages.length);
-    txt(pg, M + CW - textW(pg, 8, false), 30, 8, "F1", MUT);
-  });
-  return pdfAssemble(pages, W, H);
-}
-window.__tvPdf = doc => tvPdf(doc);
-// knoppen Word/PDF voor elke opdracht in het werkboek; maakDoc() geeft {titel, intro, stoplicht, secties}
-function wbDownloadKnoppen(maakDoc){
-  const w = el("div");
-  const row = el("div", "row"); row.style.cssText = "justify-content:flex-start;flex-wrap:wrap;margin-top:12px";
-  const msg = note(""); msg.setAttribute("role", "status");
-  const fout = err => { const c = err && err.code; msg.textContent = c === "declined" ? vt("Niet opgeslagen.", "Not saved.") : c === "rate_limited" ? vt("Even wachten en dan opnieuw proberen.", "Wait a moment and try again.") : vt("Opslaan lukte niet hier.", "Saving did not work here."); };
-  const wd = el("button", "ghost", vt("Download als Word", "Download as Word")); wd.type = "button";
-  wd.onclick = async () => {
-    msg.textContent = vt("Bestand maken…", "Creating file…");
-    try{
-      if(!window.JSZip) throw {code: "nozip"};
-      const doc = maakDoc(), zip = new JSZip(), parts = window.__tvDocParts(doc); Object.keys(parts).forEach(k => zip.file(k, parts[k]));
-      const mime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-      const blob = await zip.generateAsync({type: "blob", mimeType: mime});
-      await offerFile(tvBestand(doc.titel, "docx"), blob, mime); msg.textContent = ""; toast(vt("Bestand gemaakt.", "File created."));
-    }catch(err){ fout(err); }
-  };
-  const pd = el("button", "ghost", vt("Download als PDF", "Download as PDF")); pd.type = "button";
-  pd.onclick = async () => { try{ const doc = maakDoc(); await offerFile(tvBestand(doc.titel, "pdf"), tvPdf(doc), "application/pdf"); msg.textContent = ""; toast(vt("Bestand gemaakt.", "File created.")); }catch(err){ fout(err); } };
-  row.appendChild(wd); row.appendChild(pd); w.appendChild(row); w.appendChild(msg);
-  return w;
+function tvDoc(){
+  const n = TV_STAPPEN.filter(tvStapGevuld).length;
+  return {titel: vt("Terugvalpreventieplan", "Relapse prevention plan"), intro: TV_INTRO(), stoplicht: true,
+    tegel: [vt("INGEVULD", "FILLED IN"), vt(n + " van " + TV_STAPPEN.length + " opdrachten", n + " of " + TV_STAPPEN.length + " assignments")], secties: tvExportSecties()};
 }
