@@ -216,6 +216,225 @@ function wegHeuvel(W, y0, amp, f, fase, H){   // een heuvelrug van links naar re
   for(let x = 0; x <= W + 8; x += 8) d += " L" + x + " " + (y0 + amp * Math.sin(x / W * Math.PI * f + fase)).toFixed(1);
   return d + " L" + W + " " + H + "Z";
 }
+// ---- mijlpaal-show: tik op een behaalde keytag op Jouw weg ----
+// 1. wegViering: een komeet loopt over je gelopen pad (van je begin tot de mijlpaal), keytags onderweg lichten op, schokgolf bij aankomst
+// 2. ktVlucht: scherm wordt donker, de keytag vliegt draaiend naar het midden; flits, draaiende lichtstralen, confetti en schokgolven;
+//    dan verschijnt de mijlpaalpagina en zweeft de keytag naar zijn plek. Alles getekend op één canvas (ktShow).
+// Bij "minder beweging" (KT_RUSTIG) gebeurt niets hiervan: dan meteen de mijlpaalpagina.
+let wegBezig = false, ktShowNu = null;
+const ktRgb = kleur => {
+  let k = String(kleur || "").trim();
+  if(k.indexOf("var(") === 0) k = getComputedStyle(document.documentElement).getPropertyValue(k.slice(4, -1)).trim() || "#2f6f62";
+  if(/^#[0-9a-f]{3}$/i.test(k)) k = "#" + k.slice(1).split("").map(c => c + c).join("");
+  return /^#[0-9a-f]{6}$/i.test(k) ? [1, 3, 5].map(i => parseInt(k.slice(i, i + 2), 16)) : [255, 255, 255];
+};
+const ktRgba = (rgb, a) => "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "," + Math.max(0, Math.min(1, a)).toFixed(3) + ")";
+// kleuren voor de confetti: de keytag zelf (witte/lichte keytags: de themakleur), plus goud en wit
+const ktFeestKleuren = c => { const eigen = c === "#ffffff" || c === "#EEF2E6" ? ktRgb("var(--accent)") : ktRgb(c); return [eigen, eigen, [244, 213, 141], [255, 255, 255], eigen.map(v => Math.min(255, v + 70))]; };
+// één canvas over het hele scherm met deeltjes, schokgolven, lichtstralen, flits en verduistering
+function ktShow(){
+  if(ktShowNu) return ktShowNu;
+  const c = document.createElement("canvas"); c.className = "ktshow"; c.setAttribute("aria-hidden", "true");
+  document.body.appendChild(c);
+  const ctx = c.getContext("2d"), dpr = Math.min(2, window.devicePixelRatio || 1);
+  const maat = () => { c.width = innerWidth * dpr; c.height = innerHeight * dpr; c.style.width = innerWidth + "px"; c.style.height = innerHeight + "px"; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  maat(); window.addEventListener("resize", maat);
+  const S = {deeltjes: [], ringen: [], stralen: null, flits: 0, dim: 0, dimDoel: 0, vast: 0};
+  // gloeiende stip en ster één keer per kleur als plaatje maken (gloed per beeldje uitrekenen is te zwaar voor een telefoon)
+  const sprites = {};
+  const sprite = (vorm, rgb) => {
+    const k = vorm + rgb.join(","); if(sprites[k]) return sprites[k];
+    const z = 64, o = document.createElement("canvas"); o.width = o.height = z; const g = o.getContext("2d"), m = z / 2;
+    const gl = g.createRadialGradient(m, m, 0, m, m, m); gl.addColorStop(0, ktRgba(rgb, .9)); gl.addColorStop(.25, ktRgba(rgb, .45)); gl.addColorStop(1, ktRgba(rgb, 0));
+    g.fillStyle = gl; g.fillRect(0, 0, z, z);
+    g.fillStyle = "rgba(255,255,255,.95)";
+    if(vorm === "ster"){ g.beginPath(); for(let i = 0; i < 10; i++){ const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 6 : 15; g.lineTo(m + Math.cos(a) * rr, m + Math.sin(a) * rr); } g.closePath(); g.fillStyle = ktRgba(rgb.map(v => Math.min(255, v + 90)), 1); g.fill(); }
+    else { g.beginPath(); g.arc(m, m, 5, 0, Math.PI * 2); g.fill(); }
+    return (sprites[k] = o);
+  };
+  // lichtstralen: één keer tekenen, daarna alleen draaien
+  const stralenBeeld = rgb => {
+    const R = Math.ceil(Math.hypot(innerWidth, innerHeight) * .75), o = document.createElement("canvas"); o.width = o.height = R * 2; const g = o.getContext("2d");
+    g.translate(R, R);
+    const gr = g.createRadialGradient(0, 0, 0, 0, 0, R); gr.addColorStop(0, ktRgba(rgb, .75)); gr.addColorStop(.3, ktRgba(rgb, .28)); gr.addColorStop(1, ktRgba(rgb, 0));
+    g.fillStyle = gr;
+    for(let i = 0; i < 18; i++){ const a = i * Math.PI * 2 / 18; g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, R, a, a + Math.PI / 28); g.closePath(); g.fill(); }
+    const k = g.createRadialGradient(0, 0, 0, 0, 0, 160); k.addColorStop(0, "rgba(255,255,255,.6)"); k.addColorStop(.4, ktRgba(rgb, .4)); k.addColorStop(1, ktRgba(rgb, 0));
+    g.fillStyle = k; g.beginPath(); g.arc(0, 0, 160, 0, Math.PI * 2); g.fill();
+    return {o, R};
+  };
+  let vorige = 0, loopt = false;
+  const tik = nu => {
+    const dt = Math.min(2.5, (nu - (vorige || nu)) / 16.7) || 1; vorige = nu;
+    const W = innerWidth, H = innerHeight;
+    ctx.clearRect(0, 0, W, H);
+    S.dim += (S.dimDoel - S.dim) * Math.min(1, .09 * dt);
+    if(S.dim > .004){ ctx.fillStyle = "rgba(3,6,18," + S.dim.toFixed(3) + ")"; ctx.fillRect(0, 0, W, H); }
+    const st = S.stralen;
+    if(st){
+      st.rot += .0045 * dt; st.a += (st.doel - st.a) * Math.min(1, .08 * dt);
+      if(st.a > .005){
+        if(!st.beeld) st.beeld = stralenBeeld(st.rgb);
+        ctx.save(); ctx.translate(st.x, st.y); ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = Math.min(1, st.a);
+        ctx.rotate(st.rot); ctx.drawImage(st.beeld.o, -st.beeld.R, -st.beeld.R);
+        ctx.rotate(-st.rot * 2.6); ctx.globalAlpha = Math.min(1, st.a) * .45; ctx.scale(.7, .7); ctx.drawImage(st.beeld.o, -st.beeld.R, -st.beeld.R);
+        ctx.restore();
+      }
+      if(st.doel === 0 && st.a < .005) S.stralen = null;
+    }
+    // schokgolven
+    S.ringen = S.ringen.filter(r => r.a > .01);
+    S.ringen.forEach(r => {
+      if(r.wacht > 0){ r.wacht -= dt * 16.7; return; }
+      r.r += r.v * dt; r.v *= Math.pow(.965, dt); r.a -= r.af * dt;
+      ctx.save(); ctx.globalCompositeOperation = "lighter";
+      ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2);
+      ctx.strokeStyle = ktRgba(r.rgb, r.a * .3); ctx.lineWidth = r.w * 4; ctx.stroke();
+      ctx.strokeStyle = ktRgba(r.rgb, r.a); ctx.lineWidth = r.w * (.4 + r.a); ctx.stroke(); ctx.restore();
+    });
+    // deeltjes: stippen (gloed), sterren en confetti-strookjes
+    S.deeltjes = S.deeltjes.filter(p => p.l > 0 && p.y < H + 40);
+    S.deeltjes.forEach(p => {
+      p.vx *= Math.pow(p.drag, dt); p.vy = p.vy * Math.pow(p.drag, dt) + p.g * dt;
+      p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; p.l -= dt;
+      const a = Math.min(1, p.l / (p.max * .35));
+      if(p.vorm === "strook"){
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, Math.cos(p.rot * 2.2));
+        ctx.fillStyle = ktRgba(p.rgb, a); ctx.fillRect(-p.m, -p.m * .45, p.m * 2, p.m * .9); ctx.restore();
+      } else {
+        const sp = sprite(p.vorm, p.rgb), z = p.m * (p.vorm === "ster" ? 4.2 : 5);
+        ctx.globalCompositeOperation = "lighter"; ctx.globalAlpha = a;
+        if(p.vorm === "ster"){ ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.drawImage(sp, -z / 2, -z / 2, z, z); ctx.restore(); }
+        else ctx.drawImage(sp, p.x - z / 2, p.y - z / 2, z, z);
+        ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+      }
+    });
+    if(S.flits > .004){ ctx.fillStyle = "rgba(255,255,255," + S.flits.toFixed(3) + ")"; ctx.fillRect(0, 0, W, H); S.flits *= Math.pow(.86, dt); }
+    const bezig = S.vast > 0 || S.deeltjes.length || S.ringen.length || S.stralen || S.dim > .004 || S.dimDoel > 0 || S.flits > .004;
+    if(bezig) requestAnimationFrame(tik);
+    else { loopt = false; window.removeEventListener("resize", maat); c.remove(); if(ktShowNu === S) ktShowNu = null; }
+  };
+  S.start = () => { if(!loopt){ loopt = true; vorige = 0; requestAnimationFrame(tik); } };
+  // uitbarsting: n deeltjes vanuit (x, y); kracht = snelheid; soorten = welke vormen
+  S.knal = (x, y, kleuren, n, kracht, soorten, extra) => {
+    for(let i = 0; i < n; i++){
+      const hoek = Math.random() * Math.PI * 2, v = (.35 + Math.random() * .65) * kracht, vorm = soorten[i % soorten.length];
+      S.deeltjes.push(Object.assign({x, y, vx: Math.cos(hoek) * v, vy: Math.sin(hoek) * v - kracht * .25, g: vorm === "strook" ? .16 : .09, drag: vorm === "strook" ? .975 : .955,
+        rot: Math.random() * 6, vr: (Math.random() - .5) * .3, m: vorm === "stip" ? 1.6 + Math.random() * 2.6 : vorm === "ster" ? 4 + Math.random() * 5 : 4 + Math.random() * 4,
+        l: 0, max: 0, vorm, rgb: kleuren[i % kleuren.length]}, extra || {}));
+      const p = S.deeltjes[S.deeltjes.length - 1]; p.max = p.l = (extra && extra.l) || 70 + Math.random() * 80;
+    }
+    S.start();
+  };
+  S.ring = (x, y, rgb, wacht, v, w) => { S.ringen.push({x, y, rgb, r: 8, v: v || 9, a: .95, af: .016, w: w || 5, wacht: wacht || 0}); S.start(); };
+  ktShowNu = S;
+  return S;
+}
+// midden van een element op het scherm
+const ktMidden = n => { const r = n.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2, r]; };
+function wegViering(svg, d, tag, kleur, verder){
+  if(KT_RUSTIG() || !svg || !svg.animate || !svg.getScreenCTM){ verder(); return; }
+  if(wegBezig) return; wegBezig = true;
+  const show = ktShow(), kl = ktFeestKleuren(kleur), wit = [255, 255, 255];
+  const spoor = svgEl("path", {class: "wegspoor", d, pathLength: "1"}), vonk = svgEl("circle", {class: "wegvonk", r: 7, cx: -99, cy: -99});
+  svg.appendChild(spoor); svg.appendChild(vonk);
+  const lang = spoor.getTotalLength(), duur = Math.max(650, Math.min(1100, lang * 1.7)), t0 = performance.now();
+  spoor.animate([{strokeDashoffset: 1}, {strokeDashoffset: 0}], {duration: duur, easing: "cubic-bezier(.5,0,.2,1)", fill: "forwards"});
+  const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  // keytags langs de weg (behaald) lichten op als de komeet erlangs komt
+  const langs = [...document.querySelectorAll("#wegBaan .wegstop:not(.komt) .wegtag")].filter(n => n !== tag).map(n => ({n, geweest: false}));
+  show.vast++;
+  const vak = ($("wegScroll") || svg).getBoundingClientRect(), inBeeld = (x, y) => x >= vak.left && x <= vak.right && y >= vak.top && y <= vak.bottom;
+  const stap = nu => {
+    const x = Math.min(1, (nu - t0) / duur), p = spoor.getPointAtLength(lang * ease(x));
+    vonk.setAttribute("cx", p.x.toFixed(1)); vonk.setAttribute("cy", p.y.toFixed(1));
+    const m = svg.getScreenCTM(), sx = m.a * p.x + m.c * p.y + m.e, sy = m.b * p.x + m.d * p.y + m.f;
+    if(inBeeld(sx, sy)) show.knal(sx, sy, [wit, kl[0], kl[2]], 3, 2.2, ["stip", "stip", "ster"], {g: -.015, drag: .93, l: 26 + Math.random() * 22});
+    langs.forEach(o => {
+      if(o.geweest) return; const [tx, ty] = ktMidden(o.n);
+      if(Math.hypot(tx - sx, ty - sy) < 60){ o.geweest = true; o.n.animate([{transform: "scale(1)", filter: "brightness(1)"}, {transform: "scale(1.35) translateY(-5px)", filter: "brightness(1.6)"}, {transform: "scale(1)", filter: "brightness(1)"}], {duration: 520, easing: "ease-out"}); show.knal(tx, ty, [wit, kl[2]], 10, 4, ["ster", "stip"], {l: 40}); }
+    });
+    if(x < 1) return requestAnimationFrame(stap);
+    // aangekomen: schokgolf, vonkenregen en de keytag springt op
+    show.vast--;
+    const [tx, ty] = tag ? ktMidden(tag) : [sx, sy];
+    show.ring(tx, ty, kl[0], 0, 7, 4); show.ring(tx, ty, wit, 90, 5, 2.5);
+    show.knal(tx, ty, kl, 26, 7, ["ster", "stip", "stip"], {l: 55});
+    if(tag) tag.animate([{transform: "scale(1)"}, {transform: "scale(1.45) translateY(-8px) rotate(-8deg)"}, {transform: "scale(1.2) translateY(-4px) rotate(5deg)"}], {duration: 420, easing: "cubic-bezier(.3,1.6,.5,1)", fill: "forwards"});
+    [spoor, vonk].forEach(n => n.animate([{opacity: 1}, {opacity: 0}], {duration: 900, delay: 400, fill: "forwards"}).onfinish = () => n.remove());
+    setTimeout(() => { wegBezig = false; verder(); if(tag) setTimeout(() => tag.getAnimations().forEach(a => a.cancel()), 1200); }, 380);
+  };
+  requestAnimationFrame(stap);
+}
+// de keytag vliegt van de weg (bron) via het midden van het scherm (de knal) naar de grote keytag op de mijlpaalpagina (doel).
+// toonPagina() laat de mijlpaalpagina verschijnen, klaar() na de landing.
+function ktVlucht(bron, doel, kleur, toonPagina, klaar){
+  const a = bron.getBoundingClientRect();
+  if(!a.width || !bron.animate){ toonPagina(); klaar(); return; }
+  const show = ktShow(), kl = ktFeestKleuren(kleur), wit = [255, 255, 255], goud = [244, 213, 141];
+  show.vast++;
+  const kloon = bron.cloneNode(true);
+  kloon.classList.remove("wegglow");
+  // de kloon is net zo groot als in het midden (scherp), en wordt via scale kleiner getekend; s in tf() is t.o.v. de keytag op de weg
+  const cx = innerWidth / 2, cy = innerHeight * .44, groot = Math.min(190, innerWidth * .46) / a.width;
+  const ax = a.left + a.width / 2, ay = a.top + a.height / 2, dx = cx - ax, dy = cy - ay, bw = a.width * groot * 1.25, bh = a.height * groot * 1.25;
+  kloon.setAttribute("width", bw.toFixed(0)); kloon.setAttribute("height", bh.toFixed(0));
+  kloon.style.cssText = "position:fixed;left:" + (ax - bw / 2) + "px;top:" + (ay - bh / 2) + "px;width:" + bw + "px;height:" + bh + "px;margin:0;z-index:430;pointer-events:none;animation:none;transform-origin:50% 50%";
+  document.body.appendChild(kloon);
+  doel.style.visibility = "hidden"; bron.style.visibility = "hidden";
+  const tf = (x, y, s, ry, r) => "perspective(800px) translate(" + x.toFixed(1) + "px," + y.toFixed(1) + "px) scale(" + (s / groot / 1.25).toFixed(4) + ") rotateY(" + ry + "deg) rotate(" + r + "deg)";
+  show.dimDoel = .78;
+  // vonkenspoor achter de vliegende keytag
+  let spoorAan = true;
+  const spoor = () => { if(!spoorAan) return; const [x, y] = ktMidden(kloon); show.knal(x, y, [wit, kl[0], goud], 4, 2.6, ["stip", "ster"], {g: .03, drag: .94, l: 30 + Math.random() * 25}); requestAnimationFrame(spoor); };
+  requestAnimationFrame(spoor);
+  const omhoog = kloon.animate([
+    {transform: tf(0, 0, 1.2, 0, 0)},
+    {transform: tf(dx * .25, dy * .25 - 50, groot * .45, 300, -14), offset: .45},
+    {transform: tf(dx * .85, dy * .85 - 20, groot * 1.15, 650, 8), offset: .82},
+    {transform: tf(dx, dy, groot, 720, 0)}
+  ], {duration: 950, easing: "cubic-bezier(.55,0,.25,1)", fill: "forwards"});
+  omhoog.onfinish = () => {
+    spoorAan = false;
+    // de knal
+    show.flits = .9;
+    show.stralen = {x: cx, y: cy, rgb: kl[0], rot: 0, a: 0, doel: 1};
+    show.knal(cx, cy, kl, 110, 17, ["strook", "strook", "ster", "stip"], {});
+    show.knal(cx, cy, [wit, goud], 40, 9, ["stip", "ster"], {g: .05, l: 60});
+    [0, 140, 300].forEach((w, i) => show.ring(cx, cy, i === 1 ? wit : kl[0], w, 12 - i * 2, 7 - i * 2));
+    try{ if(navigator.vibrate) navigator.vibrate([35, 40, 90]); }catch(e){}
+    kloon.style.filter = "drop-shadow(0 0 18px " + ktRgba(kl[0], .9) + ") drop-shadow(0 0 40px rgba(255,255,255,.5))";
+    const hart = kloon.animate([
+      {transform: tf(dx, dy, groot, 720, 0)},
+      {transform: tf(dx, dy, groot * 1.22, 720, -5), offset: .18},
+      {transform: tf(dx, dy, groot * .96, 720, 4), offset: .4},
+      {transform: tf(dx, dy, groot * 1.06, 720, -2), offset: .62},
+      {transform: tf(dx, dy, groot, 720, 0)}
+    ], {duration: 900, easing: "ease-out", fill: "forwards"});
+    // halverwege nog een kleinere knal met sterren
+    setTimeout(() => show.knal(cx, cy, [goud, wit, kl[0]], 30, 11, ["ster"], {l: 70}), 420);
+    hart.onfinish = () => {
+      // de mijlpaalpagina verschijnt, de keytag zweeft naar zijn plek
+      toonPagina();
+      show.dimDoel = 0; show.stralen.doel = 0;
+      requestAnimationFrame(() => {
+        const b = doel.getBoundingClientRect(), ex = b.left + b.width / 2 - ax, ey = b.top + b.height / 2 - ay, es = b.width / a.width;
+        const land = kloon.animate([
+          {transform: tf(dx, dy, groot, 720, 0), filter: kloon.style.filter},
+          {transform: tf(ex, ey - 14, es * 1.08, 720, 0), offset: .75},
+          {transform: tf(ex, ey, es, 720, 0), filter: "drop-shadow(0 0 0 rgba(0,0,0,0))"}
+        ], {duration: 700, easing: "cubic-bezier(.35,0,.15,1)", fill: "forwards"});
+        land.onfinish = () => {
+          doel.style.visibility = ""; bron.style.visibility = ""; kloon.remove();
+          const [lx, ly] = ktMidden(doel);
+          show.ring(lx, ly, kl[0], 0, 6, 3); show.knal(lx, ly, [wit, goud, kl[0]], 24, 6, ["ster", "stip"], {l: 50});
+          show.vast--;
+          klaar();
+        };
+      });
+    };
+  };
+}
 function renderWeg(){
   const box = $("weg"), baan = $("wegBaan"), rij = $("wegRij"), sc = $("wegScroll"); if(!box || !baan || !rij || !sc) return;
   const since = settings.since, tk = todayKey();
@@ -285,13 +504,16 @@ function renderWeg(){
     knop.dataset.kant = side < 0 ? "l" : "r";
     return knop;
   };
-  const tikBehaald = t => () => {
-    if(t.key === since) toast(vt("Welkom · je begon op ", "Welcome · you started on ") + shortDate(since));
-    else openMijlpaal(t.years !== undefined ? addMonthsKey(since, 12 * t.years) : t.key);
+  // tik op een behaalde keytag: een lichtje loopt over je weg van je begin tot deze mijlpaal, dan vliegt de keytag naar de mijlpaalpagina
+  const tBegin = ouder.length ? tEind : -.2;
+  const tikBehaald = (t, tH) => function(){
+    if(t.key === since){ toast(vt("Welkom · je begon op ", "Welcome · you started on ") + shortDate(since)); return; }
+    const key = t.years !== undefined ? addMonthsKey(since, 12 * t.years) : t.key, tag = this.querySelector(".wegtag");
+    wegViering(svg, wegLijn(tBegin, tH, W), tag, t.c, () => openMijlpaal(key, tag));
   };
   behaald.forEach((t, i) => {
     const knop = halte(tStop(i), t, true, i);
-    knop.onclick = tikBehaald(t);
+    knop.onclick = tikBehaald(t, tStop(i));
     baan.appendChild(knop);
   });
   // oudere keytags langs het pad naar beneden, met naam en datum ernaast
@@ -301,7 +523,7 @@ function renderWeg(){
     const lab = el("span", "wegdatum"); lab.appendChild(el("b", null, t.key === since ? vt("Je begin", "Your start") : t.label)); lab.appendChild(el("span", null, shortDate(t.key)));
     knop.appendChild(lab);
     knop.setAttribute("aria-label", knop.getAttribute("aria-label") + " · " + shortDate(t.key));
-    knop.onclick = tikBehaald(t);
+    knop.onclick = tikBehaald(t, tOud[j]);
     baan.appendChild(knop);
   });
   const links = Math.round((parseKey(volg.key) - parseKey(tk)) / 864e5);

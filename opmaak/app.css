@@ -1250,6 +1250,11 @@
   .wegpad .wegtoekomst,.wegpad .weggelopen{fill:none;stroke-linecap:round}
   .wegtoekomst{stroke:var(--lijn);stroke-width:2;stroke-dasharray:3 7}
   .weggelopen{stroke:var(--accent);stroke-width:3.5;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 70%,transparent))}
+  /* tik op een mijlpaal: lichtspoor over het gelopen pad, daarna vliegt de keytag (keytags.js: wegViering, ktVlucht, ktShow) */
+  .wegpad .wegspoor{fill:none;stroke:#fff;stroke-width:6;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;
+    filter:drop-shadow(0 0 5px var(--accent)) drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 75%,transparent))}
+  .wegpad .wegvonk{fill:#fff;filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px var(--accent))}
+  .ktshow{position:fixed;left:0;top:0;z-index:425;pointer-events:none}
   .weggelopen.tekent{stroke-dasharray:1;stroke-dashoffset:1;animation:wegTeken 1.8s var(--ease) .5s forwards}
   @keyframes wegTeken{to{stroke-dashoffset:0}}
   .wegstop{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}

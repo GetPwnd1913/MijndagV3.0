@@ -75,7 +75,7 @@ function mpTelling(map, tot){
 }
 
 let mpOpen = null;
-async function openMijlpaal(key){
+async function openMijlpaal(key, vanTag){
   const since = settings.since; if(!since || !key) return;
   const s = mpSoort(since, key); if(!s) return;
   if(mpOpen) mpOpen.remove();
@@ -131,8 +131,11 @@ async function openMijlpaal(key){
   wrap.appendChild(ok);
 
   document.body.appendChild(back); document.body.style.overflow = "hidden";
-  requestAnimationFrame(() => { back.style.opacity = "1"; ok.focus({preventScroll: true}); });
-  setTimeout(() => ktConfetti(held, tagEl.firstChild, true), 350);   // zachte gloed; niet bij "minder beweging"
+  // vanaf Jouw weg: eerst de show (keytag vliegt naar het midden, knal), dan verschijnt deze pagina en landt de keytag hier
+  const groot = tag && tagEl.querySelector("svg"), vliegt = !!(vanTag && groot && !KT_RUSTIG());
+  const toon = () => { back.style.opacity = "1"; ok.focus({preventScroll: true}); };
+  if(vliegt){ back.style.transition = "opacity .6s ease"; requestAnimationFrame(() => ktVlucht(vanTag, groot, tag.c, toon, () => ktConfetti(held, tagEl.firstChild, true))); }
+  else { requestAnimationFrame(toon); setTimeout(() => ktConfetti(held, tagEl.firstChild, true), 350); }   // zachte gloed; niet bij "minder beweging"
 
   const t = mpTelling(await allDays(), key);
   laden.remove();
