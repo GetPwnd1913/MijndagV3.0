@@ -1,7 +1,7 @@
 // © 2026 Roy van Dalem. Alle rechten voorbehouden.
 // ---------- over deze app: copyright en open-sourcelicenties ----------
 // De licentieteksten zijn letterlijk overgenomen van de officiële bronnen (zie bron) en blijven Engels.
-const APP_VERSIE = "3.7";
+const APP_VERSIE = "4.0";
 const LICENTIES = [
  {
   "naam": "JSZip",
