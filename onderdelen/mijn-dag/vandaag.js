@@ -93,6 +93,7 @@ function renderHome(){
   renderWelkomTerug();
   renderHomeKeytags();
   if(typeof renderWeg === "function") renderWeg();
+  if(typeof wegMomenten === "function") wegMomenten();   // stapje vooruit na je dagbeschouwing, feest bij een nieuwe keytag
   renderDbKnop();
   if(typeof renderTvSein === "function") renderTvSein();
   renderMeldingen();

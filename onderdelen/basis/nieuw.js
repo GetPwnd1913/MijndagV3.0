@@ -100,7 +100,9 @@ function nieuwToonWanneerVrij(){
   let n = 0;
   const kijk = () => {
     nieuwWacht = null;
-    const bezig = document.getElementById("splash") || document.getElementById("vergrendel") || document.querySelector(".dlgback");
+    const bezig = document.getElementById("splash") || document.getElementById("vergrendel") || document.querySelector(".dlgback") ||
+      document.querySelector(".ktshow, .feestbanier") || (typeof mpOpen !== "undefined" && mpOpen) || (typeof wegMomentBezig !== "undefined" && wegMomentBezig) ||
+      (typeof wegFeestOpKomst === "function" && wegFeestOpKomst());   // een nieuwe mijlpaal gaat voor: eerst het feest (keytags.js), daarna dit venster
     if(bezig){ if(n++ < 1500) nieuwWacht = setTimeout(kijk, 400); return; }
     if(nieuwNodig()) openNieuw();
   };

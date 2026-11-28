@@ -63,6 +63,7 @@ function openSummary(e, fromHistory){
 $("summaryBtn").onclick = async () => {
   const open = QUESTIONS.map((q, i) => ({q, i})).filter(o => !isDone(o.q));
   if(open.length){ showOpenQuestions(open); return; } if(dirty){ clearTimeout(saveTimer); await flush(); }
+  if(curKey === todayKey()){ try{ localStorage.setItem("dagbeschouwing:wegStap", curKey); }catch(e){} }   // op het beginscherm loopt je bolletje dan een stapje verder (keytags.js: wegMomenten)
   if(curKey === todayKey() && typeof toonDagRond === "function") toonDagRond(() => openSummary(entry, false)); else openSummary(entry, false); };
 $("closeSum").onclick = () => $("overlay").classList.remove("show");
 $("overlay").onclick = e => { if(e.target.id==="overlay") $("overlay").classList.remove("show"); };

@@ -1255,6 +1255,17 @@
     filter:drop-shadow(0 0 5px var(--accent)) drop-shadow(0 0 12px color-mix(in srgb,var(--accent) 75%,transparent))}
   .wegpad .wegvonk{fill:#fff;filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px var(--accent))}
   .ktshow{position:fixed;left:0;top:0;z-index:425;pointer-events:none}
+  /* feest op de dag van een nieuwe keytag (keytags.js: wegFeestStart) */
+  .feestbanier{position:fixed;left:50%;top:27%;z-index:431;width:min(92vw,420px);text-align:center;color:#fff;pointer-events:none;
+    transform:translate(-50%,-50%);opacity:0;text-shadow:0 2px 24px rgba(0,0,0,.55)}
+  .feestbanier .fbklein{font-size:var(--fs-kop-m);font-weight:750;color:#f4d58d;letter-spacing:.01em}
+  .feestbanier .fbgroot{font-family:var(--serif);font-size:calc(64px*var(--ts));font-weight:600;line-height:1.02;margin-top:4px}
+  .feestbanier .fbsub{font-size:var(--fs-tekst);margin-top:8px;opacity:.92}
+  /* stapje vooruit na je dagbeschouwing (keytags.js: wegStapVooruit) */
+  .wegpad .wegspoor.stap{stroke-dasharray:none;stroke-dashoffset:0;stroke-width:5}
+  .wegpad .wegvoet{fill:#fff;opacity:.85;filter:drop-shadow(0 0 3px var(--accent))}
+  .wegplus{position:absolute;left:50%;bottom:100%;margin-bottom:6px;white-space:nowrap;pointer-events:none;font-weight:800;font-size:var(--fs-tekst);
+    color:#fff;background:var(--accent);padding:4px 10px;border-radius:999px;box-shadow:0 4px 14px color-mix(in srgb,var(--accent) 60%,transparent)}
   .weggelopen.tekent{stroke-dasharray:1;stroke-dashoffset:1;animation:wegTeken 1.8s var(--ease) .5s forwards}
   @keyframes wegTeken{to{stroke-dashoffset:0}}
   .wegstop{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;min-width:44px;min-height:44px;padding:0;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer}
