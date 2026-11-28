@@ -97,6 +97,10 @@ async function openMijlpaal(key, vanTag){
   held.appendChild(tagEl);
   const h = el("div", "mptitel", mpTitel(s)); held.appendChild(h);
   const datum = note(vt("Behaald op ", "Achieved on ") + shortDate(key)); datum.style.cssText = "margin-top:4px;font-size:calc(14px*var(--ts))"; held.appendChild(datum);
+  if(typeof openDeelkaart === "function"){   // deelkaart.js: mooie kaart om te delen
+    const dl = el("button", "primary dkknop", vt("Deel je mijlpaal", "Share your milestone")); dl.type = "button";
+    dl.onclick = () => openDeelkaart(key); held.appendChild(dl);
+  }
   wrap.appendChild(held);
 
   // 1b. vitrine: alle behaalde keytags tot deze datum in een rij
