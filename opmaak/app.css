@@ -1559,6 +1559,79 @@
   .wbmeter i{display:block;height:100%;border-radius:2px}
   .wbklaar{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff}
   .wbklaar .i{stroke:currentColor;stroke-width:3;fill:none}
+  /* werkboek-overzicht met kaarten, stempels, voorbeelden en suggesties (werkboek-extra.js) */
+  .wbheld{padding:var(--ruimte-4)}
+  .wbheldrij{display:flex;align-items:center;gap:16px}
+  .wbheldtx{flex:1;min-width:0}
+  .wbheldtx .qtitle{font-family:var(--serif);font-size:var(--fs-kop-m)}
+  .wbring{position:relative;flex:none;width:84px;height:84px}
+  .wbring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .wbring circle{fill:none;stroke-width:8}
+  .wbring .bg{stroke:var(--line)}
+  .wbring .vg{stroke-linecap:round;transition:stroke-dashoffset 1s var(--ease,ease)}
+  .wbringtx{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+  .wbringtx b{font-family:var(--serif);font-size:var(--fs-kop-m);font-weight:650}
+  .wbringtx small{font-size:var(--fs-bijschrift);color:var(--muted);font-weight:600}
+  .wbverder{display:flex;align-items:center;gap:12px;width:100%;margin-top:14px;padding:10px 12px;border:0;border-radius:var(--hoek-m);font:inherit;text-align:left;color:var(--ink);cursor:pointer;
+    background:color-mix(in srgb,var(--k) 13%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--k) 30%,transparent)}
+  .wbverder .wbtx small{font-weight:600;color:var(--k);text-transform:uppercase;letter-spacing:.5px;font-size:var(--fs-bijschrift)}
+  .wbverder .wbpijl{color:var(--k)}
+  .wbgrid{display:grid;grid-template-columns:1fr 1fr;gap:var(--ruimte-3);margin-bottom:var(--ruimte-2)}
+  .wbkaart{position:relative;display:flex;flex-direction:column;padding:0;margin:0;overflow:hidden;font:inherit;text-align:left;color:var(--ink);cursor:pointer;
+    transition:transform .18s ease,box-shadow .18s ease}
+  .wbkaart:active{transform:scale(.97)}
+  .wbplaat{display:block;height:86px;background:radial-gradient(120% 90% at 20% 0%,color-mix(in srgb,var(--k) 55%,#fff) 0%,var(--k) 70%);position:relative}
+  .wbplaatsvg{position:absolute;inset:6px 4px 0;width:calc(100% - 8px);height:calc(100% - 6px)}
+  .wbplaatsvg .w{fill:#fff}
+  .wbplaatsvg .z{fill:#fff;opacity:.35}
+  .wbplaatsvg .g{fill:#fff;opacity:.22}
+  .wbplaatsvg .d{fill:#25302b}
+  .wbplaatsvg .r{fill:none;stroke:#fff;stroke-width:2;opacity:.55;stroke-dasharray:3 4}
+  .wbplaatsvg .l{fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+  .wbplaatsvg .lt{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;opacity:.85}
+  .wbkaart .stralen{transform-origin:64px 38px;animation:wbDraai 18s linear infinite}
+  .wbkaart .lamp{animation:wbLamp 2.6s ease-in-out infinite}
+  @keyframes wbDraai{to{transform:rotate(360deg)}}
+  @keyframes wbLamp{50%{opacity:.55}}
+  .wbkaarttx{display:flex;flex-direction:column;gap:3px;padding:10px 12px 12px;flex:1}
+  .wbkaarttx b{font-weight:650;font-size:var(--fs-tekst);line-height:1.25}
+  .wbkaarttx small{font-size:var(--fs-bijschrift);color:var(--muted);line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .wbkaarttx .wbmeter{margin-top:auto;padding-top:0;max-width:none;position:relative;top:4px}
+  .wbstempel{position:absolute;top:8px;right:8px;width:58px;height:58px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;
+    background:color-mix(in srgb,#fff 92%,var(--k));color:var(--k);border:2.5px solid var(--k);box-shadow:0 0 0 3px #fff,0 6px 14px -6px rgba(0,0,0,.45);transform:rotate(-12deg)}
+  .wbstempel .i{stroke:currentColor;stroke-width:3.2;fill:none}
+  .wbstempel b{font-size:var(--fs-bijschrift);font-weight:800;text-transform:uppercase;letter-spacing:.8px}
+  .wbstempel small{font-size:calc(12px*var(--ts));font-weight:600;margin-top:1px;opacity:.85}
+  .wbstempel.nieuw{animation:wbStempel .7s cubic-bezier(.2,1.6,.4,1) .35s both}
+  @keyframes wbStempel{0%{transform:scale(3) rotate(-40deg);opacity:0}55%{transform:scale(.88) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-12deg)}}
+  .wbkaart.klaar .wbplaat{filter:saturate(1.08)}
+  .wbvb{margin-top:10px}
+  .wbvbknop{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+  .wbvbknop .i{stroke:currentColor;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .wbvbvak{background:color-mix(in srgb,#f4d58d 22%,var(--card));border:1px dashed color-mix(in srgb,#c9a23a 55%,var(--line));border-radius:var(--hoek-m);padding:10px var(--ruimte-3);animation:potIn .3s ease}
+  .wbvbkop{display:block;font-size:var(--fs-bijschrift);font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+  .wbvbtekst{font-family:var(--serif);font-size:var(--fs-lees);line-height:1.45;margin-top:4px;font-style:italic}
+  .wbvbrij{display:flex;gap:16px;margin-top:8px}
+  .wbvbnoot{display:block;font-size:var(--fs-bijschrift);color:var(--muted);margin-top:6px}
+  .wbapp{margin-top:10px;padding:8px 10px 10px;border-radius:var(--hoek-m);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+  .wbappkop{display:flex;align-items:center;gap:6px;font-size:var(--fs-bijschrift);font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+  .wbappkop .i{stroke:currentColor;stroke-width:1.6;fill:currentColor;fill-opacity:.25;stroke-linejoin:round}
+  .chip.wbappchip{border-style:dashed;border-color:var(--accent);color:var(--accent);background:var(--card)}
+  .wbmomenten{padding-bottom:6px}
+  .wbmomenten .wbrij{padding:12px 0}
+  .wbmomentsoort{flex:none;font-size:var(--fs-bijschrift);font-weight:700;border-radius:var(--hoek-rond);padding:4px 9px;background:color-mix(in srgb,var(--tv-oranje) 16%,transparent);color:var(--tv-oranje)}
+  .wbmomentsoort[data-q="q3"]{background:color-mix(in srgb,var(--tv-rood) 13%,transparent);color:var(--tv-rood)}
+  .wbmomentsoort[data-q="q5"]{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent)}
+  .wbafpop{position:fixed;left:50%;top:42%;z-index:430;transform:translate(-50%,-50%);width:min(300px,calc(100vw - 48px));padding:26px 20px 20px;text-align:center;
+    background:var(--card);border-radius:var(--radius);box-shadow:0 24px 60px -18px rgba(0,0,0,.5);border:1px solid var(--line);animation:wbPopIn .5s cubic-bezier(.2,1.4,.4,1)}
+  .wbafpop.weg{opacity:0;transform:translate(-50%,-46%) scale(.96);transition:.3s ease}
+  .wbafpop .wbstempel.groot{position:relative;top:auto;right:auto;margin:0 auto 12px;width:92px;height:92px;animation:wbStempel .7s cubic-bezier(.2,1.6,.4,1) .15s both}
+  .wbafpop .wbstempel.groot b{font-size:var(--fs-klein)}
+  .wbafkop{display:block;font-family:var(--serif);font-size:var(--fs-kop-l)}
+  .wbafnaam{font-weight:650;color:var(--k);margin:4px 0 6px}
+  .wbafpop small{color:var(--muted);font-size:var(--fs-klein)}
+  @keyframes wbPopIn{from{opacity:0;transform:translate(-50%,-40%) scale(.85)}}
+  @media (prefers-reduced-motion: reduce){ .wbkaart .stralen,.wbkaart .lamp,.wbstempel.nieuw,.wbafpop,.wbafpop .wbstempel.groot{animation:none} }
   .wbkoprij{display:flex;align-items:center;gap:14px}
   .wbkoprij .qtitle{margin:0}
   /* G-schema */

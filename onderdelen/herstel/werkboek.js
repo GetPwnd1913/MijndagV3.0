@@ -29,7 +29,7 @@ const WB_LIJSTEN = {
 const WB_EN = {};
 Object.keys(WB_LIJSTEN).forEach(k => WB_LIJSTEN[k].forEach(p => { WB_EN[p[0]] = p[1]; }));
 const wbLijst = k => k === "gs.gevoelens" ? FEELINGS.map((f, i) => [f, FEELINGS_EN[i]]) : (WB_LIJSTEN[k] || []);
-const wbT = s => { if(!isEn()) return s; if(WB_EN[s]) return WB_EN[s]; const i = FEELINGS.indexOf(s); return i >= 0 ? FEELINGS_EN[i] : s; };
+const wbT = s => { if(!isEn()) return s; if(WB_EN[s]) return WB_EN[s]; const i = FEELINGS.indexOf(s); return i >= 0 ? FEELINGS_EN[i] : vItem(s); };
 const wbData = () => {
   if(!settings.werkboek || typeof settings.werkboek !== "object") settings.werkboek = {};
   const d = settings.werkboek;
@@ -140,7 +140,7 @@ const WB_OPDRACHTEN = [
    status: () => { const n = (wbItems("nee").zinnen || []).length; return n ? (isEn() ? n + (n === 1 ? " sentence ready" : " sentences ready") : n + (n === 1 ? " zin klaar" : " zinnen klaar")) : null; }},
   {id: "gschema", groep: "begrijpen", t: "G-schema", te: "ABC diary", kleur: "var(--accent)",
    uit: "Eén moment uitpluizen: gebeurtenis, gedachten, gevoelens, gedrag en gevolgen.", uitEn: "Unpick one moment: event, thoughts, feelings, behaviour and consequences.",
-   voortgang: () => [Math.min((wbLees().gschema || []).length, 1), 1],
+   voortgang: () => [Math.max(0, ...(wbLees().gschema || []).map(g => GS_DELEN.filter(d => gsDeelGevuld(g, d)).length)), GS_DELEN.length],   // af = één G-schema helemaal ingevuld
    status: () => { const l = (wbLees().gschema || []); return l.length ? vt(l.length + " ingevuld · laatste ", l.length + " filled in · last ") + parseKey(l.map(g => g.date).sort().pop()).toLocaleDateString(locale(), {day: "numeric", month: "short"}) : null; }},
   {id: "balans", groep: "begrijpen", t: "Beslisbalans", te: "Decision balance", kleur: "var(--warm)",
    uit: "Voordelen en nadelen van gebruiken en van clean blijven op een rij.", uitEn: "The pros and cons of using and of staying clean side by side.",
@@ -159,42 +159,14 @@ const wbKlaar = o => { const [a, b] = o.voortgang(); return a >= b; };
 const wbBegonnen = o => o.voortgang()[0] > 0;
 function renderWerkboek(){
   const box = $("wbBox"); if(!box) return; box.innerHTML = "";
+  wbxAppLaad(); wbxCheckAf();   // werkboek-extra.js: suggesties uit je app, stempel als een opdracht af is
   if(wbOpen === "terugval") return tvStap !== null ? renderTvStap(box) : renderTvOverzicht(box);
   if(wbOpen === "gschema") return !gsOpen ? renderGsLijst(box) : gsStap !== null ? renderGsStap(box) : renderGs(box);
   if(wbOpen === "balans") return renderBalans(box);
   if(wbOpen === "netwerk") return renderNetwerk(box);
   if(wbOpen === "plezier") return renderPlezier(box);
   if(wbOpen === "nee") return renderNee(box);
-  const kop = el("div", "card wbintro");
-  kop.appendChild(el("div", "qtitle", vt("Opdrachten voor je herstel", "Assignments for your recovery")));
-  const n = note(vt("Opdrachten zoals je ze ook in de verslavingszorg meekrijgt. Doe ze in je eigen tempo, één tegelijk, en bespreek ze met je sponsor of begeleider.", "Assignments like the ones you get in addiction care. Do them at your own pace, one at a time, and talk them through with your sponsor or support worker."));
-  n.style.marginTop = "4px"; kop.appendChild(n);
-  const begonnen = WB_OPDRACHTEN.filter(wbBegonnen).length;
-  const balk = el("div", "wbbalk");
-  WB_OPDRACHTEN.forEach(o => { const i = el("i"); i.style.setProperty("--k", o.kleur); if(wbKlaar(o)) i.className = "vol"; else if(wbBegonnen(o)) i.className = "half"; balk.appendChild(i); });
-  kop.appendChild(balk);
-  kop.appendChild(el("div", "wbbalktx", begonnen ? vt(begonnen + " van de " + WB_OPDRACHTEN.length + " opdrachten begonnen", begonnen + " of the " + WB_OPDRACHTEN.length + " assignments started") : vt("Nog niet begonnen. Kies er hieronder één uit.", "Not started yet. Pick one below.")));
-  box.appendChild(kop);
-  WB_GROEPEN.forEach(g => {
-    box.appendChild(el("div", "wbgroep", vt(g.t, g.te)));
-    const lijst = el("div", "card wblijst");
-    WB_OPDRACHTEN.filter(o => o.groep === g.k).forEach(o => {
-      const r = el("button", "wbrij"); r.type = "button";
-      const ic = el("span", "wbtegel"); ic.style.setProperty("--k", o.kleur); ic.appendChild(wbIcoon(o.id, 22));
-      r.appendChild(ic);
-      const tx = el("span", "wbtx");
-      tx.appendChild(el("b", null, vt(o.t, o.te)));
-      tx.appendChild(el("small", null, o.status() || vt(o.uit, o.uitEn)));
-      const [a, b] = o.voortgang();
-      if(a){ const m = el("span", "wbmeter"); const f = el("i"); f.style.width = Math.round(a / b * 100) + "%"; f.style.background = o.kleur; m.appendChild(f); tx.appendChild(m); }
-      r.appendChild(tx);
-      if(wbKlaar(o)){ const k = el("span", "wbklaar"); k.style.background = o.kleur; k.appendChild(icon("check", 14)); r.appendChild(k); }
-      r.appendChild(el("span", "wbpijl", "›"));
-      r.onclick = () => { wbOpen = o.id; tvStap = null; gsOpen = null; gsStap = null; nwBewerk = null; neeKaart = null; wbToon(); };
-      lijst.appendChild(r);
-    });
-    box.appendChild(lijst);
-  });
+  wbxOverzicht(box);
 }
 
 // ---- G-schema: stap voor stap, daarna een samenvatting ----
@@ -224,6 +196,7 @@ function renderGsLijst(box){
   const kop = wbKop("gschema", vt("G-schema", "ABC diary"), vt("Neem één moment dat je bezighoudt, zoals een ruzie, een craving of een moment dat je boos werd. Je pluist het stap voor stap uit: gebeurtenis, gedachten, gevoelens, gedrag en gevolgen. Daarna bedenk je een helpende gedachte. Zo zie je hoe je gedachten je gevoel en gedrag sturen.", "Take one moment that is on your mind, like an argument, a craving or a moment you got angry. You unpick it step by step: event, thoughts, feelings, behaviour and consequences. Then you come up with a helpful thought. That way you see how your thoughts steer your feelings and behaviour."));
   const b = el("button", "primary", vt("+ Nieuw G-schema", "+ New ABC diary")); b.type = "button"; b.style.marginTop = "14px"; b.onclick = () => gsNieuw();
   kop.appendChild(b); box.appendChild(kop);
+  wbxMomenten(box);
   const l = (wbLees().gschema || []).slice().sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : (b.updated || 0) - (a.updated || 0));
   if(!l.length){ const e = note(vt("Tip: bij een conflict, craving of trigger in je dagbeschouwing staat een knop om er meteen een G-schema van te maken.", "Tip: with a conflict, craving or trigger in your daily reflection there is a button to turn it into an ABC diary straight away.")); e.style.margin = "4px 4px 0"; box.appendChild(e); return; }
   l.forEach(g => {
@@ -260,6 +233,7 @@ function renderGsStap(box){
   const ht = el("div"); ht.appendChild(el("b", "gsdeeltitel", vt(d.t, d.te))); ht.appendChild(el("small", null, vt(d.v, d.ve)));
   h.appendChild(ht); c.appendChild(h);
   c.appendChild(el("div", "tip", vt(d.tip, d.tipEn)));
+  c.appendChild(wbxVoorbeeld("gs." + d.k));
   const keuze = k => ({get: () => (g.keuzes || {})[k], set: l => { g.keuzes = g.keuzes || {}; if(l.length) g.keuzes[k] = l; else delete g.keuzes[k]; bewaar(); }});
   if(d.chips) c.appendChild(wbChips(Object.assign({k: d.chips, id: g.id, cls: d.k === "gevoelens" ? "feel" : "", l: d.chips2 ? "Wat had ik ook kunnen denken?" : null, le: "What could I have thought instead?"}, keuze(d.k))));
   if(d.k === "gevoelens") c.appendChild(wbChips(Object.assign({k: "gs.sterkte", id: g.id, enkel: true, geenEigen: true, l: "Hoe sterk was het gevoel?", le: "How strong was the feeling?", cls: "sterkte"}, keuze("sterkte"))));
@@ -310,13 +284,13 @@ function renderGs(box){
   box.appendChild(k2);
 }
 // vanuit de dagbeschouwing (vraag 3, 5 of 6): G-schema met wat je al hebt ingevuld
-function gsVanuitDag(q){
-  const e = entry, kies = r => picked(e, q.id, r).map(vItem);
+function gsVanuitDag(q, e0){
+  const e = e0 || entry, dk = e0 ? e0.date : (curKey || todayKey()), kies = r => picked(e, q.id, r).map(vItem);
   let geb = "", gev = [];
   if(q.id === "q3"){ const w = kies(0); geb = vt("Conflict", "Conflict") + (w.length ? vt(" met ", " with ") + w.join(", ") : ""); gev = picked(e, "q3", 1); }
   if(q.id === "q5"){ const w = kies(1); geb = vt("Craving", "Craving") + (w.length ? " " + w.join(", ") : ""); }
   if(q.id === "q6"){ const w = kies(0); geb = vt("Trigger", "Trigger") + (w.length ? ": " + w.join(", ") : ""); gev = picked(e, "q6", 1); }
-  gsNieuw({date: curKey || todayKey(), gebeurtenis: geb, keuzes: gev.length ? {gevoelens: gev} : {}});
+  gsNieuw({date: dk, bron: dk + q.id, gebeurtenis: geb, keuzes: gev.length ? {gevoelens: gev} : {}});
 }
 
 // ---- beslisbalans ----
@@ -355,6 +329,7 @@ function renderBalans(box){
     const h = el("div", "balanskop"); h.appendChild(el("span", "balanskant", v.kant === "clean" ? vt("Clean", "Clean") : vt("Gebruiken", "Using")));
     h.appendChild(el("div", "qtitle", vt(v.t, v.te))); c.appendChild(h);
     const s = note(vt(v.v, v.ve)); s.style.marginTop = "2px"; c.appendChild(s);
+    c.appendChild(wbxVoorbeeld("balans." + v.k));
     c.appendChild(wbVakChips("balans", v.k, {na: () => { const n = balansWeegschaal(); huidig.replaceWith(n); huidig = n; }}));
     box.appendChild(c);
   });
@@ -405,7 +380,9 @@ function renderNetwerk(box){
     const b = el("button", "primary", vt("+ Persoon toevoegen", "+ Add person")); b.type = "button"; b.style.marginTop = "14px";
     b.onclick = () => { nwBewerk = {id: wbId(), naam: "", rol: "", soort: "helpt", afstand: "dichtbij", tel: "", nieuw: true}; renderWerkboek(); };
     kop.appendChild(b);
+    wbxNoodplanMensen(kop);
   }
+  kop.appendChild(wbxVoorbeeld("netwerk"));
   box.appendChild(kop);
   if(nwBewerk) box.appendChild(nwFormulier());
   if(l.length){ const k = el("div", "card"); k.appendChild(nwKaart(l)); box.appendChild(k); }
@@ -500,7 +477,8 @@ const PL_VAKKEN = [
 const plAlles = () => { const it = wbItems("plezier"); return PL_VAKKEN.reduce((a, v) => a.concat(it[v.k] || []), []); };
 function renderPlezier(box){
   box.appendChild(wbTerug());
-  box.appendChild(wbKop("plezier", vt("Plezierlijst", "Fun list"), vt("Verveling is een van de bekendste triggers. Maak een lijst met dingen die je leuk vindt of weer wilt leren doen, zonder middelen. Op een lege dag kies je er één uit.", "Boredom is one of the best-known triggers. Make a list of things you enjoy or want to learn again, without substances. On an empty day, pick one.")));
+  const plKop = box.appendChild(wbKop("plezier", vt("Plezierlijst", "Fun list"), vt("Verveling is een van de bekendste triggers. Maak een lijst met dingen die je leuk vindt of weer wilt leren doen, zonder middelen. Op een lege dag kies je er één uit.", "Boredom is one of the best-known triggers. Make a list of things you enjoy or want to learn again, without substances. On an empty day, pick one.")));
+  plKop.appendChild(wbxVoorbeeld("plezier"));
   const kies = el("div", "card plkies");
   const tekenKies = () => {
     kies.innerHTML = "";
@@ -554,8 +532,10 @@ function renderNee(box){
     nw.onclick = () => { neeKaart = {sit: sit[Math.floor(Math.random() * sit.length)], zin: zin[Math.floor(Math.random() * zin.length)], toon: false}; tekenKaart(); };
     row.appendChild(nw); kaart.appendChild(row);
   };
+  c1.appendChild(wbxVoorbeeld("nee.situaties"));
   c1.appendChild(wbVakChips("nee", "situaties", {na: tekenKaart})); box.appendChild(c1);
   const c2 = el("div", "card"); c2.appendChild(el("div", "qtitle", vt("Wat zeg ik dan?", "What do I say?")));
+  c2.appendChild(wbxVoorbeeld("nee.zinnen"));
   c2.appendChild(wbVakChips("nee", "zinnen", {hoofdletter: true, na: tekenKaart})); box.appendChild(c2);
   tekenKaart(); box.appendChild(kaart);
   if((wbItems("nee").zinnen || []).length){

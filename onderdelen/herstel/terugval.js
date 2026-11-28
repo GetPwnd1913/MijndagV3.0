@@ -36,7 +36,7 @@ function tvLijst(k){
 }
 const TV_EN = {};
 Object.keys(TV_LIJSTEN).forEach(k => TV_LIJSTEN[k].forEach(p => { TV_EN[p[0]] = p[1]; }));
-const tvT = s => { if(!isEn()) return s; if(TV_EN[s]) return TV_EN[s]; const i = WHO.indexOf(s); return i >= 0 ? WHO_EN[i] : s; };
+const tvT = s => { if(!isEn()) return s; if(TV_EN[s]) return TV_EN[s]; const i = WHO.indexOf(s); return i >= 0 ? WHO_EN[i] : vItem(s); };
 const tvCap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
 // rijen per kleur: zelfde vier vragen, eigen woorden per kleur
@@ -89,7 +89,7 @@ const tvGet = k => ((settings.terugval || {}).items || {})[k] || [];
 const tvNote = id => (((settings.terugval || {}).notes || {})[id] || "").trim();
 const tvStapGevuld = s => s.rows.some(r => tvGet(r.k).length) || !!tvNote(s.id);
 const tvZoneGevuld = z => tvZoneRijen(z).some(r => tvGet(r.k).length) || !!tvNote(z);
-function tvBewaar(){ settings.updated = Date.now(); local.set("settings", settings); clearTimeout(tvSaveTimer); tvSaveTimer = setTimeout(() => saveSettingsNow(), 500); }
+function tvBewaar(){ settings.updated = Date.now(); local.set("settings", settings); clearTimeout(tvSaveTimer); tvSaveTimer = setTimeout(() => saveSettingsNow(), 500); if(typeof wbxCheckAf === "function") wbxCheckAf(); }
 const tvKleurVandaag = () => (settings.kleuren || {})[todayKey()] || null;
 function tvZetKleur(z){
   settings.kleuren = Object.assign({}, settings.kleuren || {});
@@ -259,6 +259,7 @@ function renderTvStap(box){
   const tb = el("button", "linkbtn tipbtn", vt("Verberg hulp", "Hide help")); tb.type = "button"; tb.setAttribute("aria-expanded", "true");
   tb.onclick = () => { tip.classList.toggle("hidden"); const dicht = tip.classList.contains("hidden"); tb.textContent = dicht ? vt("Hulp bij deze opdracht", "Help with this assignment") : vt("Verberg hulp", "Hide help"); tb.setAttribute("aria-expanded", dicht ? "false" : "true"); };
   c.appendChild(tb); c.appendChild(tip);
+  c.appendChild(wbxVoorbeeld("tv." + s.id));
   s.rows.forEach(r => c.appendChild(tvRij(r)));
   c.appendChild(el("div", "label", vt("Eigen aantekening", "Own notes")));
   const ta = el("textarea"); ta.value = d.notes[s.id] || ""; ta.placeholder = vt("Schrijf het in je eigen woorden (mag ook leeg blijven)…", "Write it in your own words (can stay empty)…");
@@ -277,9 +278,11 @@ function renderTvStap(box){
 function tvRij(r){
   const w = el("div");
   w.appendChild(el("div", "label", vt(r.l, r.le)));
-  const chips = el("div", "chips"); w.appendChild(chips);
+  const chips = el("div", "chips"), app = el("div"); w.appendChild(chips); w.appendChild(app);
   const teken = () => {
     chips.innerHTML = "";
+    // uit je app (werkboek-extra.js): triggers en gevoelens uit je dagbeschouwingen, mensen uit je noodplan
+    wbxAppRij(app, r.k, tvGet(r.k), item => { const dd = tvData(), cur = (dd.items[r.k] || []).slice(); if(cur.indexOf(item) < 0) cur.push(item); dd.items[r.k] = cur; tvBewaar(); teken(); });
     const vast = tvLijst(r.k).map(p => p[0]), gekozen = tvGet(r.k);
     vast.concat(gekozen.filter(x => vast.indexOf(x) < 0)).forEach(item => {
       const on = gekozen.indexOf(item) >= 0;

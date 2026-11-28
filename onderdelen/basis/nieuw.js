@@ -4,8 +4,12 @@
 // Verschijnt elke keer, tot je "Niet meer laten zien" aanvinkt: dan staat settings.nieuwGezien = NIEUW_VERSIE.
 // Bij een volgende update met nieuws: NIEUW_VERSIE en NIEUW_ITEMS aanpassen, dan komt het venster weer.
 // Op een nieuw toestel komt eerst de uitleg (uitleg.js); dan niet ook nog dit venster.
-const NIEUW_VERSIE = "2026-11-27";
+const NIEUW_VERSIE = "2026-11-28";
 const NIEUW_ITEMS = [
+  {icoon: "star", kleur: "var(--tv-groen)", naar: "home",
+   t: "Jouw weg door de seizoenen", te: "Your road through the seasons",
+   u: "Jouw weg verandert mee met het seizoen, en je volgende keytag loopt langzaam vol met kleur.",
+   ue: "Your road changes with the seasons, and your next keytag slowly fills up with colour."},
   {icoon: "award", kleur: "var(--warm)", naar: "home",
    t: "Tik op een mijlpaal", te: "Tap a milestone",
    u: "Er is iets veranderd op Jouw weg. Tik op een van je keytags en kijk wat er gebeurt.",
