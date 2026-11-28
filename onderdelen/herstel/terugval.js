@@ -106,7 +106,7 @@ function tvKicker(z, tekst){
 function tvTags(list){ const w = el("div", "tvtags"); list.forEach(s => w.appendChild(el("span", "tvtag", tvCap(tvT(s))))); return w; }
 function tvTerugLink(tekst, fn){ const b = el("button", "linkbtn tvterug"); b.type = "button"; b.appendChild(icon("chevL", 18)); b.appendChild(document.createTextNode(tekst)); b.onclick = fn; return b; }
 function tvAfvinkLijst(list){
-  const ol = el("ol", "soslist");
+  const ol = el("ol", "soslist tvafvink");
   list.forEach((s, i) => {
     const li = el("li"); li.appendChild(el("div", "num", String(i + 1))); li.appendChild(el("span", "t", tvCap(tvT(s))));
     li.onclick = () => { li.classList.toggle("done"); li.setAttribute("aria-pressed", li.classList.contains("done") ? "true" : "false"); };
@@ -145,6 +145,7 @@ function tvNuCard(){
 function tvPaneel(z){
   const p = el("div", "tvpaneel"); p.dataset.z = z;
   const si = tvStapVan(z);
+  p.appendChild(tvZoneKop(z));
   if(!tvZoneGevuld(z)){
     p.appendChild(el("div", "tvkop", vt("Je hebt " + TV_ZONES[z].nl.toLowerCase() + " nog niet ingevuld", "You haven't filled in " + TV_ZONES[z].en.toLowerCase() + " yet")));
     p.appendChild(note(vt("Maak de opdracht voor deze kleur. Dan staat hier precies hoe jij het herkent en wat je dan doet.", "Do the assignment for this colour. Then this shows exactly how you recognise it and what you do.")));
@@ -159,10 +160,7 @@ function tvPaneel(z){
   const herken = () => {
     if(!(denk.length || voel.length || doe.length)) return;
     p.appendChild(el("div", "tvkop", z === "groen" ? vt("Zo merk ik dat het goed gaat", "This is how I notice I'm doing well") : vt("Zo herken ik het", "This is how I recognise it")));
-    [[denk, vt("Gedachten", "Thoughts")], [voel, vt("Gevoelens", "Feelings")], [doe, vt("Gedrag", "Behaviour")]].forEach(([l, kop]) => {
-      if(!l.length) return;
-      p.appendChild(el("div", "tvsub", kop)); p.appendChild(tvTags(l));
-    });
+    p.appendChild(tvHerken(denk, voel, doe));
   };
   const doen = () => {
     if(!actie.length) return;
@@ -319,47 +317,167 @@ function tvRij(r){
 }
 
 // ---- het hele plan in één overzicht ----
+// Bovenaan een stoplicht met je voortgang; dan "Hoe gaat het vandaag?" met je kleuren van de afgelopen twee weken;
+// dan één kleur tegelijk (tabjes groen/oranje/rood); dan je gedachten tegenspreken; dan de andere opdrachten als tegels.
+let tvTab = null;
+const TV_IC = {
+  hoofd: '<path d="M9 21v-3.5A7 7 0 1 1 18 12l1.5 3H18v3a2 2 0 0 1-2 2h-1"/><path d="M10 8.5a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 1.8-2 3"/>',
+  hart: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>',
+  voet: '<path d="M8 3.5c2 0 3 2.5 3 5.5s-1 5-3 5-3-2-3-5 1-5.5 3-5.5zM6 16.5h4V19a2 2 0 0 1-4 0zM16 7.5c2 0 3 2.5 3 5.5s-1 5-3 5-3-2-3-5 1-5.5 3-5.5z"/>',
+  terugblik: '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/>',
+  situaties: '<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',
+  gedachten: '<path d="M4 6h12a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H9l-4 3v-3H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"/><path d="M7 10.5l4 0M7 10.5l2-2M7 10.5l2 2"/>',
+  aanspreken: '<circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 6.5a6 6 0 0 1 0 7M19 4a9.5 9.5 0 0 1 0 12"/>',
+  uitglijder: '<path d="M4 20c4-1 6-4 8-8s4-7 8-8"/><path d="M16 4h4v4"/><circle cx="6" cy="8" r="2"/>'
+};
+const tvIc = (naam, size) => { const s = icon("x", size || 22); s.innerHTML = TV_IC[naam] || ""; return s; };
+// stoplicht: een lamp brandt als die kleur is ingevuld; de kleur van vandaag gloeit
+// kop van een kleur: gloeiende lamp met de naam en een korte zin
+function tvZoneKop(z){
+  const k = el("div", "tvzkop"); k.appendChild(el("span", "tvzlamp"));
+  const t = el("div"); t.appendChild(el("b", null, vt(TV_ZONES[z].kop, TV_ZONES[z].kopEn)));
+  t.appendChild(el("small", null, vt({groen: "Zo ziet het eruit als het goed met me gaat", oranje: "De eerste waarschuwingen", rood: "Gebruik is dichtbij"}[z], {groen: "This is what it looks like when I'm doing well", oranje: "The first warning signs", rood: "Using is close"}[z])));
+  k.appendChild(t); return k;
+}
+// gedachten, gevoelens en gedrag in drie vakjes met een icoontje
+function tvHerken(denk, voel, doe){
+  const w = el("div", "tvherken");
+  [[denk, "hoofd", vt("Ik denk", "I think")], [voel, "hart", vt("Ik voel", "I feel")], [doe, "voet", vt("Ik doe", "I do")]].forEach(([l, ic, kopje]) => {
+    if(!l.length) return;
+    const v = el("div", "tvherkenvak");
+    const h = el("div", "tvherkenkop"); h.appendChild(tvIc(ic, 18)); h.appendChild(document.createTextNode(kopje)); v.appendChild(h);
+    v.appendChild(tvTags(l)); w.appendChild(v);
+  });
+  return w;
+}
+function tvStoplicht(){
+  const vandaag = tvKleurVandaag();
+  const w = el("div", "tvlicht"); w.setAttribute("role", "group"); w.setAttribute("aria-label", vt("Stoplicht van je plan", "Traffic light of your plan"));
+  ["rood", "oranje", "groen"].forEach(z => {
+    const b = el("button", "tvlamp" + (tvZoneGevuld(z) ? " aan" : "") + (vandaag === z ? " nu" : "")); b.type = "button"; b.dataset.z = z;
+    b.setAttribute("aria-label", vt(TV_ZONES[z].nl + ": " + TV_ZONES[z].kop, TV_ZONES[z].en + ": " + TV_ZONES[z].kopEn));
+    b.onclick = () => { tvTab = z; renderWerkboek(); requestAnimationFrame(() => { const n = document.querySelector(".tvzonekaart"); if(n) n.scrollIntoView({block: "start", behavior: "smooth"}); }); };
+    w.appendChild(b);
+  });
+  return w;
+}
+// kleuren van de afgelopen 14 dagen als stipjes
+function tvKleurStrook(){
+  const k = settings.kleuren || {}, tk = todayKey(), w = el("div", "tvstrook");
+  let iets = false;
+  for(let i = 13; i >= 0; i--){
+    const d = addDaysKey(tk, -i), z = k[d], s = el("span", "tvstrookdag" + (i === 0 ? " vandaag" : ""));
+    const dot = el("i"); if(z){ dot.dataset.z = z; iets = true; } s.appendChild(dot);
+    s.appendChild(el("small", null, parseKey(d).toLocaleDateString(locale(), {weekday: "narrow"})));
+    s.setAttribute("aria-label", cap(parseKey(d).toLocaleDateString(locale(), {weekday: "long", day: "numeric", month: "long"})) + ": " + (z ? vt(TV_ZONES[z].nl, TV_ZONES[z].en) : vt("niet gekozen", "not chosen")));
+    s.setAttribute("role", "img");
+    w.appendChild(s);
+  }
+  return {w, iets};
+}
 function renderTvOverzicht(box){
   box.appendChild(tvTerugLink(vt("Terug naar werkboek", "Back to workbook"), () => { wbOpen = null; wbToon(); }));
-  const kop = el("div", "card tvkopkaart");
-  kop.appendChild(el("div", "qtitle", vt("Mijn terugvalpreventieplan", "My relapse prevention plan")));
-  tvVoortgang(kop);
-  if(TV_STAPPEN.some(tvStapGevuld)) kop.appendChild(wbDownloadKnoppen(tvDoc));
-  box.appendChild(kop);
-  // nog niet ingevulde opdrachten compact in één lijstje, daarna de ingevulde als kaart
-  const todo = TV_STAPPEN.map((s, i) => [s, i]).filter(([s]) => !tvStapGevuld(s));
-  if(todo.length){
-    const l = el("div", "card wblijst tvtodo");
-    l.appendChild(el("div", "tvtodokop", vt("Nog te doen", "Still to do")));
-    todo.forEach(([s, i]) => {
-      const r = el("button", "wbrij"); r.type = "button";
-      const d = el("span", "tvtodonr", String(i + 1)); if(s.zone) d.dataset.z = s.zone; r.appendChild(d);
-      const tx = el("span", "wbtx"); tx.appendChild(el("b", null, vt(s.t, s.te))); r.appendChild(tx);
-      r.appendChild(el("span", "wbpijl", "›"));
-      r.onclick = () => tvNaarStap(i);
-      l.appendChild(r);
-    });
-    box.appendChild(l);
+  const gedaan = TV_STAPPEN.filter(tvStapGevuld).length, eerste = TV_STAPPEN.findIndex(s => !tvStapGevuld(s));
+  // kop met stoplicht
+  const kop = el("div", "card tvheld");
+  const rij = el("div", "tvheldrij");
+  rij.appendChild(tvStoplicht());
+  const tx = el("div", "tvheldtx");
+  tx.appendChild(el("div", "qtitle", vt("Mijn terugvalpreventieplan", "My relapse prevention plan")));
+  tx.appendChild(el("div", "tvheldtel", vt(gedaan + " van de " + TV_STAPPEN.length + " opdrachten", gedaan + " of the " + TV_STAPPEN.length + " assignments")));
+  tx.appendChild(tvBalk(null));
+  const n = note(gedaan ? vt("Je eigen plan. Lees het af en toe terug en bespreek het met je sponsor of begeleider.", "Your own plan. Read it back now and then and talk it through with your sponsor or support worker.")
+    : vt("Met " + TV_STAPPEN.length + " korte opdrachten maak je je eigen plan: hoe herken je groen, oranje en rood, en wat doe je dan?", "With " + TV_STAPPEN.length + " short assignments you make your own plan: how do you recognise green, orange and red, and what do you do then?"));
+  n.style.marginTop = "8px"; tx.appendChild(n);
+  rij.appendChild(tx); kop.appendChild(rij);
+  if(eerste >= 0){
+    const s = TV_STAPPEN[eerste], b = el("button", "wbverder tvverder"); b.type = "button"; b.style.setProperty("--k", s.zone ? "var(--tv-" + s.zone + ")" : "var(--accent)");
+    const nr = el("span", "tvverdernr", String(eerste + 1)); b.appendChild(nr);
+    const t = el("span", "wbtx"); t.appendChild(el("small", null, gedaan ? vt("Volgende opdracht", "Next assignment") : vt("Begin met", "Start with"))); t.appendChild(el("b", null, vt(s.t, s.te))); b.appendChild(t);
+    b.appendChild(el("span", "wbpijl", "›")); b.onclick = () => tvNaarStap(eerste);
+    kop.appendChild(b);
   }
-  TV_STAPPEN.forEach((s, i) => {
-    if(!tvStapGevuld(s)) return;
-    const c = el("div", "card tvzone"); if(s.zone) c.dataset.z = s.zone;
-    const h = el("div", "tvzonekop");
-    h.appendChild(tvKicker(s.zone || null, vt("Opdracht " + (i + 1), "Assignment " + (i + 1))));
-    const e = el("button", "linkbtn", tvStapGevuld(s) ? vt("Aanpassen", "Edit") : vt("Invullen", "Fill in")); e.type = "button"; e.onclick = () => tvNaarStap(i);
-    h.appendChild(e); c.appendChild(h);
-    c.appendChild(el("div", "qtitle", vt(s.t, s.te)));
-    s.rows.forEach(r => {
-      const l = tvGet(r.k); if(!l.length) return;
-      c.appendChild(el("div", "tvsub", vt(r.l, r.le)));
-      c.appendChild(tvTags(l));
-    });
-    if(tvNote(s.id)) c.appendChild(el("div", "tvnotitie", tvNote(s.id)));
-    box.appendChild(c);
+  if(gedaan) kop.appendChild(wbDownloadKnoppen(tvDoc));
+  box.appendChild(kop);
+
+  // hoe gaat het vandaag? (dezelfde keuze als "Waar sta ik nu?" in het noodplan)
+  const nu = tvKleurVandaag();
+  const vk = el("div", "card tvvandaag");
+  vk.appendChild(el("div", "qtitle", vt("Hoe gaat het vandaag?", "How are you doing today?")));
+  const kies = el("div", "tvkies"); kies.setAttribute("role", "group"); kies.setAttribute("aria-label", vt("Hoe gaat het vandaag?", "How are you doing today?"));
+  ["groen", "oranje", "rood"].forEach(z => {
+    const b = el("button", "tvknop" + (nu === z ? " on" : "")); b.type = "button"; b.dataset.z = z; b.setAttribute("aria-pressed", nu === z ? "true" : "false");
+    b.appendChild(el("span", "tvdot")); b.appendChild(el("b", null, vt(TV_ZONES[z].nl, TV_ZONES[z].en))); b.appendChild(el("small", null, vt(TV_ZONES[z].kop, TV_ZONES[z].kopEn)));
+    b.onclick = () => { if(nu === z) tvZetKleur(null); else { tvZetKleur(z); tvTab = z; } tvOpen = null; renderWerkboek(); };
+    kies.appendChild(b);
   });
-  const row = el("div", "row"); row.style.justifyContent = "flex-start";
-  const b = el("button", "ghost", vt("Terug naar werkboek", "Back to workbook")); b.type = "button"; b.onclick = () => { wbOpen = null; wbToon(); };
-  row.appendChild(b); box.appendChild(row);
+  vk.appendChild(kies);
+  const st = tvKleurStrook();
+  if(st.iets){ vk.appendChild(el("div", "label", vt("De afgelopen twee weken", "The past two weeks"))); vk.appendChild(st.w); }
+  box.appendChild(vk);
+
+  // één kleur tegelijk
+  const tab = tvTab || nu || "groen";
+  const zk = el("div", "card tvzonekaart"); zk.dataset.z = tab;
+  const tabs = el("div", "tvtabs"); tabs.setAttribute("role", "tablist");
+  ["groen", "oranje", "rood"].forEach(z => {
+    const t = el("button", "tvtab" + (z === tab ? " on" : "")); t.type = "button"; t.dataset.z = z; t.setAttribute("role", "tab"); t.setAttribute("aria-selected", z === tab ? "true" : "false");
+    t.appendChild(el("span", "tvdot")); t.appendChild(document.createTextNode(vt(TV_ZONES[z].nl, TV_ZONES[z].en)));
+    t.onclick = () => { tvTab = z; renderWerkboek(); };
+    tabs.appendChild(t);
+  });
+  zk.appendChild(tabs);
+  const si = tvStapVan(tab), Z = TV_ZONES[tab];
+  zk.appendChild(tvZoneKop(tab));
+  if(!tvZoneGevuld(tab)){
+    zk.appendChild(note(vt("Deze kleur heb je nog niet ingevuld. Dan staat hier precies hoe jij het herkent en wat je dan doet.", "You haven't filled in this colour yet. Then this shows exactly how you recognise it and what you do.")));
+    const b = el("button", "primary", vt("Nu invullen", "Fill in now")); b.type = "button"; b.style.marginTop = "12px"; b.onclick = () => tvNaarStap(si); zk.appendChild(b);
+  } else {
+    const [denk, voel, doe, actie] = tvZoneRijen(tab).map(r => tvGet(r.k));
+    const herken = tvHerken(denk, voel, doe);
+    if(herken.children.length){ zk.appendChild(el("div", "tvkop", tab === "groen" ? vt("Zo merk ik dat het goed gaat", "This is how I notice I'm doing well") : vt("Zo herken ik het", "This is how I recognise it"))); zk.appendChild(herken); }
+    if(actie.length){
+      zk.appendChild(el("div", "tvkop", {groen: vt("Dit houdt mij in het groen", "This keeps me in the green"), oranje: vt("Als ik dit merk, doe ik", "When I notice this, I"), rood: vt("Doe dit nu meteen", "Do this right away")}[tab]));
+      const ol = el("ol", "tvacties"); actie.forEach((a, i) => { const li = el("li"); li.appendChild(el("span", "tvactienr", String(i + 1))); li.appendChild(el("span", null, tvCap(tvT(a)))); ol.appendChild(li); }); zk.appendChild(ol);
+    }
+    if(tab === "rood") zk.appendChild(tvBelLijst());
+    if(tvNote(tab)) zk.appendChild(el("div", "tvnotitie", tvNote(tab)));
+    const a = el("button", "linkbtn tvaanpas", vt("Aanpassen", "Edit")); a.type = "button"; a.onclick = () => tvNaarStap(si); zk.appendChild(a);
+  }
+  box.appendChild(zk);
+
+  // gedachten tegenspreken: tik op een gedachte en zie wat je terugzegt
+  const ziek = tvGet("gedachten.ziek"), tegen = tvGet("gedachten.tegen");
+  if(ziek.length && tegen.length){
+    const c = el("div", "card tvtegen");
+    c.appendChild(el("div", "qtitle", vt("Als de verslaving praat", "When the addiction talks")));
+    const nn = note(vt("Tik op een gedachte en zie wat jij terugzegt.", "Tap a thought and see what you say back.")); nn.style.margin = "2px 0 10px"; c.appendChild(nn);
+    ziek.forEach(g => {
+      const k = el("button", "tvflip"); k.type = "button"; k.setAttribute("aria-expanded", "false");
+      const voor = el("span", "tvflipvoor"); voor.appendChild(el("small", null, vt("De gedachte", "The thought"))); voor.appendChild(el("b", null, "‘" + tvCap(tvT(g)) + "’"));
+      const achter = el("span", "tvflipachter"); achter.appendChild(el("small", null, vt("Wat ik terugzeg", "What I say back"))); tegen.forEach(t => achter.appendChild(el("b", null, tvCap(tvT(t)))));
+      k.appendChild(voor); k.appendChild(achter);
+      k.onclick = () => { const om = k.classList.toggle("om"); k.setAttribute("aria-expanded", om ? "true" : "false"); };
+      c.appendChild(k);
+    });
+    box.appendChild(c);
+  }
+
+  // de andere opdrachten als tegels
+  box.appendChild(el("div", "wbgroep", vt("Meer in mijn plan", "More in my plan")));
+  const grid = el("div", "tvtegels");
+  ["terugblik", "situaties", "gedachten", "aanspreken", "uitglijder"].forEach(id => {
+    const i = tvStapVan(id), s = TV_STAPPEN[i], gevuld = tvStapGevuld(s);
+    const t = el("button", "card tvtegel" + (gevuld ? "" : " leeg")); t.type = "button";
+    const ic = el("span", "tvtegelic"); ic.appendChild(tvIc(id, 22)); t.appendChild(ic);
+    t.appendChild(el("b", null, vt(s.t, s.te)));
+    const items = s.rows.reduce((a, r) => a.concat(tvGet(r.k)), []);
+    if(items.length){ const l = el("span", "tvtegelitems"); items.slice(0, 3).forEach(x => l.appendChild(el("span", null, tvCap(tvT(x))))); if(items.length > 3) l.appendChild(el("span", "meer", "+" + (items.length - 3))); t.appendChild(l); }
+    else t.appendChild(el("small", "tvtegelleeg", tvNote(s.id) ? vt("Eigen aantekening", "Own note") : vt("Nog invullen", "Still to fill in")));
+    t.onclick = () => tvNaarStap(i);
+    grid.appendChild(t);
+  });
+  box.appendChild(grid);
 }
 
 // ---- de app denkt mee: seintje op het beginscherm ----

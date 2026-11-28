@@ -5,6 +5,7 @@
 // Opslag: settings.werkboek = {gschema: [{id, date, gebeurtenis, gedachten, gedrag, gevolgen, helpend, keuzes: {...}}],
 //   balans: {items: {...}, notitie}, netwerk: [{id, naam, rol, soort, afstand, tel}], plezier: {items: {...}}, nee: {items: {...}, notitie}}.
 // Knopjes worden in het Nederlands bewaard (sleutel); WB_EN geeft de Engelse tekst.
+const wbMeer = {};   // wbChips: welke ingekorte rijen helemaal open staan
 let wbOpen = null, gsOpen = null, gsStap = null, nwBewerk = null, wbEigen = null, plKeuze = null, neeKaart = null;
 
 const WB_LIJSTEN = {
@@ -64,8 +65,9 @@ function wbChips(o){
   const sleutel = o.k + (o.id || "");
   const teken = () => {
     chips.innerHTML = "";
-    const vast = wbLijst(o.k).map(p => p[0]), gekozen = o.get() || [];
-    vast.concat(gekozen.filter(x => vast.indexOf(x) < 0)).forEach(item => {
+    const alleVast = wbLijst(o.k).map(p => p[0]), gekozen = o.get() || [];
+    const vast = o.kort && !wbMeer[sleutel] ? alleVast.filter((x, i) => i < o.kort || gekozen.indexOf(x) >= 0) : alleVast;
+    vast.concat(gekozen.filter(x => alleVast.indexOf(x) < 0)).forEach(item => {
       const on = gekozen.indexOf(item) >= 0;
       const b = el("button", "chip" + (on ? " on" : "") + (o.cls ? " " + o.cls : ""), wbT(item)); b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
       b.onclick = () => {
@@ -76,6 +78,11 @@ function wbChips(o){
       };
       chips.appendChild(b);
     });
+    if(vast.length < alleVast.length){
+      const m = el("button", "chip meer", vt("Meer…", "More…")); m.type = "button";
+      m.onclick = () => { wbMeer[sleutel] = true; teken(); };
+      chips.appendChild(m);
+    }
     if(o.geenEigen) return;
     if(wbEigen === sleutel){
       const f = el("div"); f.style.cssText = "display:flex;gap:6px;flex-basis:100%;margin-top:4px";
@@ -191,30 +198,92 @@ function gsNieuw(vooraf){
   d.gschema.unshift(g); tvBewaar();
   wbOpen = "gschema"; gsOpen = g.id; gsStap = vooraf && vooraf.gebeurtenis ? 1 : 0; wbToon();
 }
+// kleur en icoon per G (lijst, balk, stap en samenvatting)
+const GS_STIJL = {
+  gebeurtenis: {k: "#4f86e0", ic: '<rect x="2.5" y="7" width="13" height="11" rx="2.5"/><path d="M15.5 11l5-3v9l-5-3"/><circle cx="9" cy="12.5" r="2.4"/>'},
+  gedachten: {k: "#8a66d9", ic: '<path d="M7.5 17a4.2 4.2 0 0 1-.8-8.3A5.6 5.6 0 0 1 17.4 8a4.5 4.5 0 0 1 .1 9z"/><circle cx="7" cy="20.5" r="1.2"/><circle cx="4" cy="22" r=".6"/>'},
+  gevoelens: {k: "#de5f93", ic: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z"/>'},
+  gedrag: {k: "#e08a2e", ic: '<path d="M8 3.5c2 0 3 2.5 3 5.5s-1 5-3 5-3-2-3-5 1-5.5 3-5.5zM6 16.5h4V19a2 2 0 0 1-4 0zM16 7.5c2 0 3 2.5 3 5.5s-1 5-3 5-3-2-3-5 1-5.5 3-5.5z"/>'},
+  gevolgen: {k: "#cf4f45", ic: '<rect x="3" y="9" width="4.5" height="11" rx="1" transform="rotate(-14 5 14)"/><rect x="10" y="7" width="4.5" height="13" rx="1"/><rect x="17" y="5" width="4.5" height="15" rx="1"/>'},
+  helpend: {k: "#2f9a6b", ic: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/>'}
+};
+const gsIc = (k, size) => { const s = icon("x", size || 22); s.innerHTML = GS_STIJL[k].ic; return s; };
+const gsKlaar = g => GS_DELEN.every(d => gsDeelGevuld(g, d));
+// hoe sterk was het gevoel: tien bolletjes van groen naar rood
+function gsSterkte(g, bewaar){
+  const w = el("div", "gsschaalvak");
+  w.appendChild(el("div", "label", vt("Hoe sterk was het gevoel?", "How strong was the feeling?")));
+  const rij = el("div", "gsschaal"); rij.setAttribute("role", "group"); rij.setAttribute("aria-label", vt("Hoe sterk was het gevoel?", "How strong was the feeling?"));
+  const nu = parseInt(((g.keuzes || {}).sterkte || [])[0], 10) || 0;
+  const tx = el("div", "gsschaaltx", nu ? vt(nu + " uit 10", nu + " out of 10") + " · " + (nu <= 3 ? vt("een beetje", "a little") : nu <= 6 ? vt("best sterk", "fairly strong") : nu <= 8 ? vt("sterk", "strong") : vt("heel sterk", "very strong")) : vt("Tik een getal aan", "Tap a number"));
+  for(let n = 1; n <= 10; n++){
+    const b = el("button", "gsschaalknop" + (n === nu ? " on" : n < nu ? " vol" : ""), String(n)); b.type = "button";
+    b.style.setProperty("--k", "hsl(" + Math.round(135 - (n - 1) * 15) + " 62% 46%)");
+    b.setAttribute("aria-pressed", n === nu ? "true" : "false");
+    b.onclick = () => { g.keuzes = g.keuzes || {}; if(n === nu) delete g.keuzes.sterkte; else g.keuzes.sterkte = [n + " uit 10"]; bewaar(); w.replaceWith(gsSterkte(g, bewaar)); };
+    rij.appendChild(b);
+  }
+  w.appendChild(rij); w.appendChild(tx);
+  return w;
+}
+// wat komt vaker terug in je G-schema's?
+function gsPatronen(box, l){
+  if(l.length < 2) return;
+  const top = k => tally(l.map(g => (g.keuzes || {})[k] || [])).filter(x => x[1] >= 2).slice(0, 3);
+  const ged = top("gedachten"), gev = top("gevoelens");
+  if(!ged.length && !gev.length) return;
+  const c = el("div", "card gspatroon");
+  c.appendChild(el("div", "qtitle", vt("Wat komt vaker terug?", "What keeps coming back?")));
+  const n = note(vt("Uit je " + l.length + " G-schema’s. Herken je een patroon? Bespreek het met je sponsor of begeleider.", "From your " + l.length + " ABC diaries. Do you recognise a pattern? Talk it through with your sponsor or support worker.")); n.style.margin = "2px 0 4px"; c.appendChild(n);
+  [[ged, "gedachten", vt("Gedachten", "Thoughts")], [gev, "gevoelens", vt("Gevoelens", "Feelings")]].forEach(([lijst, k, kop]) => {
+    if(!lijst.length) return;
+    const h = el("div", "gspatroonkop"); h.style.setProperty("--k", GS_STIJL[k].k); h.appendChild(gsIc(k, 16)); h.appendChild(document.createTextNode(kop)); c.appendChild(h);
+    lijst.forEach(([x, aantal]) => { const r = el("div", "gspatroonrij"); r.style.setProperty("--k", GS_STIJL[k].k); r.appendChild(el("span", null, cap(wbT(x)))); r.appendChild(el("b", null, aantal + "×")); c.appendChild(r); });
+  });
+  box.appendChild(c);
+}
 function renderGsLijst(box){
   box.appendChild(wbTerug());
   const kop = wbKop("gschema", vt("G-schema", "ABC diary"), vt("Neem één moment dat je bezighoudt, zoals een ruzie, een craving of een moment dat je boos werd. Je pluist het stap voor stap uit: gebeurtenis, gedachten, gevoelens, gedrag en gevolgen. Daarna bedenk je een helpende gedachte. Zo zie je hoe je gedachten je gevoel en gedrag sturen.", "Take one moment that is on your mind, like an argument, a craving or a moment you got angry. You unpick it step by step: event, thoughts, feelings, behaviour and consequences. Then you come up with a helpful thought. That way you see how your thoughts steer your feelings and behaviour."));
+  // de zes G's als gekleurde rij
+  const rij = el("div", "gsrij");
+  GS_DELEN.forEach((d, i) => { const s = el("span", "gsrijstap"); s.style.setProperty("--k", GS_STIJL[d.k].k); const ri = el("span", "gsrijic"); ri.appendChild(gsIc(d.k, 18)); s.appendChild(ri); s.appendChild(el("small", null, vt(d.t, d.te))); rij.appendChild(s); });
+  kop.appendChild(rij);
   const b = el("button", "primary", vt("+ Nieuw G-schema", "+ New ABC diary")); b.type = "button"; b.style.marginTop = "14px"; b.onclick = () => gsNieuw();
   kop.appendChild(b); box.appendChild(kop);
   wbxMomenten(box);
   const l = (wbLees().gschema || []).slice().sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : (b.updated || 0) - (a.updated || 0));
   if(!l.length){ const e = note(vt("Tip: bij een conflict, craving of trigger in je dagbeschouwing staat een knop om er meteen een G-schema van te maken.", "Tip: with a conflict, craving or trigger in your daily reflection there is a button to turn it into an ABC diary straight away.")); e.style.margin = "4px 4px 0"; box.appendChild(e); return; }
+  gsPatronen(box, l);
   l.forEach(g => {
-    const c = el("button", "card gskaart"); c.type = "button";
+    const af = gsKlaar(g), c = el("div", "card gskaart" + (af ? "" : " open")); c.setAttribute("role", "button"); c.tabIndex = 0;
     const top = el("div", "gskaarttop"); top.appendChild(el("span", "gsdatum", wbDatum(g.date)));
-    const stip = el("span", "gsstippen"); GS_DELEN.forEach(d => stip.appendChild(el("i", gsDeelGevuld(g, d) ? "on" : null))); top.appendChild(stip);
+    const rechts = el("span", "gskaartrechts");
+    if(!af) rechts.appendChild(el("span", "gsafmaken", vt("Nog afmaken", "To finish")));
+    // verwijderen: prullenbakje op de kaart (met een vraag of het zeker is)
+    const weg = el("button", "gsweg"); weg.type = "button"; weg.setAttribute("aria-label", vt("G-schema verwijderen", "Delete ABC diary"));
+    const wi = icon("x", 18); wi.innerHTML = '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/>'; weg.appendChild(wi);
+    weg.onclick = async ev => {
+      ev.stopPropagation();
+      if(!(await confirmDialog(vt("G-schema verwijderen?", "Delete ABC diary?"), vt("Dit G-schema verdwijnt helemaal.", "This ABC diary will be removed completely."), vt("Verwijderen", "Delete")))) return;
+      const d = wbData(); d.gschema = d.gschema.filter(x => x.id !== g.id); await saveSettingsNow(); toast(vt("G-schema verwijderd.", "ABC diary deleted.")); renderWerkboek();
+    };
+    rechts.appendChild(weg); top.appendChild(rechts);
     c.appendChild(top);
     c.appendChild(el("div", "gstitel", (g.gebeurtenis || "").trim().split("\n")[0] || vt("Nog geen gebeurtenis ingevuld", "No event filled in yet")));
-    const gv = (g.keuzes || {}).gevoelens || [];
-    if(gv.length) c.appendChild(wbTags(gv.slice(0, 4)));
-    c.onclick = () => { gsOpen = g.id; gsStap = GS_DELEN.every(d => gsDeelGevuld(g, d)) ? null : Math.max(0, GS_DELEN.findIndex(d => !gsDeelGevuld(g, d))); wbToon(); };
+    const kz = g.keuzes || {}, gv = kz.gevoelens || [], st = parseInt((kz.sterkte || [])[0], 10);
+    if(gv.length){ const t = wbTags(gv.slice(0, 4)); if(st){ const s = el("span", "gssterktetag", st + "/10"); s.style.setProperty("--k", "hsl(" + Math.round(135 - (st - 1) * 15) + " 62% 46%)"); t.appendChild(s); } c.appendChild(t); }
+    if((kz.volgende || []).length || (g.helpend || "").trim()){ const h = el("div", "gskaarthelp"); h.appendChild(gsIc("helpend", 16)); h.appendChild(el("span", null, (g.helpend || "").trim().split("\n")[0] || cap(wbT(kz.volgende[0])))); c.appendChild(h); }
+    const stip = el("div", "gsstippen"); GS_DELEN.forEach(d => { const i = el("i", gsDeelGevuld(g, d) ? "on" : null); i.style.setProperty("--k", GS_STIJL[d.k].k); stip.appendChild(i); }); c.appendChild(stip);
+    c.onclick = () => { gsOpen = g.id; gsStap = af ? null : Math.max(0, GS_DELEN.findIndex(d => !gsDeelGevuld(g, d))); wbToon(); };
+    toetsKlik(c); c.setAttribute("aria-label", wbDatum(g.date) + ": " + ((g.gebeurtenis || "").trim().split(String.fromCharCode(10))[0] || vt("G-schema", "ABC diary")));
     box.appendChild(c);
   });
 }
 function gsBalk(g, huidig){
   const b = el("div", "tvbalk gsbalk");
   GS_DELEN.forEach((d, i) => {
-    const x = el("i"); if(gsDeelGevuld(g, d)) x.classList.add("on"); if(i === huidig) x.classList.add("nu");
+    const x = el("i"); x.style.setProperty("--k", GS_STIJL[d.k].k); if(gsDeelGevuld(g, d)) x.classList.add("on"); if(i === huidig) x.classList.add("nu");
     x.setAttribute("role", "button"); x.tabIndex = 0; x.setAttribute("aria-label", vt(d.t, d.te));
     x.onclick = () => { gsStap = i; wbToon(); }; toetsKlik(x);
     b.appendChild(x);
@@ -223,61 +292,89 @@ function gsBalk(g, huidig){
 }
 function renderGsStap(box){
   const g = gsVind(gsOpen); if(!g){ gsOpen = null; gsStap = null; return renderGsLijst(box); }
-  const i = gsStap, d = GS_DELEN[i], bewaar = () => { g.updated = Date.now(); tvBewaar(); };
+  const i = gsStap, d = GS_DELEN[i], bewaar = () => { g.updated = Date.now(); tvBewaar(); }, kl = GS_STIJL[d.k].k;
   box.appendChild(tvTerugLink(vt("Terug naar G-schema’s", "Back to ABC diaries"), () => { gsOpen = null; gsStap = null; wbToon(); }));
   box.appendChild(el("div", "tvstapkop", vt("Stap " + (i + 1) + " van " + GS_DELEN.length, "Step " + (i + 1) + " of " + GS_DELEN.length) + "  ·  " + wbDatum(g.date)));
   box.appendChild(gsBalk(g, i));
-  const c = el("div", "card gsstap");
+  const c = el("div", "card gsstap"); c.style.setProperty("--k", kl);
   const h = el("div", "gskop");
-  h.appendChild(el("span", "gsletter groot" + (d.plus ? " plus" : ""), d.plus ? "+" : "G" + (i + 1)));
+  const ic = el("span", "gsictegel"); ic.appendChild(gsIc(d.k, 26)); ic.appendChild(el("b", "gsicletter", d.plus ? "+" : "G" + (i + 1))); h.appendChild(ic);
   const ht = el("div"); ht.appendChild(el("b", "gsdeeltitel", vt(d.t, d.te))); ht.appendChild(el("small", null, vt(d.v, d.ve)));
   h.appendChild(ht); c.appendChild(h);
+  // wat je bij de vorige stap invulde, als geheugensteuntje
+  if(i > 0){
+    const vd = GS_DELEN[i - 1], vk = (g.keuzes || {})[vd.k] || [], vtx = (g[vd.k] || "").trim();
+    if(vk.length || vtx){ const v = el("div", "gsvorige"); v.style.setProperty("--k", GS_STIJL[vd.k].k); v.appendChild(gsIc(vd.k, 15)); v.appendChild(el("span", null, vtx.split("\n")[0] || vk.map(x => cap(wbT(x))).slice(0, 3).join(", "))); c.appendChild(v); }
+  }
   c.appendChild(el("div", "tip", vt(d.tip, d.tipEn)));
   c.appendChild(wbxVoorbeeld("gs." + d.k));
   const keuze = k => ({get: () => (g.keuzes || {})[k], set: l => { g.keuzes = g.keuzes || {}; if(l.length) g.keuzes[k] = l; else delete g.keuzes[k]; bewaar(); }});
-  if(d.chips) c.appendChild(wbChips(Object.assign({k: d.chips, id: g.id, cls: d.k === "gevoelens" ? "feel" : "", l: d.chips2 ? "Wat had ik ook kunnen denken?" : null, le: "What could I have thought instead?"}, keuze(d.k))));
-  if(d.k === "gevoelens") c.appendChild(wbChips(Object.assign({k: "gs.sterkte", id: g.id, enkel: true, geenEigen: true, l: "Hoe sterk was het gevoel?", le: "How strong was the feeling?", cls: "sterkte"}, keuze("sterkte"))));
-  if(d.chips2) c.appendChild(wbChips(Object.assign({k: d.chips2, id: g.id, l: "Wat doe ik de volgende keer?", le: "What will I do next time?"}, keuze("volgende"))));
+  if(d.chips) c.appendChild(wbChips(Object.assign({k: d.chips, id: g.id, kort: 8, cls: d.k === "gevoelens" ? "feel" : "", l: d.chips2 ? "Wat had ik ook kunnen denken?" : null, le: "What could I have thought instead?"}, keuze(d.k))));
+  if(d.k === "gevoelens") c.appendChild(gsSterkte(g, bewaar));
+  if(d.chips2) c.appendChild(wbChips(Object.assign({k: d.chips2, id: g.id, kort: 8, l: "Wat doe ik de volgende keer?", le: "What will I do next time?"}, keuze("volgende"))));
   if(!d.alleenChips) c.appendChild(wbTekstveld(g[d.k], d.p, d.pe, v => { g[d.k] = v; bewaar(); }, vt(d.t, d.te)));
   box.appendChild(c);
   const row = el("div", "row");
   const vorige = el("button", "ghost", vt("‹ Vorige", "‹ Previous")); vorige.type = "button"; vorige.disabled = i === 0; vorige.onclick = () => { gsStap = i - 1; wbToon(); };
-  const laatste = i === GS_DELEN.length - 1;
-  const volgende = el("button", "primary", laatste ? vt("Klaar", "Done") : vt("Volgende ›", "Next ›")); volgende.type = "button";
+  const laatste = i === GS_DELEN.length - 1, nd = GS_DELEN[i + 1];
+  const volgende = el("button", "primary", laatste ? vt("Klaar", "Done") : vt("Naar ", "To ") + vt(nd.t, nd.te).toLowerCase() + " ›"); volgende.type = "button";
   volgende.onclick = () => { gsStap = laatste ? null : i + 1; if(laatste) saveSettingsNow(); wbToon(); };
   row.appendChild(vorige); row.appendChild(volgende); box.appendChild(row);
 }
-// samenvatting: de G's als ketting onder elkaar
+// samenvatting: de G's als kettingreactie, daarna "toen" tegenover "volgende keer"
 function renderGs(box){
   const g = gsVind(gsOpen); if(!g){ gsOpen = null; return renderGsLijst(box); }
   box.appendChild(tvTerugLink(vt("Terug naar G-schema’s", "Back to ABC diaries"), () => { gsOpen = null; wbToon(); }));
+  const kz = g.keuzes || {};
   const c = el("div", "card gssamen");
   c.appendChild(el("div", "tvkicker", vt("G-schema · ", "ABC diary · ") + wbDatum(g.date)));
   const kt = el("div", "gsketen");
   GS_DELEN.forEach((d, i) => {
-    const s = el("div", "gsschakel" + (d.plus ? " plus" : ""));
-    s.appendChild(el("span", "gsletter" + (d.plus ? " plus" : ""), d.plus ? "+" : "G" + (i + 1)));
+    if(d.plus) return;
+    const s = el("div", "gsblok"); s.style.setProperty("--k", GS_STIJL[d.k].k);
+    const ic = el("span", "gsblokic"); ic.appendChild(gsIc(d.k, 20)); s.appendChild(ic);
     const inh = el("div", "gsinh");
     const kop = el("div", "gsinhkop"); kop.appendChild(el("b", null, vt(d.t, d.te)));
     const e = el("button", "linkbtn", gsDeelGevuld(g, d) ? vt("Wijzig", "Edit") : vt("Invullen", "Fill in")); e.type = "button"; e.onclick = () => { gsStap = i; wbToon(); };
     kop.appendChild(e); inh.appendChild(kop);
-    const kz = g.keuzes || {};
     if((kz[d.k] || []).length) inh.appendChild(wbTags(kz[d.k]));
-    if(d.k === "gevoelens" && (kz.sterkte || []).length){ const st = parseInt(kz.sterkte[0], 10); const m = el("div", "gssterkte"); const f = el("i"); f.style.width = (st * 10) + "%"; m.appendChild(f); inh.appendChild(m); inh.appendChild(el("small", "gssterktetx", wbT(kz.sterkte[0]))); }
+    if(d.k === "gevoelens" && (kz.sterkte || []).length){
+      const st = parseInt(kz.sterkte[0], 10); const m = el("div", "gssterkte"); const f = el("i"); f.style.width = (st * 10) + "%"; m.appendChild(f); inh.appendChild(m);
+      inh.appendChild(el("small", "gssterktetx", wbT(kz.sterkte[0])));
+    }
     if((g[d.k] || "").trim()) inh.appendChild(el("div", "gstekst", g[d.k].trim()));
-    if(d.chips2 && (kz.volgende || []).length){ inh.appendChild(el("div", "tvsub", vt("Volgende keer", "Next time"))); inh.appendChild(wbTags(kz.volgende)); }
     if(!gsDeelGevuld(g, d)) inh.appendChild(el("div", "gsleeg", "–"));
     s.appendChild(inh); kt.appendChild(s);
   });
   c.appendChild(kt);
   box.appendChild(c);
+  // toen tegenover volgende keer
+  const hd = GS_DELEN[GS_DELEN.length - 1], hi = GS_DELEN.length - 1;
+  const vn = el("div", "card gsvoorna");
+  vn.appendChild(el("div", "qtitle", vt("Wat neem ik mee?", "What do I take away?")));
+  const kol = el("div", "gsvnkol");
+  const toen = el("div", "gsvn toen");
+  toen.appendChild(el("small", null, vt("Toen dacht ik", "Back then I thought")));
+  const tg = (g.gedachten || "").trim().split("\n")[0] || ((kz.gedachten || [])[0] ? cap(wbT(kz.gedachten[0])) : "");
+  toen.appendChild(el("b", null, tg ? "‘" + tg + "’" : "–"));
+  if((kz.gedrag || []).length || (g.gedrag || "").trim()) toen.appendChild(el("span", null, vt("en ik deed: ", "and I did: ") + ((g.gedrag || "").trim().split("\n")[0] || wbT(kz.gedrag[0]))));
+  const nu = el("div", "gsvn nu");
+  nu.appendChild(el("small", null, vt("Volgende keer denk ik", "Next time I'll think")));
+  const hg = (g.helpend || "").trim().split("\n")[0] || ((kz.helpend || [])[0] ? cap(wbT(kz.helpend[0])) : "");
+  nu.appendChild(el("b", null, hg ? "‘" + hg + "’" : "–"));
+  if((kz.volgende || []).length) nu.appendChild(el("span", null, vt("en ik ga: ", "and I'll: ") + kz.volgende.map(wbT).join(", ")));
+  kol.appendChild(toen); const pijl = el("span", "gsvnpijl", "→"); pijl.setAttribute("aria-hidden", "true"); kol.appendChild(pijl); kol.appendChild(nu);
+  vn.appendChild(kol);
+  if(!gsDeelGevuld(g, hd)){ const b = el("button", "primary", vt("Bedenk een helpende gedachte", "Come up with a helpful thought")); b.type = "button"; b.style.marginTop = "12px"; b.onclick = () => { gsStap = hi; wbToon(); }; vn.appendChild(b); }
+  else { const e = el("button", "linkbtn", vt("Wijzig", "Edit")); e.type = "button"; e.style.marginTop = "10px"; e.onclick = () => { gsStap = hi; wbToon(); }; vn.appendChild(e); }
+  box.appendChild(vn);
   const k2 = el("div", "card");
   k2.appendChild(el("div", "qtitle", vt("Bespreken of bewaren", "Discuss or keep")));
   const n = note(vt("Neem dit mee naar je 1-op-1 of bespreek het met je sponsor.", "Take this to your 1-to-1 or talk it through with your sponsor.")); n.style.marginTop = "4px"; k2.appendChild(n);
   k2.appendChild(wbDownloadKnoppen(() => gsDoc(g)));
-  const weg = el("button", "linkbtn wbweg", vt("Dit G-schema weggooien", "Delete this ABC diary")); weg.type = "button";
+  const weg = el("button", "linkbtn wbweg", vt("Dit G-schema verwijderen", "Delete this ABC diary")); weg.type = "button";
   weg.onclick = async () => {
-    if(!(await confirmDialog(vt("G-schema weggooien?", "Delete ABC diary?"), vt("Dit G-schema verdwijnt helemaal.", "This ABC diary will be removed completely."), vt("Weggooien", "Delete")))) return;
+    if(!(await confirmDialog(vt("G-schema verwijderen?", "Delete ABC diary?"), vt("Dit G-schema verdwijnt helemaal.", "This ABC diary will be removed completely."), vt("Verwijderen", "Delete")))) return;
     const d = wbData(); d.gschema = d.gschema.filter(x => x.id !== g.id); gsOpen = null; await saveSettingsNow(); wbToon();
   };
   k2.appendChild(weg);
