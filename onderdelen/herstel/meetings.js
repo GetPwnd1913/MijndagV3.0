@@ -63,8 +63,173 @@ const dayName = d => vt(DAYNAMES[d], DAYNAMES_EN[d]);
 const DAY_ORDER = [1,2,3,4,5,6,0];
 let meetOpen = {}, meetForm = false;
 
+// ---------- meetings in de buurt: actuele lijsten van de websites van NA, AA en CA ----------
+// Alle drie gebruiken dezelfde meetinglijst (TSML) die van buitenaf mag worden opgehaald. De opgehaalde lijst
+// (alleen meetings op een vaste plek) staat in een eigen key, dus niet in settings en niet in de back-up.
+// settings.meetPlek = {naam, lat, lon} (of {gps:1, lat, lon}); zonder plek blijft de vaste lijst hierboven (rond Rhenen).
+const MEET_BRONNEN = [["NA","https://www.nanederland.nl/wp-admin/admin-ajax.php?action=meetings"],["AA","https://aa-nederland.nl/wp-admin/admin-ajax.php?action=meetings"],["CA","https://ca-holland.nl/wp-admin/admin-ajax.php?action=meetings"]];
+const MEET_CACHE = "dagbeschouwing:meetcache", MEET_STRAAL = 30, MEET_VERS = 7 * 864e5;
+let meetOnline = null, meetBezig = false, meetMelding = "", meetGeprobeerd = false;
+function meetCacheLees(){
+  if(meetOnline) return meetOnline;
+  try{ const v = JSON.parse(localStorage.getItem(MEET_CACHE) || "null"); if(v && Array.isArray(v.lijst)) meetOnline = v; }catch(e){}
+  return meetOnline;
+}
+function meetTekst(s){
+  s = String(s == null ? "" : s);
+  if(s.indexOf("&") < 0) return s.trim();
+  const t = document.createElement("textarea"); t.innerHTML = s; return t.value.trim();
+}
+function meetNorm(f, m){
+  if(!m || typeof m !== "object" || m.attendance_option === "online" || m.approximate === "yes") return null;
+  const lat = +m.latitude, lon = +m.longitude, d = +m.day;
+  if(!isFinite(lat) || !isFinite(lon) || !(d >= 0 && d <= 6)) return null;
+  const adres = meetTekst(m.formatted_address).replace(/,\s*(Nederland|Netherlands|België|Belgique|Belgium)$/i, "");
+  const delen = adres.split(/,\s*/);
+  const city = meetTekst(m.sub_region) || (delen.length > 1 ? delen[delen.length - 1].replace(/^\d{4}\s?[A-Z]{2}\s+/, "") : "") || meetTekst(m.region) || "?";
+  const out = {id: f.toLowerCase() + "-" + m.id, f, d, t: String(m.time || "").slice(0, 5), city, loc: meetTekst(m.location), addr: adres, nt: meetTekst(m.name), lat, lon};
+  if(m.attendance_option === "hybrid") out.hy = 1;
+  if(typeof m.url === "string" && /^https:\/\//.test(m.url)) out.url = m.url;
+  return out;
+}
+async function meetOphalen(){
+  if(meetBezig) return;
+  meetBezig = true; meetGeprobeerd = true; meetMelding = vt("Meetings ophalen…", "Fetching meetings…"); renderMeetings();
+  const res = await Promise.all(MEET_BRONNEN.map(async ([f, u]) => {
+    try{
+      const r = await fetch(u, {cache: "no-cache"}); if(!r.ok) return null;
+      const d = await r.json();
+      return Array.isArray(d) ? d.map(m => meetNorm(f, m)).filter(Boolean) : null;
+    }catch(e){ return null; }
+  }));
+  const oud = meetCacheLees(), lijst = [], gelukt = [];
+  res.forEach((r, i) => {
+    const f = MEET_BRONNEN[i][0];
+    if(r && r.length){ lijst.push(...r); gelukt.push(f); }
+    else if(oud) lijst.push(...oud.lijst.filter(m => m.f === f));
+  });
+  meetBezig = false;
+  if(gelukt.length){
+    meetOnline = {tijd: Date.now(), lijst};
+    try{ localStorage.setItem(MEET_CACHE, JSON.stringify(meetOnline)); }catch(e){}
+    meetSterrenOmzetten();
+  }
+  const mis = MEET_BRONNEN.map(b => b[0]).filter(f => gelukt.indexOf(f) < 0);
+  meetMelding = !mis.length ? "" : gelukt.length
+    ? vt("Ophalen lukte niet voor " + mis.join(", ") + ". Daarvan zie je de laatst bekende lijst.", "Could not fetch " + mis.join(", ") + ". For those you see the last known list.")
+    : oud ? vt("Ophalen lukte niet (geen internet?). Je ziet de laatst opgehaalde lijst.", "Could not fetch the meetings (no internet?). You see the last list that was fetched.")
+          : vt("Ophalen lukte niet (geen internet?). Je ziet voorlopig de vaste lijst rond Rhenen.", "Could not fetch the meetings (no internet?). For now you see the fixed list around Rhenen.");
+  renderMeetings(); renderMeetToday();
+}
+// sterren van de vaste lijst overzetten naar dezelfde meeting in de opgehaalde lijst
+function meetSterrenOmzetten(){
+  const o = meetCacheLees(); if(!o) return;
+  let veranderd = false;
+  const s = meetStars().map(id => {
+    const b = MEETINGS.find(m => m.id === id); if(!b) return id;
+    const plaats = b.city.split(" (")[0].toLowerCase();
+    const n = o.lijst.find(m => m.f === b.f && m.d === b.d && m.t === b.t && m.city.toLowerCase() === plaats);
+    if(!n) return id;
+    veranderd = true; return n.id;
+  });
+  if(veranderd){ settings.meetStars = s.filter((x, i) => s.indexOf(x) === i); saveSettingsNow(); }
+}
+function meetVanaf(){
+  const p = settings.meetPlek;
+  return p && isFinite(p.lat) && isFinite(p.lon) ? p : {naam: "Rhenen", lat: CITY_LL.Rhenen[0], lon: CITY_LL.Rhenen[1]};
+}
+const meetPlekNaam = p => p.gps ? vt("je locatie", "your location") : p.naam;
+function kmTussen(a1, o1, a2, o2){
+  const R = 6371, r = x => x * Math.PI / 180, dLa = r(a2 - a1), dLo = r(o2 - o1);
+  const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a1)) * Math.cos(r(a2)) * Math.sin(dLo / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+// hemelsbrede afstand vanaf de gekozen plek (of Rhenen)
+function meetKm(m){
+  const ll = m.lat != null ? [m.lat, m.lon] : (CITY_LL[m.city] || CITY_LL[String(m.city || "").split(" (")[0]]);
+  if(!ll) return 999;
+  const p = meetVanaf(); return kmTussen(p.lat, p.lon, ll[0], ll[1]);
+}
+async function meetZetPlek(p){
+  settings.meetPlek = p; meetMelding = "";
+  await saveSettingsNow();
+  const o = meetCacheLees();
+  if(!o || Date.now() - o.tijd > MEET_VERS) meetOphalen(); else renderMeetings();
+  renderMeetToday();
+}
+async function meetZoekPlek(q){
+  const u = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=nl,be&q=" + encodeURIComponent(q);
+  const r = await fetch(u); if(!r.ok) throw new Error("zoeken");
+  const d = await r.json();
+  return Array.isArray(d) && d.length ? {naam: q.charAt(0).toUpperCase() + q.slice(1), lat: +d[0].lat, lon: +d[0].lon} : null;
+}
+function meetPlekKaart(){
+  const c = el("div", "card"); c.style.cssText = "background:var(--accent-soft);border-color:transparent";
+  const p = settings.meetPlek, o = p ? meetCacheLees() : null;
+  const tekst = p
+    ? vt("Meetings binnen " + MEET_STRAAL + " km van " + meetPlekNaam(p) + ". Tik op NA, AA of CA om ze te zien. Met de ster ☆ maak je een meeting vast. Die zie je dan op de dag zelf bij Invullen.",
+         "Meetings within " + MEET_STRAAL + " km of " + meetPlekNaam(p) + ". Tap NA, AA or CA to see them. With the star ☆ you make a meeting one of your regulars. You will then see it on that day under Fill in.")
+    : vt("Meetings binnen ongeveer 30 km van Rhenen. Vul hieronder je eigen plaats of adres in, dan zie je alle meetings van NA, AA en CA binnen 30 km daarvan. Met de ster ☆ maak je een meeting vast. Die zie je dan op de dag zelf bij Invullen.",
+         "Meetings within about 30 km of Rhenen. Enter your own town or address below to see all NA, AA and CA meetings within 30 km of it. With the star ☆ you make a meeting one of your regulars. You will then see it on that day under Fill in.");
+  const it = note(tekst); it.style.cssText = "margin:0;font-size:calc(15px*var(--ts));color:var(--ink)"; c.appendChild(it);
+  const f = el("div", "field"); f.style.marginTop = "10px";
+  const lab = el("label", null, vt("Plaats of adres", "Town or address")); f.appendChild(lab);
+  const inp = el("input"); inp.id = "meetPlekInvoer"; lab.htmlFor = inp.id;
+  inp.placeholder = vt("Bijv. Utrecht of Dorpsstraat 1, Ede", "E.g. Utrecht or Dorpsstraat 1, Ede"); inp.autocomplete = "off";
+  if(p && !p.gps) inp.value = p.naam;
+  f.appendChild(inp); c.appendChild(f);
+  const msg = note(meetMelding); msg.style.marginTop = "6px"; msg.setAttribute("role", "status");
+  const row = el("div", "row"); row.style.cssText = "margin-top:10px;flex-wrap:wrap;gap:8px";
+  const zoek = el("button", "primary", vt("Zoeken", "Search")); zoek.type = "button";
+  zoek.onclick = async () => {
+    const q = inp.value.trim().replace(/\s+/g, " ");
+    if(!q){ msg.textContent = vt("Vul eerst een plaats of adres in.", "Please enter a town or address first."); inp.focus(); return; }
+    zoek.disabled = true; msg.textContent = vt("Zoeken…", "Searching…");
+    try{
+      const plek = await meetZoekPlek(q);
+      if(!plek){ msg.textContent = vt("Die plek kon ik niet vinden. Probeer een plaatsnaam.", "Could not find that place. Try a town name."); zoek.disabled = false; return; }
+      await meetZetPlek(plek);
+    }catch(e){ msg.textContent = vt("Zoeken lukte niet. Heb je internet?", "Searching did not work. Are you online?"); zoek.disabled = false; }
+  };
+  inp.onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); zoek.click(); } };
+  row.appendChild(zoek);
+  if(navigator.geolocation){
+    const gps = el("button", "ghost", vt("Mijn locatie", "My location")); gps.type = "button";
+    gps.onclick = () => {
+      msg.textContent = vt("Locatie bepalen…", "Finding your location…");
+      navigator.geolocation.getCurrentPosition(
+        pos => meetZetPlek({gps: 1, naam: "", lat: +pos.coords.latitude.toFixed(3), lon: +pos.coords.longitude.toFixed(3)}),
+        () => { msg.textContent = vt("Je locatie kon niet worden bepaald. Vul een plaats in.", "Your location could not be found. Please enter a town."); },
+        {timeout: 15000, maximumAge: 6e5});
+    };
+    row.appendChild(gps);
+  }
+  c.appendChild(row);
+  c.appendChild(msg);
+  if(p){
+    const bij = el("div", "links"); bij.style.cssText = "display:flex;gap:16px;margin-top:8px;flex-wrap:wrap;align-items:center";
+    if(o){
+      const dat = new Date(o.tijd).toLocaleDateString(settings.taal === "en" ? "en-GB" : "nl-NL", {day: "numeric", month: "long"});
+      const n = note(vt("Bijgewerkt op " + dat, "Updated on " + dat)); n.style.margin = "0"; bij.appendChild(n);
+    }
+    const ver = el("button", "linkbtn", vt("Vernieuwen", "Refresh")); ver.type = "button"; ver.disabled = meetBezig; ver.onclick = () => meetOphalen(); bij.appendChild(ver);
+    const weg = el("button", "linkbtn", vt("Terug naar de vaste lijst", "Back to the fixed list")); weg.type = "button"; weg.style.color = "var(--muted)";
+    weg.onclick = async () => { delete settings.meetPlek; meetMelding = ""; renderMeetings(); renderMeetToday(); await saveSettingsNow(); };
+    bij.appendChild(weg);
+    c.appendChild(bij);
+  }
+  return c;
+}
+
 function allMeetings(){
   const own = (settings.customMeetings || []).filter(m => m && m.id && typeof m.d === "number").map(m => Object.assign({own: true}, m));
+  const o = settings.meetPlek ? meetCacheLees() : null;
+  if(o){
+    // opgehaalde meetings binnen de straal, plus je vaste meetings (ook als ze verder weg liggen)
+    const st = meetStars();
+    return o.lijst.filter(m => st.indexOf(m.id) >= 0 || meetKm(m) <= MEET_STRAAL)
+      .concat(MEETINGS.filter(m => st.indexOf(m.id) >= 0)).concat(own);
+  }
   const weg = typeof meetingVerborgen === "function" ? meetingVerborgen() : [];
   return MEETINGS.filter(m => weg.indexOf(m.id) < 0).concat(own);
 }
@@ -87,12 +252,15 @@ function meetRow(m, showGroup){
   const tx = el("div", "tx");
   const tt = el("div", "tt");
   if(showGroup) tt.appendChild(el("span", "badge", m.f));
-  tt.appendChild(document.createTextNode((m.t || "?") + " · " + m.city));
+  const km = settings.meetPlek && m.lat != null ? meetKm(m) : null;
+  tt.appendChild(document.createTextNode((m.t || "?") + " · " + m.city + (km != null ? " · " + Math.round(km) + " km" : "")));
   tx.appendChild(tt);
   if(meetWhere(m)) tx.appendChild(el("div", "ad", meetWhere(m)));
   if(m.nt) tx.appendChild(el("div", "nt", m.nt));
+  if(m.hy) tx.appendChild(el("div", "nt", vt("Ook online te volgen", "Can also be joined online")));
   const links = el("div", "links");
   if(m.addr){ const a = el("a", "linkbtn more", vt("Route", "Directions")); a.href = routeUrl(m); a.target = "_blank"; a.rel = "noopener"; links.appendChild(a); }
+  if(m.url){ const a = el("a", "linkbtn", vt("Meer info", "More info")); a.href = m.url; a.target = "_blank"; a.rel = "noopener"; links.appendChild(a); }
   if(m.own){
     const del = el("button", "linkbtn", vt("Weghalen", "Remove")); del.type = "button"; del.style.color = "var(--muted)";
     del.onclick = async () => {
@@ -158,11 +326,13 @@ function meetFormCard(){
 function renderMeetings(){
   const box = $("meetBox"); if(!box) return;
   box.innerHTML = "";
+  // plek gekozen en lijst ontbreekt of is ouder dan een week: één keer per keer openen opnieuw ophalen
+  if(settings.meetPlek && !meetBezig && !meetGeprobeerd){
+    const o = meetCacheLees();
+    if(!o || Date.now() - o.tijd > MEET_VERS){ setTimeout(meetOphalen, 0); }
+  }
   const all = allMeetings();
-  const intro = el("div", "card"); intro.style.cssText = "background:var(--accent-soft);border-color:transparent";
-  const it = note(vt("Meetings binnen ongeveer 30 km van Rhenen. Tik op NA, AA of CA om de meetings te zien. Met de ster ☆ maak je een meeting vast. Die zie je dan op de dag zelf bij Invullen.", "Meetings within about 30 km of Rhenen. Tap NA, AA or CA to see the meetings. With the star ☆ you make a meeting one of your regulars. You will then see it on that day under Fill in."));
-  it.style.cssText = "margin:0;font-size:calc(15px*var(--ts));color:var(--ink)"; intro.appendChild(it);
-  box.appendChild(intro);
+  box.appendChild(meetPlekKaart());
 
   const stars = all.filter(isStar);
   if(stars.length){
@@ -195,7 +365,9 @@ function renderMeetings(){
   }
 
   const f = el("div", "card");
-  const ft = note(vt("Gecontroleerd op 8 november 2026. Tijden en adressen kunnen veranderen. Kijk bij twijfel op de site van NA, AA of CA.", "Checked on 8 November 2026. Times and addresses can change. If in doubt, check the NA, AA or CA website."));
+  const ft = note(settings.meetPlek && meetCacheLees()
+    ? vt("De lijst komt van de websites van NA, AA en CA. Alleen meetings op een vaste plek, afstand hemelsbreed. Kijk bij twijfel op de site zelf.", "The list comes from the NA, AA and CA websites. Only meetings at a fixed place, distance as the crow flies. If in doubt, check the website itself.")
+    : vt("Gecontroleerd op 8 november 2026. Tijden en adressen kunnen veranderen. Kijk bij twijfel op de site van NA, AA of CA.", "Checked on 8 November 2026. Times and addresses can change. If in doubt, check the NA, AA or CA website."));
   ft.style.marginTop = "0"; f.appendChild(ft);
   const lr = el("div", "links"); lr.style.cssText = "display:flex;gap:16px;margin-top:8px;flex-wrap:wrap";
   MEET_LINKS.forEach(([n, u]) => { const a = el("a", "linkbtn", n + vt("-meetinglijst ›", " meeting list ›")); a.href = u; a.target = "_blank"; a.rel = "noopener"; lr.appendChild(a); });
@@ -266,14 +438,6 @@ function renderMeetToday(){
 const CITY_LL = {"Rhenen":[51.959,5.568],"Elst (Utr.)":[52.001,5.505],"Veenendaal":[52.027,5.556],"Wageningen":[51.970,5.665],"Ede":[52.040,5.665],
   "Bennekom":[52.004,5.676],"Tiel":[51.886,5.430],"Culemborg":[51.955,5.227],"Zeist":[52.089,5.233],"Amersfoort":[52.156,5.387],"Arnhem":[51.985,5.899],
   "Nijmegen":[51.842,5.853],"Elst (Gld)":[51.919,5.848],"Huissen":[51.936,5.940],"Bemmel":[51.893,5.898],"Westervoort":[51.957,5.973]};
-function kmRhenen(m){
-  const ll = CITY_LL[m.city] || CITY_LL[String(m.city || "").split(" (")[0]];
-  if(!ll) return 999;
-  const R = 6371, r = x => x * Math.PI / 180, a = CITY_LL.Rhenen;
-  const dLa = r(ll[0] - a[0]), dLo = r(ll[1] - a[1]);
-  const h = Math.sin(dLa / 2) ** 2 + Math.cos(r(a[0])) * Math.cos(r(ll[0])) * Math.sin(dLo / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
 // noodplan: eerstvolgende meeting
 function nextMeetingCard(){
   const all = allMeetings();
@@ -282,7 +446,7 @@ function nextMeetingCard(){
   let found = null, off = 0;
   for(off = 0; off < 7 && !found; off++){
     const wd = (now.getDay() + off) % 7;
-    const cand = pool.filter(m => m.d === wd && m.t && (off > 0 || m.t >= nowT)).sort((a, b) => String(a.t).localeCompare(String(b.t)) || kmRhenen(a) - kmRhenen(b));
+    const cand = pool.filter(m => m.d === wd && m.t && (off > 0 || m.t >= nowT)).sort((a, b) => String(a.t).localeCompare(String(b.t)) || meetKm(a) - meetKm(b));
     if(cand.length) found = cand[0];
   }
   if(!found) return null;
