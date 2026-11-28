@@ -38,7 +38,7 @@ function talkVolgendeKaart(open){
   const c = el("div", "card wdheld");
   const rij = el("div", "wdheldrij");
   const kal = el("div", "wdkal");
-  const nx = settings.talkNext && /^\d{4}-\d\d-\d\d$/.test(settings.talkNext) ? settings.talkNext : "";
+  const nx = talkVolgendeDatum(), vast = talkVasteDag();
   const wanneer = nx ? talkWanneer(nx) : null;
   if(wanneer){
     const d = parseKey(nx);
@@ -52,13 +52,34 @@ function talkVolgendeKaart(open){
   tx.appendChild(el("div", "wdklein", open ? vt(open + (open === 1 ? " punt" : " punten") + " om te bespreken", open + (open === 1 ? " point" : " points") + " to discuss") : vt("Nog niets om te bespreken", "Nothing to discuss yet")));
   rij.appendChild(tx);
   c.appendChild(rij);
+  // vaste dag: elke week vanzelf de volgende datum
+  const vr = el("label", "wddatum");
+  vr.appendChild(el("span", null, vt("Vaste dag", "Regular day")));
+  const vs = el("select"); vs.setAttribute("aria-label", vt("Vaste dag van je 1-op-1", "Regular day of your 1-to-1"));
+  const geen = el("option", null, vt("Geen vaste dag", "No regular day")); geen.value = ""; vs.appendChild(geen);
+  DAY_ORDER.forEach(d => { const o = el("option", null, vt("Elke ", "Every ") + dayName(d)); o.value = String(d); vs.appendChild(o); });
+  vs.value = vast == null ? "" : String(vast);
+  vs.onchange = async () => {
+    settings.talkDag = vs.value === "" ? null : Number(vs.value);
+    if(settings.talkDag != null) settings.talkNext = "";   // de vaste dag rekent zelf de volgende datum uit
+    renderTalk(); await saveSettingsNow();
+  };
+  vr.appendChild(vs); c.appendChild(vr);
   const dr = el("label", "wddatum");
-  dr.appendChild(el("span", null, wanneer ? vt("Andere datum", "Change date") : vt("Datum kiezen", "Choose date")));
+  dr.appendChild(el("span", null, vast != null ? vt("Deze keer anders", "Different this time") : wanneer ? vt("Andere datum", "Change date") : vt("Datum kiezen", "Choose date")));
   const di = el("input"); di.type = "date"; di.value = nx; di.min = todayKey();
   di.setAttribute("aria-label", vt("Datum van je volgende 1-op-1", "Date of your next 1-to-1"));
   di.onchange = async () => { settings.talkNext = di.value || ""; renderTalk(); await saveSettingsNow(); };
   dr.appendChild(di); c.appendChild(dr);
   return c;
+}
+// settings.talkDag = 0 (zondag) … 6 (zaterdag) of null; settings.talkNext = een losse datum (gaat voor zolang hij niet voorbij is)
+function talkVasteDag(){ const d = settings.talkDag; return typeof d === "number" && d >= 0 && d <= 6 ? d : null; }
+function talkVolgendeDatum(){
+  const los = settings.talkNext && /^\d{4}-\d\d-\d\d$/.test(settings.talkNext) ? settings.talkNext : "", tk = todayKey(), vast = talkVasteDag();
+  if(vast == null) return los;
+  if(los && los >= tk) return los;
+  return addDaysKey(tk, (vast - parseKey(tk).getDay() + 7) % 7);   // vandaag telt mee
 }
 
 function talkRow(t){

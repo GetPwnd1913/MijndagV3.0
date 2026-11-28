@@ -1496,7 +1496,9 @@
   .wdkal b{font-family:var(--serif);font-size:calc(30px*var(--ts));line-height:1;color:var(--ink)}
   .wdkal .i{stroke:currentColor;fill:none;stroke-width:1.8}
   .wddatum{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:var(--fs-klein);color:var(--muted);font-weight:600}
-  .wddatum input{flex:1;min-width:0;max-width:220px;min-height:44px;padding:8px 12px;border-radius:var(--hoek-m,14px);border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:var(--fs-tekst);color-scheme:light dark}
+  .wddatum span{flex:none;min-width:112px}
+  .wddatum + .wddatum{margin-top:8px}
+  .wddatum input,.wddatum select{flex:1;min-width:0;max-width:220px;min-height:44px;padding:8px 12px;border-radius:var(--hoek-m,14px);border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:var(--fs-tekst);color-scheme:light dark}
   @media (prefers-reduced-motion:reduce){.wdvink,.wdring .wdrf{transition:none}}
   .goalrow{padding:10px 0;border-top:1px solid var(--line)}
   .goalrow .tx{flex:1;min-width:0;font-size:var(--fs-lees);word-wrap:break-word}
