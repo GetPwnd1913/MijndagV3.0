@@ -1559,6 +1559,70 @@
   .wbmeter i{display:block;height:100%;border-radius:2px}
   .wbklaar{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff}
   .wbklaar .i{stroke:currentColor;stroke-width:3;fill:none}
+  /* ---------- stappenwerk: de berg, stapkaarten, tijdlijn en aantekeningen (stappenwerk.js) ---------- */
+  .stwheld .qtitle{font-family:var(--serif);font-size:var(--fs-kop-m)}
+  .stwteller{font-size:var(--fs-klein);color:var(--muted);font-weight:600;margin-top:2px}
+  .stwbergvak{margin-top:12px;border-radius:var(--hoek-m);overflow:hidden;
+    background:linear-gradient(180deg,color-mix(in srgb,#9fd0f0 55%,var(--card)) 0%,color-mix(in srgb,#ffe7c4 50%,var(--card)) 100%)}
+  html[data-donker] .stwbergvak{background:linear-gradient(180deg,#1c2740 0%,#2a2f45 100%)}
+  .stwberg{display:block;width:100%;height:auto}
+  .stwberg .zon{fill:#ffd36b;opacity:.9}
+  html[data-donker] .stwberg .zon{fill:#f1ecd7;opacity:.85}
+  .stwberg .berg2{fill:color-mix(in srgb,var(--accent) 30%,#c9d4cf)}
+  .stwberg .berg{fill:color-mix(in srgb,var(--accent) 55%,#8fa39a)}
+  html[data-donker] .stwberg .berg2{fill:color-mix(in srgb,var(--accent) 25%,#2b3438)} html[data-donker] .stwberg .berg{fill:color-mix(in srgb,var(--accent) 40%,#39464a)}
+  .stwberg .sneeuw{fill:#fff;opacity:.95}
+  .stwberg .voet{fill:color-mix(in srgb,var(--accent) 35%,#a9c48f);opacity:.9}
+  .stwberg .pad{fill:none;stroke:#fff;stroke-width:4;stroke-dasharray:2 7;stroke-linecap:round;opacity:.85}
+  .stwberg .vlagstok{stroke:#5b4a3a;stroke-width:2;stroke-linecap:round}
+  .stwberg .vlag{fill:#fff;opacity:.7}
+  .stwberg .vlag.gehaald{fill:#ffcf4a;opacity:1;transform-origin:190px 14px;animation:stwWapper 1.6s ease-in-out infinite}
+  .stwsteen{cursor:pointer;outline:none}
+  .stwsteen .rond{fill:#fff;fill-opacity:.8;stroke:#fff;stroke-width:2}
+  .stwsteen .nr{font:700 10px system-ui,sans-serif;fill:#4a5751;text-anchor:middle}
+  .stwsteen.klaar .rond{fill:var(--k);fill-opacity:1;stroke:#fff;stroke-width:2.4}
+  .stwsteen .vink{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  .stwsteen.nu .rond{fill:#fff;fill-opacity:1;stroke:var(--k);stroke-width:3.4}
+  .stwsteen.nu .nr{fill:var(--k)}
+  .stwsteen .gloed{fill:var(--k);opacity:.35;transform-box:fill-box;transform-origin:center;animation:stwGloed 2.2s ease-in-out infinite}
+  .stwsteen:focus-visible .rond{stroke:var(--ink);stroke-width:3}
+  .stwpop .hoofd{fill:#3a2f28} .stwpop .lijf{fill:none;stroke:#3a2f28;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  html[data-donker] .stwpop .hoofd{fill:#fff} html[data-donker] .stwpop .lijf{stroke:#fff}
+  .stwpop{animation:stwHup 1.8s ease-in-out infinite}
+  @keyframes stwGloed{50%{transform:scale(1.35);opacity:.12}}
+  @keyframes stwHup{50%{transform:translateY(-3px)}}
+  @keyframes stwWapper{50%{transform:skewY(-8deg) scaleX(.9)}}
+  .stwtijdrij{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:5px 0;font:inherit;color:var(--ink);cursor:pointer;text-align:left}
+  .stwtijdnr{flex:none;width:24px;height:24px;border-radius:50%;background:var(--k);color:#fff;font-size:var(--fs-bijschrift);font-weight:700;display:flex;align-items:center;justify-content:center}
+  .stwtijdbalk{flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+  .stwtijdbalk i{display:block;height:100%;border-radius:5px;background:var(--k)}
+  .stwtijdbalk i.bezig{background:repeating-linear-gradient(-45deg,var(--k) 0 6px,color-mix(in srgb,var(--k) 60%,#fff) 6px 12px)}
+  .stwtijdtx{flex:none;min-width:86px;text-align:right;font-size:var(--fs-klein);color:var(--muted);font-variant-numeric:tabular-nums}
+  .stwkaart{border-left:5px solid var(--k);scroll-margin-top:90px}
+  .stwkaart.klaar{background:color-mix(in srgb,var(--k) 7%,var(--card))}
+  .stwkop{display:flex;align-items:center;gap:12px;cursor:pointer}
+  .stwic{position:relative;flex:none;width:46px;height:46px;border-radius:14px;background:color-mix(in srgb,var(--k) 16%,var(--card));color:var(--k);display:flex;align-items:center;justify-content:center}
+  .stwic .i{stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .stwkaart.klaar .stwic{background:var(--k);color:#fff}
+  .stwicnr{position:absolute;right:-5px;bottom:-5px;min-width:20px;height:20px;border-radius:10px;background:var(--card);color:var(--k);border:2px solid var(--k);font-size:calc(12px*var(--ts));font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 3px}
+  .stwkoptx{flex:1;min-width:0}
+  .stwstapnr{display:block;font-size:var(--fs-bijschrift);font-weight:700;color:var(--k);text-transform:uppercase;letter-spacing:.5px}
+  .stwkoptx .qtitle{font-size:var(--fs-tekst);line-height:1.3}
+  .stwstatus{font-size:var(--fs-klein);color:var(--muted);margin-top:2px}
+  .stwkaart.bezig .stwstatus{color:var(--warm-text);font-weight:600}
+  .stwvink{flex:none;width:24px;height:24px;border-radius:50%;background:var(--k);color:#fff;display:flex;align-items:center;justify-content:center}
+  .stwvink .i{stroke:currentColor;stroke-width:3;fill:none}
+  .stwpijl{flex:none;color:var(--muted)}
+  .stwuitleg{margin-top:14px;font-family:var(--serif);font-size:var(--fs-lees);line-height:1.5;padding:12px 14px;border-radius:var(--hoek-m);background:color-mix(in srgb,var(--k) 10%,var(--card))}
+  .stwvragen{margin-top:12px}
+  .stwvragen ul{margin:6px 0 0;padding-left:20px;font-size:var(--fs-tekst);line-height:1.5}
+  .stwvragen li::marker{color:var(--k)}
+  .stwbewaar{margin-top:8px}
+  .stwlog{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .stwnotitie{border-left:3px solid var(--k);padding:6px 0 6px 12px}
+  .stwnotitiekop{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:var(--fs-klein);color:var(--muted);font-weight:600}
+  .stwnotitietx{white-space:pre-wrap;font-size:var(--fs-tekst);margin-top:2px}
+  @media (prefers-reduced-motion: reduce){ .stwsteen .gloed,.stwpop,.stwberg .vlag.gehaald{animation:none} }
   /* werkboek-overzicht met kaarten, stempels, voorbeelden en suggesties (werkboek-extra.js) */
   .wbheld{padding:var(--ruimte-4)}
   .wbheldrij{display:flex;align-items:center;gap:16px}
