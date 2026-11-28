@@ -71,8 +71,73 @@ function talkVolgendeKaart(open){
   di.setAttribute("aria-label", vt("Datum van je volgende 1-op-1", "Date of your next 1-to-1"));
   di.onchange = async () => { settings.talkNext = di.value || ""; renderTalk(); await saveSettingsNow(); };
   dr.appendChild(di); c.appendChild(dr);
+  // korte samenvatting van de 7 dagen vóór de volgende 1-op-1 (woensdag-gesprek: woensdag t/m dinsdag)
+  const [van, tot] = talkPeriode();
+  const sv = el("button", "ghost wdsamen"); sv.type = "button";
+  sv.appendChild(el("b", null, vt("Samenvatting voor mijn 1-op-1 (PDF)", "Summary for my 1-to-1 (PDF)")));
+  sv.appendChild(el("small", null, dayMonth(van) + " – " + dayMonth(tot)));
+  sv.onclick = async () => {
+    try{ await offerFile(vt("Samenvatting 1-op-1 ", "1-to-1 summary ") + tot + ".pdf", talkSamenvattingPdf(), "application/pdf"); }
+    catch(e){ if(!(e && e.code === "declined")) toast(vt("Het bestand maken lukte niet.", "Could not create the file."), true); }
+  };
+  c.appendChild(sv);
   return c;
 }
+// de 7 dagen tot en met de dag vóór je volgende 1-op-1; zonder datum: de laatste 7 dagen
+function talkPeriode(){
+  const nx = talkVolgendeDatum(), tot = nx ? addDaysKey(nx, -1) : todayKey();
+  return [addDaysKey(tot, -6), tot];
+}
+function talkSamenvattingPdf(){
+  const [van, tot] = talkPeriode();
+  const map = {}; local.days().forEach(e => { if(e && e.date) map[e.date] = e; });
+  if(typeof entry !== "undefined" && entry && entry.date) map[entry.date] = entry;
+  const dagen = []; for(let k = van; k <= tot; k = addDaysKey(k, 1)) dagen.push(k);
+  const ing = dagen.map(k => map[k]).filter(e => e && hasContent(e));
+  const cijfers = ing.map(patCijfer).filter(x => x != null), gem = patGem(cijfers);
+  const meet = dagen.reduce((s, k) => s + (map[k] ? meetBezoekenVan(map[k]) : 0), 0);
+  const kl = settings.kleuren || {}, kleur = {groen: 0, oranje: 0, rood: 0}; dagen.forEach(k => { if(kleur[kl[k]] != null) kleur[kl[k]]++; });
+  const regels = [];   // [tekst, grootte, vet, ruimte erboven]
+  const kop = t => regels.push(["#" + t, 12.5, true, 16]);
+  const punt = t => regels.push(["- " + t, 10.5, false, 3]);
+  kop(vt("Hoe ging het?", "How did it go?"));
+  punt(vt("Dagbeschouwing ingevuld: " + ing.length + " van de 7 dagen", "Daily reflection filled in: " + ing.length + " of 7 days"));
+  if(gem != null) punt(vt("Gemiddeld cijfer: " + nl1(gem) + " (laagste " + Math.min(...cijfers) + ", hoogste " + Math.max(...cijfers) + ")", "Average score: " + nl1(gem) + " (lowest " + Math.min(...cijfers) + ", highest " + Math.max(...cijfers) + ")"));
+  if(ing.length){
+    punt(vt("Zucht of trek: " + ing.filter(e => hadIt(e, "q5")).length + " dagen", "Cravings: " + ing.filter(e => hadIt(e, "q5")).length + " days"));
+    punt(vt("Triggers: " + ing.filter(e => hadIt(e, "q6")).length + " dagen", "Triggers: " + ing.filter(e => hadIt(e, "q6")).length + " days"));
+  }
+  if(kleur.groen + kleur.oranje + kleur.rood) punt(vt("Stoplicht: " + kleur.groen + "x groen, " + kleur.oranje + "x oranje, " + kleur.rood + "x rood", "Traffic light: " + kleur.groen + "x green, " + kleur.oranje + "x orange, " + kleur.rood + "x red"));
+  punt(vt("Meetings bezocht: " + meet, "Meetings attended: " + meet));
+  const weken = dagen.map(mondayOf).filter((w, i, a) => a.indexOf(w) === i), doelen = [];
+  weken.forEach(w => weekData(w).goals.forEach(g => { if(!doelen.some(x => x.text === g.text)) doelen.push(g); else if(g.done) doelen.find(x => x.text === g.text).done = g.done; }));
+  if(doelen.length){
+    kop(vt("Weekdoelen", "Weekly goals"));
+    doelen.forEach(g => punt((g.done ? vt("[gelukt] ", "[done] ") : vt("[nog open] ", "[still open] ")) + g.text + (g.stuck ? vt(" (loop ik tegenaan: ", " (stuck on: ") + g.stuck.trim() + ")" : "")));
+  }
+  const open = (settings.talk || []).filter(t => !t.done).sort((a, b) => (b.prio ? 1 : 0) - (a.prio ? 1 : 0));
+  kop(vt("Wat ik wil bespreken", "What I want to discuss"));
+  if(open.length) open.forEach(t => punt((t.prio ? vt("(belangrijk) ", "(important) ") : "") + t.text)); else punt(vt("Geen open punten", "No open points"));
+  // opmaak: A4, kop met kleurvlak, daarna de regels
+  const W = 595.28, H = 841.89, M = 56, k = pdfKit(); k.page();
+  k.fill(0, H - 118, W, 118, "e6f1ec");
+  k.txt(cp1252(vt("Samenvatting voor mijn 1-op-1", "Summary for my 1-to-1")), M, H - 62, 20, "F2");
+  k.txt(cp1252(((settings.naam || "").trim() ? settings.naam.trim() + "  ·  " : "") + dayMonth(van) + " – " + dayMonth(tot)), M, H - 86, 11, "F1");
+  let y = H - 140;
+  regels.forEach(([t, sz, vet, voor]) => {
+    const isKop = t.charAt(0) === "#", tekst = isKop ? t.slice(1) : t;
+    y -= voor;
+    wrap(tekst, sz, vet, W - 2 * M - (isKop ? 0 : 12)).forEach((r, i) => {
+      if(y < 50){ k.page(); y = H - 60; }
+      y -= sz * 1.35;
+      k.txt(r, M + (isKop || i === 0 ? 0 : 9), y, sz, vet ? "F2" : "F1");
+    });
+    if(isKop){ y -= 4; k.line(M, y, W - M, y); y -= 2; }
+  });
+  pdfFooter(k, W, M, vt("Mijn dag", "My day"));
+  return pdfAssemble(k.pages, W, H);
+}
+window.__talkPdf = talkSamenvattingPdf;
 // settings.talkDag = 0 (zondag) … 6 (zaterdag) of null; settings.talkNext = een losse datum (gaat voor zolang hij niet voorbij is)
 function talkVasteDag(){ const d = settings.talkDag; return typeof d === "number" && d >= 0 && d <= 6 ? d : null; }
 function talkVolgendeDatum(){

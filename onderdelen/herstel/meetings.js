@@ -261,6 +261,10 @@ function meetRow(m, showGroup){
   const links = el("div", "links");
   if(m.addr){ const a = el("a", "linkbtn more", vt("Route", "Directions")); a.href = routeUrl(m); a.target = "_blank"; a.rel = "noopener"; links.appendChild(a); }
   if(m.url){ const a = el("a", "linkbtn", vt("Meer info", "More info")); a.href = m.url; a.target = "_blank"; a.rel = "noopener"; links.appendChild(a); }
+  if(m.d === new Date().getDay() && curKey === todayKey()){
+    const al = meetAlGeweest(m), g = el("button", "linkbtn", al ? vt("Geweest ✓", "Went ✓") : vt("Ik ben geweest", "I went")); g.type = "button"; g.disabled = al;
+    g.onclick = () => meetGeweest(m, g); links.appendChild(g);
+  }
   if(m.own){
     const del = el("button", "linkbtn", vt("Weghalen", "Remove")); del.type = "button"; del.style.color = "var(--muted)";
     del.onclick = async () => {
@@ -333,6 +337,7 @@ function renderMeetings(){
   }
   const all = allMeetings();
   box.appendChild(meetPlekKaart());
+  box.appendChild(meetTelKaart());
 
   const stars = all.filter(isStar);
   if(stars.length){
@@ -373,6 +378,65 @@ function renderMeetings(){
   MEET_LINKS.forEach(([n, u]) => { const a = el("a", "linkbtn", n + vt("-meetinglijst ›", " meeting list ›")); a.href = u; a.target = "_blank"; a.rel = "noopener"; lr.appendChild(a); });
   f.appendChild(lr);
   box.appendChild(f);
+}
+
+// ---------- meetings bijhouden: geteld uit vraag 4 van je dagbeschouwingen ----------
+// "- een meeting bezocht: Arnhem, Ede" telt als 2; zonder plaats als 1. Ook eerder ingevulde dagen tellen mee.
+const MEET_MIJLPALEN = [1, 10, 25, 50, 90, 100, 150, 200, 365, 500, 750, 1000];
+function meetBezoekenVan(e){
+  const t = (e && e.answers && e.answers.q4 && e.answers.q4.text) || ""; let n = 0;
+  t.split("\n").forEach(l => {
+    const r = l.trim(); if(!/^- (een meeting bezocht|attended a meeting)/i.test(r)) return;
+    const i = r.indexOf(": ");
+    n += i < 0 ? 1 : Math.max(1, r.slice(i + 2).replace(/\.$/, "").split(/,\s*/).filter(Boolean).length);
+  });
+  return n;
+}
+function meetTelling(){
+  const map = {}, per = {};
+  local.days().forEach(e => { if(e && e.date) map[e.date] = e; });
+  if(typeof entry !== "undefined" && entry && entry.date) map[entry.date] = entry;
+  Object.keys(map).forEach(k => { const n = meetBezoekenVan(map[k]); if(n) per[k] = n; });
+  return per;
+}
+const meetTotaal = () => Object.values(meetTelling()).reduce((a, b) => a + b, 0);
+function meetTelKaart(){
+  const per = meetTelling(), tk = todayKey(), mk = tk.slice(0, 7), van90 = addDaysKey(tk, -89);
+  let maand = 0, d90 = 0, tot = 0;
+  Object.keys(per).forEach(k => { tot += per[k]; if(k.slice(0, 7) === mk) maand += per[k]; if(k >= van90 && k <= tk) d90 += per[k]; });
+  const c = el("div", "card");
+  const kop = el("div", "qtitle withic"); kop.appendChild(icon("award", 20)); kop.appendChild(document.createTextNode(vt("Mijn meetings", "My meetings"))); c.appendChild(kop);
+  const tegels = el("div", "mteltegels");
+  [[maand, vt("deze maand", "this month")], [d90, vt("laatste 90 dagen", "last 90 days")], [tot, vt("in totaal", "in total")]].forEach(([n, l]) => {
+    const t = el("div", "mteltegel"); t.appendChild(el("b", null, String(n))); t.appendChild(el("span", null, l)); tegels.appendChild(t);
+  });
+  c.appendChild(tegels);
+  const volgende = MEET_MIJLPALEN.find(m => m > tot), vorige = MEET_MIJLPALEN.filter(m => m <= tot).pop() || 0;
+  if(volgende){
+    const bar = el("div", "bar"); bar.style.marginTop = "14px"; const i = el("i"); i.style.width = ((tot - vorige) / (volgende - vorige) * 100).toFixed(1) + "%"; bar.appendChild(i); c.appendChild(bar);
+    const n = note(tot ? vt("Nog " + (volgende - tot) + " tot je " + volgende + "ste meeting.", (volgende - tot) + " to go until meeting number " + volgende + ".")
+      : vt("Ben je naar een meeting geweest? Tik bij een meeting van vandaag op ‘Ik ben geweest’, of vink het aan bij vraag 4 van je dagbeschouwing.", "Have you been to a meeting? Tap ‘I went’ on one of today's meetings, or tick it under question 4 of your daily reflection."));
+    n.style.marginTop = "8px"; c.appendChild(n);
+  }
+  if(d90 >= 90){ const n = note(vt("90 meetings in 90 dagen. Knap gedaan!", "90 meetings in 90 days. Well done!")); n.style.cssText = "margin-top:8px;color:var(--accent);font-weight:700"; c.appendChild(n); }
+  return c;
+}
+// is deze meeting vandaag al genoteerd bij vraag 4?
+function meetAlGeweest(m){
+  const q4 = (entry.answers && entry.answers.q4 && entry.answers.q4.text) || "";
+  return q4.split("\n").some(l => /^- (een meeting bezocht|attended a meeting)/i.test(l.trim()) && l.indexOf(": ") >= 0 && l.slice(l.indexOf(": ") + 2).replace(/\.$/, "").split(/,\s*/).indexOf(m.city) >= 0);
+}
+// "Ik ben geweest": noteren bij vraag 4, en een feestje bij een mijlpaal (10e, 25e, 50e … meeting)
+function meetGeweest(m, knop){
+  const voor = meetTotaal(), t = logMeetingVisit(m);
+  const na = meetTotaal(), mp = MEET_MIJLPALEN.find(x => x > voor && x <= na);
+  const plek = knop && document.contains(knop) ? ktMidden(knop) : [innerWidth / 2, innerHeight / 2];
+  render(); renderMeetings();
+  if(mp){
+    toast(mp === 1 ? vt("Je eerste meeting in de app. Goed bezig!", "Your first meeting in the app. Well done!") : vt("Je " + mp + "ste meeting! Goed bezig.", "Meeting number " + mp + "! Well done."));
+    if(typeof ktShow === "function" && !KT_RUSTIG()) try{ ktShow().knal(plek[0], plek[1], ktFeestKleuren(wbxKleurVan("var(--warm)")), 46, 7, ["strook", "stip", "ster"]); }catch(e){}
+  }
+  return t;
 }
 
 // vraag 4: "een meeting bezocht" + plaats aanvinken
@@ -422,12 +486,12 @@ function renderMeetToday(){
     const tx = el("div", "tx");
     const tt = el("div", "tt"); tt.appendChild(el("span", "badge", m.f)); tt.appendChild(document.createTextNode((m.t || "?") + " · " + m.city)); tx.appendChild(tt);
     if(meetWhere(m)) tx.appendChild(el("div", "ad", meetWhere(m)));
-    const done = q4.split("\n").some(l => /^- (een meeting bezocht|attended a meeting)/i.test(l.trim()) && l.indexOf(": ") >= 0 && l.slice(l.indexOf(": ") + 2).split(/,\s*/).indexOf(m.city) >= 0);
+    const done = meetAlGeweest(m);
     const b = el("button", done ? "ghost" : "primary", done ? vt("Geweest ✓", "Went ✓") : vt("Ik ben geweest ✓", "I went ✓")); b.type = "button"; b.style.marginTop = "8px";
     const msg = note(""); msg.style.marginTop = "6px";
     b.disabled = done;
     msg.dataset.mid = m.id;
-    b.onclick = () => { const t = logMeetingVisit(m); render(); const nm = $("meetToday").querySelector('[data-mid="' + m.id + '"]'); if(nm) nm.textContent = t; };
+    b.onclick = () => { const t = meetGeweest(m, b); const nm = $("meetToday").querySelector('[data-mid="' + m.id + '"]'); if(nm) nm.textContent = t; };
     tx.appendChild(b); tx.appendChild(msg);
     r.appendChild(tx);
     card.appendChild(r);

@@ -45,7 +45,7 @@ function renderDbKnop(){
 }
 
 // meldingen (weekterugblik, back-up, weekformulieren) samen in één regel; kopje "Vandaag" alleen als er iets staat
-const MELD_IDS = ["reviewBanner", "backupBanner", "wfRemind"], VANDAAG_IDS = ["meetToday", "planCard", "goalsMini"];
+const MELD_IDS = ["reviewBanner", "backupBanner", "wfRemind"], VANDAAG_IDS = ["meetToday", "planCard", "goalsMini", "bespaardKaart"];
 function renderMeldingen(){
   const rij = $("meldRij"), box = $("meldBox"); if(!rij) return;
   const n = MELD_IDS.filter(id => !$(id).classList.contains("hidden")).length;
@@ -96,6 +96,7 @@ function renderHome(){
   if(typeof wegMomenten === "function") wegMomenten();   // stapje vooruit na je dagbeschouwing, feest bij een nieuwe keytag
   renderDbKnop();
   if(typeof renderTvSein === "function") renderTvSein();
+  if(typeof renderBespaard === "function") renderBespaard();
   renderMeldingen();
   renderIntro();
 }

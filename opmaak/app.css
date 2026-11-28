@@ -1500,6 +1500,20 @@
   .wddatum + .wddatum{margin-top:8px}
   .wddatum input,.wddatum select{flex:1;min-width:0;max-width:220px;min-height:44px;padding:8px 12px;border-radius:var(--hoek-m,14px);border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:var(--fs-tekst);color-scheme:light dark}
   @media (prefers-reduced-motion:reduce){.wdvink,.wdring .wdrf{transition:none}}
+  .wdsamen{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin-top:14px;text-align:left}
+  .wdsamen b{font-weight:650}
+  .wdsamen small{font-size:var(--fs-klein);color:var(--muted);font-weight:500}
+  /* bespaard (bespaard.js) en meetings bijhouden (meetings.js) */
+  .bspin{margin-top:8px}
+  .bspgroot{font-family:var(--serif);font-size:calc(34px*var(--ts));font-weight:600;color:var(--tv-groen);line-height:1.1}
+  .bspdoel{margin-top:14px;padding:12px;border-radius:var(--hoek-m,14px);background:color-mix(in srgb,var(--warm) 10%,transparent)}
+  .bspdoelkop{display:flex;justify-content:space-between;gap:10px;font-size:var(--fs-tekst)}
+  .bspdoelkop span{color:var(--muted);font-size:var(--fs-klein);font-weight:600;flex:none}
+  .bspdoel .bar i{background:var(--warm)}
+  .mteltegels{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .mteltegel{display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 4px;border-radius:var(--hoek-m,14px);background:color-mix(in srgb,var(--accent) 10%,transparent);text-align:center}
+  .mteltegel b{font-family:var(--serif);font-size:calc(28px*var(--ts));font-weight:600;line-height:1.1;color:var(--ink)}
+  .mteltegel span{font-size:var(--fs-klein);color:var(--muted);font-weight:600}
   .goalrow{padding:10px 0;border-top:1px solid var(--line)}
   .goalrow .tx{flex:1;min-width:0;font-size:var(--fs-lees);word-wrap:break-word}
   .goalrow .gtext{font-weight:600}
