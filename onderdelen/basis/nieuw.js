@@ -102,13 +102,17 @@ function openNieuw(){
 let nieuwWacht = null;
 function nieuwToonWanneerVrij(){
   if(!nieuwNodig() || nieuwOpen || nieuwWacht) return;
-  let n = 0;
+  let n = 0, rustig = 0;
   const kijk = () => {
     nieuwWacht = null;
+    // een nieuwe mijlpaal gaat voor: eerst het hele feest (keytags.js: feest, lichtspoor, vlucht, mijlpaalpagina), daarna dit venster
     const bezig = document.getElementById("splash") || document.getElementById("vergrendel") || document.querySelector(".dlgback") ||
-      document.querySelector(".ktshow, .feestbanier") || (typeof mpOpen !== "undefined" && mpOpen) || (typeof wegMomentBezig !== "undefined" && wegMomentBezig) ||
-      (typeof wegFeestOpKomst === "function" && wegFeestOpKomst());   // een nieuwe mijlpaal gaat voor: eerst het feest (keytags.js), daarna dit venster
-    if(bezig){ if(n++ < 1500) nieuwWacht = setTimeout(kijk, 400); return; }
+      document.querySelector(".ktshow, .feestbanier, .wegspoor") || (typeof mpOpen !== "undefined" && mpOpen) ||
+      (typeof wegMomentBezig !== "undefined" && wegMomentBezig) || (typeof wegBezig !== "undefined" && wegBezig) ||
+      (typeof ktShowNu !== "undefined" && ktShowNu) || (typeof wegFeestOpKomst === "function" && wegFeestOpKomst());
+    if(bezig){ rustig = 0; if(n++ < 1500) nieuwWacht = setTimeout(kijk, 400); return; }
+    // pas na 2 seconden achter elkaar rust: een kort gaatje tussen twee delen van het feest telt niet als "klaar" (trage computers)
+    if(++rustig < 5){ nieuwWacht = setTimeout(kijk, 400); return; }
     if(nieuwNodig()) openNieuw();
   };
   nieuwWacht = setTimeout(kijk, 300);
