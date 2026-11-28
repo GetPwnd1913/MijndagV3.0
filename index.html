@@ -145,7 +145,7 @@
       <button type="button" id="dwStap" aria-pressed="false" data-en="One question at a time">Vraag voor vraag</button>
       <button type="button" id="dwLijst" aria-pressed="false" data-en="All at once">Alles tegelijk</button>
     </div>
-    <div class="stapkop hidden" id="stapKop"><div class="stapteller" id="stapTeller" aria-live="polite"></div><div class="segmenten" id="stapSeg" aria-hidden="true"></div></div>
+    <div class="stapkop hidden" id="stapKop"><div class="stapkoprij"><div class="stapteller" id="stapTeller" aria-live="polite"></div><button type="button" class="linkbtn" id="stapAlle" data-en="All questions">Alle vragen</button></div><div class="segmenten" id="stapSeg" aria-hidden="true"></div></div>
     <div id="questions"></div>
     <div class="stapnav hidden" id="stapNav">
       <button type="button" class="ghost" id="stapVorige" data-en="‹ Previous">‹ Vorige</button>
@@ -256,7 +256,7 @@
       <input type="file" id="backupFile" accept="application/json,.json" class="hidden">
     </div>
   </section>
-  <footer class="credits" data-en="My day v3.7 (20c07b2) · Roy/GetPwnd · 2026">Mijn dag v3.7 (20c07b2) · Roy/GetPwnd · 2026</footer>
+  <footer class="credits" data-en="My day v3.7 (de21254) · Roy/GetPwnd · 2026">Mijn dag v3.7 (de21254) · Roy/GetPwnd · 2026</footer>
 </div>
 
 <div class="drawer-bg" id="drawerBg"></div>
@@ -296,6 +296,8 @@
       <div class="bar"><i id="progBar"></i></div></div>
     </div>
     <button class="primary" id="summaryBtn" data-en="Finish">Afronden</button>
+    <button type="button" class="ghost balkknop" id="balkVorige" aria-label="Vorige vraag" data-en-aria="Previous question">‹</button>
+    <button type="button" class="primary balkknop" id="balkVolgende">Volgende ›</button>
   </div>
 </div>
 
@@ -357,6 +359,7 @@
 <script src="onderdelen/basis/opslag.js"></script>
 <script src="onderdelen/mijn-dag/dag.js"></script>
 <script src="onderdelen/mijn-dag/weergave.js"></script>
+<script src="onderdelen/mijn-dag/dag-stijl.js"></script>
 <script src="onderdelen/mijn-dag/ochtend.js"></script>
 <script src="onderdelen/mijn-dag/vandaag.js"></script>
 <script src="onderdelen/basis/instellingen.js"></script>

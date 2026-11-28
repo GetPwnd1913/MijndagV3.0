@@ -62,7 +62,7 @@ function klaarKnop(q, a, card, nr){
   kb.onclick = () => {
     if(!(a.text || "").trim()) return;
     a.klaar = !a.klaar; paint(); scheduleSave(); markCard(q);
-    if(a.klaar) setTimeout(() => { if(isDone(q)) setFold(card, q, true); }, 450);
+    if(a.klaar) setTimeout(() => { if(isDone(q) && !$("questions").classList.contains("stap")) dbLijstVolgende(card); }, 450);
     if(a.klaar && typeof stapVolgendeNa === "function") stapVolgendeNa(card);
   };
   card._paintKlaar = paint;
@@ -77,7 +77,7 @@ function setFold(card, q, on){
     ch.setAttribute("aria-expanded", on ? "false" : "true");
     ch.setAttribute("aria-label", (on ? vt("Vraag openklappen: ", "Expand question: ") : vt("Vraag inklappen: ", "Collapse question: ")) + qTitle(q)); }
   const fs = card.querySelector(".fsum");
-  if(fs) fs.textContent = on ? (answerText(q, entry) || "").split("\n").map(l => l.replace(/^- /, "").trim()).filter(Boolean).join(" · ") : "";
+  if(fs) fs.textContent = on ? ((answerText(q, entry) || "").split("\n").map(l => l.replace(/^- /, "").trim()).filter(Boolean).join(" · ") || vt("Nog niet ingevuld", "Not filled in yet")) : "";
 }
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
@@ -337,6 +337,7 @@ function buildQuestion(q, i){
   head.querySelector(".tipbtn").setAttribute("aria-expanded", "false");
   head.querySelector(".tipbtn").onclick = e => { tip.classList.toggle("hidden"); e.target.textContent = tip.classList.contains("hidden") ? vt("Hulp bij deze vraag", "Help with this question") : vt("Verberg hulp", "Hide help"); e.target.setAttribute("aria-expanded", tip.classList.contains("hidden") ? "false" : "true"); };
   card.appendChild(head);
+  if(typeof dbStijlKaart === "function") dbStijlKaart(card, q, i + 1);   // kleur en icoon per vraag (dag-stijl.js)
 
   const ta = document.createElement("textarea");
   ta.value = a.text || "";
@@ -444,8 +445,9 @@ function buildQuestion(q, i){
   if(isDone(q)) setFold(card, q, true);
   head.addEventListener("click", e => {
     if(e.target.closest(".tipbtn") || e.target.closest(".tip") || card.classList.contains("fs")) return;
-    if(card.classList.contains("fold")) setFold(card, q, false);
-    else if(isDone(q)) setFold(card, q, true);
+    if($("questions").classList.contains("stap")) return;
+    if(card.classList.contains("fold")) dbLijstAccordeon(card, true);   // open deze, klap de andere in
+    else { setFold(card, q, true); card.classList.remove("dbopen"); }
   });
   return card;
 }
@@ -636,7 +638,13 @@ function renderStap(){
   $("dwLijst").classList.toggle("on", !stap); $("dwLijst").setAttribute("aria-pressed", stap ? "false" : "true");
   $("stapKop").classList.toggle("hidden", !stap); $("stapNav").classList.toggle("hidden", !stap);
   const k = stapKaarten();
-  if(!stap){ k.forEach(c => { c.classList.remove("stapweg"); c.removeAttribute("data-nr"); }); return; }
+  dbBalk(stap);
+  if(!stap){
+    k.forEach(c => { c.classList.remove("stapweg"); c.removeAttribute("data-nr"); });
+    // alles tegelijk: één vraag open (de eerste die nog niet klaar is), de rest ingeklapt tot een korte regel (dag-stijl.js)
+    dbLijstAccordeon(null);
+    return;
+  }
   if(stapDag !== curKey){ stapDag = curKey; stapNu = stapEersteOpen(); }
   stapNu = Math.max(0, Math.min(k.length - 1, stapNu));
   k.forEach(c => c.classList.remove("fold"));   // vragen die al klaar waren, zijn bij het bouwen ingeklapt: in deze weergave nooit
@@ -646,14 +654,13 @@ function renderStap(){
 function renderStapKop(){
   const qs = $("questions"); if(!qs || !qs.classList.contains("stap")) return;
   const k = stapKaarten(), kop = $("stapSeg"); if(!kop) return;
-  while(kop.children.length > k.length) kop.removeChild(kop.lastChild);
-  while(kop.children.length < k.length) kop.appendChild(document.createElement("i"));
-  k.forEach((c, i) => { kop.children[i].className = c.classList.contains("done") ? "klaar" : ""; if(i === stapNu) kop.children[i].classList.add("nu"); });
-  const nu = k[stapNu], vraagNr = nu && nu.dataset.q ? QUESTIONS.findIndex(q => q.id === nu.dataset.q) + 1 : 0;
-  $("stapTeller").textContent = vraagNr ? vt("Vraag " + vraagNr + " van " + QUESTIONS.length, "Question " + vraagNr + " of " + QUESTIONS.length) : vt("Ochtend", "Morning");
+  kop.innerHTML = dbBoog(k, stapNu);   // zonneboog (dag-stijl.js); tik = alle vragen
+  const nu = k[stapNu], vraagNr = nu && nu.dataset.q ? QUESTIONS.findIndex(q => q.id === nu.dataset.q) + 1 : 0, st = nu && DB_STIJL[nu.dataset.q];
+  $("stapTeller").textContent = vraagNr ? vt("Vraag " + vraagNr + " van " + QUESTIONS.length, "Question " + vraagNr + " of " + QUESTIONS.length) + (st ? " · " + vt(st.t[0], st.t[1]) : "") : vt("Ochtend", "Morning");
   const laatste = stapNu >= k.length - 1;
   $("stapVorige").disabled = stapNu <= 0;
   $("stapVolgende").textContent = laatste ? vt("Afronden", "Finish") : vt("Volgende ›", "Next ›");
+  dbBalk(true);
 }
 function stapNaar(i, zonderScroll){
   const k = stapKaarten(); if(!k.length) return;

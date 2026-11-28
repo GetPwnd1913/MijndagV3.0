@@ -1559,6 +1559,61 @@
   .wbmeter i{display:block;height:100%;border-radius:2px}
   .wbklaar{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff}
   .wbklaar .i{stroke:currentColor;stroke-width:3;fill:none}
+  /* ---------- dagbeschouwing: kleur en icoon per vraag, zonneboog, rooster, balk (dag-stijl.js) ---------- */
+  .card.dbk .qhead .num{display:none}
+  .qic{flex:none;width:40px;height:40px;border-radius:50%;background:color-mix(in srgb,var(--k) 14%,var(--card));color:var(--k);display:flex;align-items:center;justify-content:center;
+    font-family:var(--serif);font-weight:600;font-size:calc(19px*var(--ts));line-height:1;transition:background .3s,color .3s}
+  .card.done .qic{background:var(--k);color:#fff}
+  .card.justdone .qic{animation:numPop .5s cubic-bezier(.3,1.6,.5,1)}
+  .card.dbk.fold .qic{width:34px;height:34px;font-size:calc(16px*var(--ts))}
+  /* vraag voor vraag: groot rond nummer, zachte kleur bovenin de kaart */
+  #questions.stap .card.dbk:not(.fs){background:linear-gradient(170deg,color-mix(in srgb,var(--k) 14%,var(--card)) 0%,var(--card) 45%)}
+  #questions.stap .card.dbk[data-nr]:not(.fs)::before{display:none}
+  #questions.stap .card.dbk .qic{width:58px;height:58px;font-size:calc(28px*var(--ts));background:var(--k);color:#fff;box-shadow:0 10px 18px -10px var(--k);margin-bottom:4px}
+  #questions.stap .card.dbk .qhead{flex-direction:column;gap:10px}
+  .stapkoprij{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .stapkoprij .linkbtn{font-weight:650;white-space:nowrap}
+  .segmenten:has(.dbboog){display:block;margin-top:4px;cursor:pointer}
+  .dbboog{display:block;width:100%;height:auto;overflow:visible}
+  .dbboog .baan{fill:none;stroke:color-mix(in srgb,var(--ink) 18%,transparent);stroke-width:2;stroke-dasharray:3 5;stroke-linecap:round}
+  .dbboog .stip{fill:color-mix(in srgb,var(--ink) 14%,var(--card));transition:r .3s}
+  .dbboog .stip.klaar{fill:var(--k)}
+  .dbboog .stip.nu{fill:var(--card);stroke:var(--k);stroke-width:3.5}
+  .dbboog .stip.nu.klaar{fill:var(--k);stroke:#fff}
+  .dbboog .vinkje{fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .dbboog .zongloed{fill:#ffcf5a;opacity:.45;transform-box:fill-box;transform-origin:center;animation:dbZon 2.6s ease-in-out infinite}
+  @keyframes dbZon{50%{transform:scale(1.3);opacity:.2}}
+  .balkknop{display:none}
+  body.dbstap #summaryBtn{display:none}
+  body.dbstap .balkknop{display:inline-flex;align-items:center;justify-content:center;flex:none}
+  body.dbstap #balkVorige{width:48px;min-height:48px;padding:0;font-size:var(--fs-kop-s);border-radius:50%}
+  body.dbstap #balkVorige:disabled{opacity:.35}
+  body.dbstap #balkVolgende{min-width:128px}
+  body.dbstap #stapNav{display:none!important}
+  .dbroostergrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 14px;max-height:60vh;overflow:auto;padding:2px}
+  .dbroostervak{position:relative;display:flex;align-items:center;gap:10px;padding:10px;border:1.5px solid var(--line);border-radius:var(--hoek-m);background:var(--card);font:inherit;color:var(--ink);text-align:left;cursor:pointer;min-width:0}
+  .dbroostervak.klaar{background:color-mix(in srgb,var(--k,var(--accent)) 9%,var(--card));border-color:color-mix(in srgb,var(--k,var(--accent)) 35%,var(--line))}
+  .dbroostervak.nu{border-color:var(--k,var(--accent));box-shadow:0 0 0 3px color-mix(in srgb,var(--k,var(--accent)) 25%,transparent)}
+  .dbroosteric{flex:none;width:32px;height:32px;border-radius:50%;font-family:var(--serif);font-weight:600;font-size:var(--fs-tekst);background:color-mix(in srgb,var(--k,var(--accent)) 15%,var(--card));color:var(--k,var(--accent));display:flex;align-items:center;justify-content:center}
+  .dbroostervak.klaar .dbroosteric{background:var(--k,var(--accent));color:#fff}
+  .dbroostertx{display:flex;flex-direction:column;min-width:0}
+  .dbroostertx small{font-size:calc(12px*var(--ts));color:var(--muted)}
+  .dbroostertx b{font-size:var(--fs-label);font-weight:650;line-height:1.2;overflow-wrap:break-word}
+  body.dbstap .bottom .ptx .bar{display:none}
+  /* alles tegelijk als uitklaplijst */
+  #questions:not(.stap) .card.dbk{scroll-margin-top:84px;transition:box-shadow .25s}
+  #questions:not(.stap) .card.dbk.fold{margin-bottom:8px}
+  #questions:not(.stap) .card.dbk.fold:not(.done){background:color-mix(in srgb,var(--card) 70%,transparent)}
+  #questions:not(.stap) .card.dbk.fold:not(.done) .fsum{font-style:italic}
+  #questions:not(.stap) .card.dbk.fold .qhead{align-items:center}
+  #questions:not(.stap) .card.dbk.fold .qtitle{font-size:var(--fs-tekst);font-weight:600;line-height:1.3}
+  #questions:not(.stap) .card.dbk.dbopen{background:linear-gradient(170deg,color-mix(in srgb,var(--k) 13%,var(--card)) 0%,var(--card) 50%);box-shadow:0 0 0 2px color-mix(in srgb,var(--k) 35%,transparent),var(--shadow-hoog,0 10px 30px rgba(0,0,0,.12));animation:potIn .3s ease}
+  #questions:not(.stap) .card.dbk.fold.done{background:color-mix(in srgb,var(--k) 6%,var(--card))}
+  #questions:not(.stap) .card.dbk.dbopen .qtitle{font-family:var(--serif);font-size:var(--fs-kop-s)}
+  body.dbstap .bottom #progText{white-space:nowrap}
+  .dbroostervink{position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--k,var(--accent));color:#fff;display:flex;align-items:center;justify-content:center}
+  .dbroostervink .i{stroke:currentColor;stroke-width:3.2;fill:none}
+  @media (prefers-reduced-motion: reduce){ .dbboog .zongloed,.card.justdone .qic{animation:none} }
   /* ---------- G-schema: kleur per G, schaal, kettingreactie (werkboek.js) ---------- */
   .gsrij{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 6px;margin-top:14px}
   .gsrijstap{display:flex;align-items:center;gap:6px;color:var(--k);min-width:0}
