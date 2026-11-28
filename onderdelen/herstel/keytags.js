@@ -855,6 +855,7 @@ let wegPos = 0, wegMax = 0, wegVaart = null;
 function wegZet(p){
   const baan = $("wegBaan"); if(!baan) return;
   wegPos = p; baan.style.transform = "translate3d(0," + (-p).toFixed(1) + "px,0)";
+  baan.style.setProperty("--wp", p.toFixed(1));   // diepte: verre heuvels blijven achter (app.css)
   if(p > 24 && !wegHintWeg){ wegHintWeg = true; const h = $("wegHint"); if(h) h.classList.add("hidden"); }
 }
 const wegKlem = p => Math.max(0, Math.min(wegMax, p));

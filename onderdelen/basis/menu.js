@@ -5,8 +5,11 @@ function menuModusTekst(){ $("menuModusTx").textContent = vt("Weergave: ", "Appe
 function openMenu(){ menuModusTekst(); const d = daysClean(todayKey()); $("drawerSub").textContent = d === null ? vt("Dagbeschouwing", "Daily reflection") : aantal(d, "dag", "dagen", "day", "days") + " clean"; $("drawer").classList.add("open"); $("drawerBg").classList.add("show"); }
 function closeMenu(){ $("drawer").classList.remove("open"); $("drawerBg").classList.remove("show"); }
 function showView(v){
+  // richting van de overgang: dieper de app in = van rechts, terug naar het beginscherm = van links (app.css, "Vloeiende overgangen")
+  const vorig = document.body.dataset.scherm || "", richting = v === "home" ? "terug" : vorig === v ? "" : "heen";
   Object.keys(VIEWS).forEach(k => $("view-"+k).classList.toggle("hidden", k !== v));
-  const sv = $("view-" + v); if(sv){ sv.classList.remove("fadein"); void sv.offsetWidth; sv.classList.add("fadein"); }
+  const sv = $("view-" + v); if(sv){ sv.dataset.richting = richting; sv.classList.remove("fadein"); void sv.offsetWidth; sv.classList.add("fadein"); }
+  if(vorig !== v){ const t = $("pageTitle"); t.classList.remove("titelwissel"); void t.offsetWidth; t.classList.add("titelwissel"); }
   // "komtop": alleen vlak na het wisselen van scherm verschijnen de kaarten rustig na elkaar (zie app.css). Daarna gaat de
   // klasse weer weg, zodat kaarten die later opnieuw getekend worden niet telkens opnieuw bewegen.
   document.querySelectorAll(".komtop").forEach(n => n.classList.remove("komtop"));
@@ -38,7 +41,7 @@ function showView(v){
 function pasTitelAan(){
   const h = $("pageTitle"); if(!h) return;
   h.style.fontSize = "";
-  for(let i = 0; i < 8 && h.scrollWidth > h.clientWidth; i++) h.style.fontSize = (parseFloat(getComputedStyle(h).fontSize) - 1) + "px";
+  for(let i = 0; i < 14 && h.scrollWidth > h.clientWidth; i++) h.style.fontSize = (parseFloat(getComputedStyle(h).fontSize) - 1) + "px";
 }
 window.addEventListener("resize", pasTitelAan);
 // kopbalk krijgt een haarlijn zodra je scrollt (matglas over de inhoud)

@@ -258,7 +258,7 @@
       <input type="file" id="backupFile" accept="application/json,.json" class="hidden">
     </div>
   </section>
-  <footer class="credits" data-en="My day v4.0 (479364d) · Made by Roy · 2026">Mijn dag v4.0 (479364d) · Gemaakt door Roy · 2026</footer>
+  <footer class="credits" data-en="My day v4.0 (6355499) · Made by Roy · 2026">Mijn dag v4.0 (6355499) · Gemaakt door Roy · 2026</footer>
 </div>
 
 <div class="drawer-bg" id="drawerBg"></div>
@@ -330,6 +330,7 @@
     <div class="field"><label for="setMail" data-en="Email address for your daily reflection (optional)">Mailadres voor je dagbeschouwing (mag leeg)</label><input id="setMail" type="email" inputmode="email" autocomplete="off"></div>
     <div class="field"><label data-en="App colour">Kleur van de app</label><div class="swatches" id="setTheme"></div></div>
     <div class="field"><label data-en="Appearance">Weergave</label><div class="scale" id="setModus"></div></div>
+    <div class="field"><label class="schakel" for="setWeer"><input type="checkbox" id="setWeer"><span data-en="Show the real weather in the sky">Het echte weer in de lucht laten zien</span></label><div class="note" style="margin-top:4px" data-en="Rain, snow or clouds outside? Then you see it in the app too. Uses the town you entered under Meetings (or your location) and gets the weather from Open-Meteo.">Regent, sneeuwt of is het bewolkt buiten? Dan zie je dat ook in de app. Gebruikt de plaats die je bij Meetings hebt ingevuld (of je locatie) en vraagt het weer op bij Open-Meteo.</div></div>
     <div class="field"><label id="setTekstLabel" data-en="Text size">Tekstgrootte</label><div class="scale" id="setTekst" role="group" aria-labelledby="setTekstLabel"></div></div>
     <div class="field"><label data-en="PIN">Pincode</label><p class="pinstatus" id="pinStatus"></p><div class="row pinknoppen" id="pinKnoppen"></div></div>
     <div class="row" style="margin-top:16px">
@@ -377,6 +378,7 @@
 <script src="onderdelen/geschiedenis/geschiedenis.js"></script>
 <script src="onderdelen/geschiedenis/maandoverzicht.js"></script>
 <script src="onderdelen/geschiedenis/patronen.js"></script>
+<script src="onderdelen/geschiedenis/tuin.js"></script>
 <script src="onderdelen/basis/menu.js"></script>
 <script src="onderdelen/herstel/noodplan.js"></script>
 <script src="onderdelen/herstel/terugval.js"></script>
@@ -402,6 +404,7 @@
 <script src="onderdelen/week/weekendvoorbespreking.js"></script>
 <script src="onderdelen/week/exporteren.js"></script>
 <script src="onderdelen/basis/vormgeving.js"></script>
+<script src="onderdelen/basis/lucht.js"></script>
 <script src="onderdelen/basis/vergrendel.js"></script>
 <script src="onderdelen/basis/toegankelijkheid.js"></script>
 <script src="onderdelen/basis/start.js"></script>

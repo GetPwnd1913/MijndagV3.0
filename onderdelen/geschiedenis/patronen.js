@@ -68,6 +68,7 @@ async function renderPatterns(){
   const sub = note(isEn() ? aantal(days.length, "", "", "day", "days") + " filled in in this period." : days.length + (days.length === 1 ? " dag" : " dagen") + " ingevuld in deze periode.");
   sub.style.cssText = "margin-top:10px;font-size:calc(14px*var(--ts))"; top.appendChild(sub);
   box.appendChild(top);
+  if(typeof patTuinKaart === "function") box.insertBefore(patTuinKaart(map, tk), top);   // tuin.js: je jaar in bloemen (los van de gekozen periode)
   { const k = patKleurKaart(van, tk); if(k) box.appendChild(k); }
   if(typeof patSlaapKaart === "function"){ const k = patSlaapKaart(days); if(k) box.appendChild(k); }   // slaap.js
 

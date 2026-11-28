@@ -98,7 +98,7 @@ function closeSettings(){
 
 // ---------- settings ----------
 $("openSettings").onclick = () => {
-  $("setNaam").value = settings.naam||""; $("setSince").value = settings.since||""; $("setMail").value = settings.mail||""; pickTheme = settings.theme || "groen";
+  $("setNaam").value = settings.naam||""; $("setSince").value = settings.since||""; $("setMail").value = settings.mail||""; if($("setWeer")) $("setWeer").checked = !!settings.weerLucht; pickTheme = settings.theme || "groen";
   taalVoorInstellingen = settings.taal || "nl";
   pickModus = settings.modus || "auto";
   pickTekst = settings.tekstgrootte || "normaal";
@@ -131,11 +131,12 @@ $("setWissen").onclick = async () => {
 $("setSave").onclick = async () => {
   const andereTaal = taalVoorInstellingen !== null && (settings.taal || "nl") !== taalVoorInstellingen;
   taalVoorInstellingen = null;
-  settings = Object.assign({}, settings, {naam:$("setNaam").value.trim(), since:$("setSince").value, mail:$("setMail").value.trim(), theme: pickTheme || settings.theme || "groen", modus: pickModus || settings.modus || "auto", tekstgrootte: pickTekst || settings.tekstgrootte || "normaal", updated:Date.now()});
+  settings = Object.assign({}, settings, {naam:$("setNaam").value.trim(), since:$("setSince").value, mail:$("setMail").value.trim(), weerLucht: !!($("setWeer") && $("setWeer").checked), theme: pickTheme || settings.theme || "groen", modus: pickModus || settings.modus || "auto", tekstgrootte: pickTekst || settings.tekstgrootte || "normaal", updated:Date.now()});
   pickModus = null; pickTekst = null;
   local.set("settings", settings);
   $("setOverlay").classList.remove("show");
   render();
   if(andereTaal) hertekenAlles();
+  if(typeof luchtWeer === "function"){ try{ localStorage.removeItem(WEER_KEY); }catch(e){} luchtWeer(); }
   if(setDoc){ try{ await setDoc.set(JSON.parse(JSON.stringify(settings))); }catch(e){} }
 };

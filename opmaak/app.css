@@ -2085,3 +2085,137 @@
   .card.trilt{animation:trilt .5s}
   @keyframes trilt{0%,100%{transform:none}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
   @media (prefers-reduced-motion:reduce){.card.trilt{animation:none}}
+
+  /* ===== Levende lucht (lucht.js): wolken in lagen, sterrenbeelden, vallende sterren, vogels, echt weer ===== */
+  .hemel{--wkleur:#ffffff;--wkschaduw:rgba(170,185,210,.55)}
+  html[data-laag="ochtend"] .hemel{--wkleur:#fff6ee;--wkschaduw:rgba(240,170,150,.5)}
+  html[data-laag="avond"] .hemel{--wkleur:#ffe0cf;--wkschaduw:rgba(230,130,130,.55)}
+  html[data-laag="nacht"] .hemel{--wkleur:#5d6a92;--wkschaduw:rgba(30,36,70,.6)}
+  html[data-laag="ochtendD"] .hemel,html[data-laag="middagD"] .hemel{--wkleur:#56607a;--wkschaduw:rgba(20,24,40,.6);--wolk:.35}
+  html[data-laag="avondD"] .hemel{--wkleur:#6a5470;--wkschaduw:rgba(40,20,40,.6);--wolk:.3}
+  html[data-laag="nachtD"] .hemel{--wkleur:#2d3554;--wkschaduw:rgba(5,8,20,.6);--wolk:.35}
+  .wk{position:absolute;left:-280px;top:var(--y);width:220px;height:110px;animation:wkDrijf 120s linear infinite;will-change:transform}
+  .wkvorm{position:absolute;inset:0;transform:scale(var(--s));transform-origin:left bottom}
+  .wkvorm i{position:absolute;border-radius:50%;background:radial-gradient(circle at 38% 30%,var(--wkleur) 55%,color-mix(in srgb,var(--wkleur) 70%,var(--wkschaduw)) 100%)}
+  .wkvorm .wkvoet{left:22px;right:34px;bottom:4px;height:28px;border-radius:99px;background:linear-gradient(var(--wkleur),color-mix(in srgb,var(--wkleur) 75%,var(--wkschaduw)))}
+  .wk.l1{opacity:.32;filter:blur(3px)} .wk.l2{opacity:.48;filter:blur(2px)} .wk.l3{opacity:.62;filter:blur(1.2px)}
+  .wk.extra{display:none}
+  html[data-weer="bewolkt"] .wk.extra,html[data-weer="regen"] .wk.extra,html[data-weer="onweer"] .wk.extra,html[data-weer="sneeuw"] .wk.extra,html[data-weer="halfbewolkt"] .wk.extra.l2{display:block}
+  @keyframes wkDrijf{from{transform:translateX(0)}to{transform:translateX(calc(100vw + 560px))}}
+  .sterrenbeeld{position:absolute;left:0;top:0;width:100%;height:320px;opacity:0;transition:opacity var(--hemel-t)}
+  html[data-tod="nacht"] .sterrenbeeld{opacity:1}
+  .sterrenbeeld g{animation:sbGloei 9s ease-in-out infinite}
+  .sterrenbeeld line{stroke:rgba(255,255,255,.16);stroke-width:.6;stroke-dasharray:2 3}
+  .sterrenbeeld circle{fill:#fff;filter:drop-shadow(0 0 2px rgba(255,255,255,.9))}
+  @keyframes sbGloei{0%,100%{opacity:.3}50%{opacity:.7}}
+  .vallster{position:absolute;width:120px;height:2px;margin-left:-120px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9) 70%,#fff);box-shadow:0 0 8px 1px rgba(255,255,255,.6);transform-origin:right center;pointer-events:none}
+  .vogels{position:absolute;left:0;width:110px;height:40px;pointer-events:none;opacity:.75}
+  .vogel{position:absolute;width:20px;height:9px;animation:vogelVleugel .55s ease-in-out infinite alternate}
+  .vogel svg{width:100%;height:100%;overflow:visible}
+  .vogel path{fill:none;stroke:#3a3f52;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  html[data-laag="avond"] .vogel path{stroke:#4a3040}
+  @keyframes vogelVleugel{from{transform:scaleY(1)}to{transform:scaleY(-.35) translateY(-2px)}}
+  /* echt weer */
+  .hemel::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s,background 2s}
+  html[data-weer="bewolkt"] .hemel::after,html[data-weer="regen"] .hemel::after,html[data-weer="sneeuw"] .hemel::after{opacity:1;background:linear-gradient(rgba(90,100,120,.38),rgba(90,100,120,.12) 60%,transparent)}
+  html[data-weer="onweer"] .hemel::after{opacity:1;background:linear-gradient(rgba(40,40,70,.55),rgba(40,40,70,.2) 65%,transparent)}
+  html[data-weer="mist"] .hemel::after{opacity:1;background:linear-gradient(transparent 20%,rgba(235,238,242,.55) 70%,rgba(235,238,242,.7))}
+  html[data-donker][data-weer="mist"] .hemel::after{background:linear-gradient(transparent 20%,rgba(120,128,145,.35) 70%,rgba(120,128,145,.45))}
+  html[data-weer="bewolkt"] .lichaam,html[data-weer="regen"] .lichaam,html[data-weer="onweer"] .lichaam,html[data-weer="sneeuw"] .lichaam,html[data-weer="mist"] .lichaam{opacity:.35}
+  .neerslag{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  .drup{position:absolute;top:-30px;width:1.6px;height:20px;border-radius:2px;background:linear-gradient(transparent,var(--drup,rgba(95,115,150,.6)));animation:drupVal .9s linear infinite;transform:rotate(12deg)}
+  html[data-donker] .drup{--drup:rgba(200,215,235,.6)}
+  @keyframes drupVal{to{transform:translate(-90px,110vh) rotate(12deg)}}
+  .vlok{position:absolute;top:-10px;border-radius:50%;background:#fff;box-shadow:0 0 4px rgba(255,255,255,.8);animation:vlokVal 10s linear infinite}
+  @keyframes vlokVal{0%{transform:translate(0,0)}25%{transform:translate(14px,27vh)}50%{transform:translate(-10px,55vh)}75%{transform:translate(12px,82vh)}100%{transform:translate(-6px,110vh)}}
+  .weerflits{position:absolute;inset:0;background:#e8eeff;pointer-events:none;opacity:0}
+  .schakel{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600}
+  .schakel input{width:22px;height:22px;accent-color:var(--accent);margin:0;flex:none}
+  @media (prefers-reduced-motion:reduce){.wk,.sterrenbeeld g,.vogel,.drup,.vlok{animation:none!important}.neerslag{display:none}}
+
+  /* ===== Vloeiende overgangen (menu.js: showView zet data-richting op het scherm) ===== */
+  section.fadein[data-richting="heen"]{animation:schermHeen .46s cubic-bezier(.2,.8,.2,1) both}
+  section.fadein[data-richting="terug"]{animation:schermTerug .46s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes schermHeen{from{opacity:0;transform:translateX(34px)}to{opacity:1;transform:none}}
+  @keyframes schermTerug{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
+  #pageTitle.titelwissel,#pageTitle.titelwissel + .status{animation:titelIn .42s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes titelIn{from{opacity:0;transform:translateY(8px);filter:blur(3px)}to{opacity:1;transform:none;filter:none}}
+  /* kaarten zweven na elkaar omhoog (de eerste zes) */
+  :where(.komtop) .card:nth-child(-n+6),:where(.komtop) .wdtab{animation:kaartZweef .55s cubic-bezier(.2,.8,.2,1) backwards}
+  :where(.komtop) .card:nth-child(2){animation-delay:60ms} :where(.komtop) .card:nth-child(3){animation-delay:120ms}
+  :where(.komtop) .card:nth-child(4){animation-delay:180ms} :where(.komtop) .card:nth-child(5){animation-delay:240ms} :where(.komtop) .card:nth-child(6){animation-delay:300ms}
+  @keyframes kaartZweef{from{opacity:0;transform:translateY(22px) scale(.985)}to{opacity:1;transform:none}}
+  /* tikken: zacht inveren */
+  .wdtab,.wdvink,.leeschip,.wdsamen,.mrow .linkbtn,.wbkaart,.wbrij,.snel,.plankop,.mgroup{transition:transform .18s cubic-bezier(.3,1.4,.5,1)}
+  .wdtab:active,.wdsamen:active,.wbkaart:active,.wbrij:active,.plankop:active,.mgroup:active{transform:scale(.975)}
+  /* vensters groeien zacht open */
+  .dlg{transform:translateY(16px) scale(.92);opacity:.4;transition:transform .42s cubic-bezier(.2,1.3,.4,1),opacity .25s ease}
+  .dlgback.show .dlg{transform:none;opacity:1}
+  .overlay .sheet{transition:transform .45s cubic-bezier(.2,1,.3,1)}
+  @media (prefers-reduced-motion:reduce){
+    section.fadein[data-richting],#pageTitle.titelwissel,:where(.komtop) .card,:where(.komtop) .wdtab{animation:none!important}
+    .dlg{transform:none;opacity:1;transition:none}
+  }
+
+  /* ===== Diepte (lucht.js: --sy, --mx, --my; keytags.js: --wp op de weg) ===== */
+  .hemel .sterren{transform:translate3d(calc(var(--mx,0) * -6px),calc(var(--sy,0) * -.04px + var(--my,0) * -4px),0)}
+  .hemel .wolken{transform:translate3d(calc(var(--mx,0) * -16px),calc(var(--sy,0) * -.12px + var(--my,0) * -8px),0)}
+  .hemel .lichaam{translate:calc(var(--mx,0) * -22px) calc(var(--sy,0) * -.2px + var(--my,0) * -10px)}
+  .hemel .heuvels svg{transform:scale(1.08);transform-origin:center bottom}
+  .hemel .heuvels path.h1{translate:calc(var(--mx,0) * -6px) calc(var(--sy,0) * .07px)}
+  .hemel .heuvels path.h2{translate:calc(var(--mx,0) * -12px) calc(var(--sy,0) * .035px)}
+  .hemel .heuvels path.h3{translate:calc(var(--mx,0) * -20px) 0}
+  .wegpad .wegheuvel.h-ver{translate:0 calc(var(--wp,0) * .45px)}
+  .wegpad .wegheuvel.h-mid{translate:0 calc(var(--wp,0) * .2px)}
+  @media (prefers-reduced-motion:reduce){.hemel .sterren,.hemel .wolken{transform:none}.hemel .lichaam,.hemel .heuvels path,.wegpad .wegheuvel{translate:none}}
+
+  /* ===== Mijn tuin (tuin.js) ===== */
+  .tuinkaart{--t-roze:#e46a9a;--t-geel:#f2c230;--t-oranje:#ef8a3c;--t-blauw:#7aa0d8;--t-steel:#4f8a55;--t-grond:#b08a66}
+  html[data-donker] .tuinkaart{--t-steel:#7cbf83;--t-grond:#6e5640}
+  .tuinkop{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+  .tuinteller{font-size:var(--fs-klein);font-weight:700;color:var(--accent)}
+  .tuinbakken{margin-top:12px;display:flex;flex-direction:column;gap:2px}
+  .tuinbak{display:flex;align-items:flex-end;gap:8px}
+  .tuinmaand{flex:none;width:34px;font-size:var(--fs-klein);font-weight:700;color:var(--muted);padding-bottom:4px;text-transform:capitalize}
+  .tuinbed{flex:1;min-width:0}
+  .tuinbed svg{display:block;width:100%;height:auto;overflow:visible}
+  .tuinbak.leeg .tuingrond{opacity:.35}
+  .tuingrond{fill:color-mix(in srgb,var(--t-grond) 45%,transparent)}
+  .tb{cursor:pointer}
+  .tb .tbtik{fill:transparent}
+  .tb:hover .tbkroon,.tb:active .tbkroon{filter:brightness(1.15)}
+  .tbsteel{fill:none;stroke:var(--t-steel);stroke-width:1.2;stroke-linecap:round}
+  .tbblad{fill:var(--t-steel)}
+  .tbspriet{fill:none;stroke:var(--t-steel);stroke-width:1.1;stroke-linecap:round;opacity:.8}
+  .tbkroon.roze{fill:var(--t-roze)} .tbkroon.geel{fill:var(--t-geel)} .tbkroon.oranje{fill:var(--t-oranje)} .tbkroon.blauw{fill:var(--t-blauw)}
+  .tbhart{fill:#fff3c4} .tbhart.bruin{fill:#7a4b25}
+  .tbzon{fill:#f5b800}
+  .tbvlinder path{fill:#b48de8;stroke:#7d5cc0;stroke-width:.4}
+  :where(.komtop) .tuinkaart .tb{animation:tuinGroei .6s cubic-bezier(.3,1.5,.5,1) backwards}
+  @keyframes tuinGroei{from{transform-box:fill-box;transform-origin:center bottom;scale:.2;opacity:0}to{scale:1;opacity:1}}
+  .tbvlinder{animation:vlinderFladder 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  @keyframes vlinderFladder{0%,100%{scale:1 1}50%{scale:.55 1}}
+  .tuinlegenda{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:var(--fs-klein);color:var(--muted)}
+  .tuinlegenda span{display:inline-flex;align-items:center;gap:6px}
+  .tuinlegenda .tl{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .tl.roze{background:var(--t-roze)} .tl.geel{background:var(--t-geel)} .tl.oranje{background:var(--t-oranje)} .tl.blauw{background:var(--t-blauw)}
+  .tl.zon{background:radial-gradient(circle,#7a4b25 35%,#f5b800 40%)} .tl.vlinder{background:#b48de8;border-radius:50% 0}
+  @media (prefers-reduced-motion:reduce){.tuinkaart .tb,.tbvlinder{animation:none!important}}
+
+  /* ===== Eén lijn door de hele app (punt 6): latere onderdelen gelijkgetrokken met de rest ===== */
+  /* kaartkoppen in de sierletter, ook als ze in een kopregel met iets ernaast staan */
+  .tuinkop > .qtitle,.slaapkop .qtitle,.wbkop .qtitle{font-family:var(--serif);font-optical-sizing:auto;font-variant-numeric:lining-nums proportional-nums;font-weight:600;font-size:var(--fs-kaartkop);letter-spacing:-.01em;line-height:1.25}
+  /* cijfertegels overal zoals bij Weekterugblik en Maandoverzicht: zacht vlak, groot cijfer links */
+  .mteltegel{align-items:flex-start;text-align:left;background:var(--bg);padding:14px 14px var(--ruimte-3);border-radius:var(--hoek-m)}
+  .mteltegel b{font-family:var(--serif);font-weight:600;font-size:var(--fs-kop-xl);line-height:1.1;letter-spacing:-.02em}
+  .mteltegel span{font-weight:500;font-size:var(--fs-klein)}
+  /* paginatitel altijd op één regel; menu.js (pasTitelAan) maakt hem zo nodig kleiner */
+  #pageTitle{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* zachte uitlegkaart (Meetings, Weekformulieren) */
+  .card.zacht{background:var(--accent-soft);border-color:transparent}
+  /* tegels bovenaan 1-op-1: nooit breder dan het scherm */
+  .wdtab{min-width:0}
+  .wdtab span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .talktabs{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  /* afvinkrondjes in het donker: doorzichtig in plaats van een zwart gat */
+  html[data-donker] .wdvink:not(.af){background:transparent}

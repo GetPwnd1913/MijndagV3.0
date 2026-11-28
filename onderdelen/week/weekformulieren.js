@@ -118,7 +118,8 @@ function renderWf(){
   nav.appendChild(pv); nav.appendChild(mid); nav.appendChild(nx);
   box.appendChild(nav);
   const intro = note(vt("Elke zondag vul je de weekplanning en de wekelijkse update in, en op woensdagavond de weekendvoorbespreking. Daarna maak je er een Word- of PDF-bestand van om te mailen.", "Every Sunday you fill in the weekly planning and the weekly update, and on Wednesday evening the weekend plan. Then you make a Word or PDF file of it to email."));
-  intro.style.margin = "0 2px 14px"; box.appendChild(intro);
+  intro.style.cssText += ";margin:0;color:var(--ink)";
+  const introKaart = el("div", "card zacht"); introKaart.appendChild(intro); box.appendChild(introKaart);   // uitleg in een zachte kaart, net als bij Meetings
   WF_FORMS.forEach(f => {
     const st = wfStatus(wfWeek, f);
     const c = el("button", "card wfitem"); c.type = "button";
