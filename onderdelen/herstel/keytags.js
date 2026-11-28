@@ -456,6 +456,60 @@ function ktVlucht(bron, doel, kleur, toonPagina, klaar){
     };
   };
 }
+// seizoen van Jouw weg, volgens de echte datum: winter (dec-feb), lente (mrt-mei), zomer (jun-aug), herfst (sep-nov).
+// Testen: ?seizoen=herfst achter het adres.
+const WEG_SEIZOENEN = ["winter", "lente", "zomer", "herfst"];
+function wegSeizoen(tk){
+  const m = /[?&]seizoen=(winter|lente|zomer|herfst)/.exec(location.search); if(m) return m[1];
+  return WEG_SEIZOENEN[Math.floor(((parseKey(tk).getMonth() + 1) % 12) / 3)];
+}
+// tekeningen langs de weg per seizoen; (0,0) is de grond, worden geschaald met de afstand (wegSchaal)
+const wegTulp = (dx, h, c) => '<path d="M' + dx + ' 0V' + (-h) + '" stroke="#4f9a4a" stroke-width="1.3"/><path d="M' + dx + ' -2q-4.5-3-3.5-8.5q3.5 3 3.5 8.5z" fill="#5fae58"/>' +
+  '<path d="M' + (dx - 3) + ' ' + (-h) + 'q0-6 3-7q3 1 3 7q-3 2.6-6 0z" fill="' + c + '"/><path d="M' + dx + ' ' + (-h - 1) + 'l-1.2-5.2l1.2 1.6l1.2-1.6z" fill="rgba(255,255,255,.35)"/>';
+const wegZonnebloem = (dx, h) => { let p = '<path d="M' + dx + ' 0V' + (-h) + '" stroke="#4f8f3a" stroke-width="1.6"/><path d="M' + dx + ' ' + (-h * .45) + 'q5-4 8-1q-4 3-8 1z" fill="#5d9e42"/>';
+  for(let i = 0; i < 12; i++) p += '<ellipse cx="' + dx + '" cy="' + (-h - 4.2) + '" rx="1.7" ry="4" fill="#f7c531" transform="rotate(' + i * 30 + ' ' + dx + ' ' + (-h) + ')"/>';
+  return p + '<circle cx="' + dx + '" cy="' + (-h) + '" r="3.4" fill="#7a4a1e"/><circle cx="' + (dx - .9) + '" cy="' + (-h - .9) + '" r="1.1" fill="#a0672e"/>'; };
+const wegPaddenstoel = (dx, k) => '<path d="M' + (dx - 1.8 * k) + ' 0v' + (-5 * k) + 'h' + (3.6 * k) + 'v' + (5 * k) + 'z" fill="#f3e7d3"/><path d="M' + (dx - 7 * k) + ' ' + (-5 * k) + 'q' + (7 * k) + ' ' + (-11 * k) + ' ' + (14 * k) + ' 0z" fill="#d6453d"/>' +
+  '<circle cx="' + (dx - 2.5 * k) + '" cy="' + (-8 * k) + '" r="' + (1.1 * k) + '" fill="#fff"/><circle cx="' + (dx + 2.2 * k) + '" cy="' + (-9.3 * k) + '" r="' + (.9 * k) + '" fill="#fff"/><circle cx="' + (dx + .2 * k) + '" cy="' + (-6.3 * k) + '" r="' + (.8 * k) + '" fill="#fff"/>';
+const wegBladhoop = '<ellipse cx="-5" cy="-1" rx="4" ry="1.8" fill="#d9822b" transform="rotate(-20 -5 -1)"/><ellipse cx="2" cy="-1.5" rx="4" ry="1.8" fill="#b8482a" transform="rotate(15 2 -1.5)"/><ellipse cx="7" cy="-.8" rx="3.5" ry="1.6" fill="#e8b03a" transform="rotate(-8 7 -.8)"/><ellipse cx="-1" cy="-3" rx="3.4" ry="1.6" fill="#e39a32" transform="rotate(30 -1 -3)"/>';
+const WEG_DECOR = {
+  winter: [
+    '<path d="M-14 0Q-10-7-3-6Q2-11 8-6Q13-6 15 0Z" fill="#fbfdff"/><path d="M-14 0Q0-3 15 0Z" fill="#dbe8f3"/>',
+    '<path d="M-10 0Q-6-6 0-5Q5-8 10 0Z" fill="#fbfdff"/><path d="M-10 0Q0-2.5 10 0Z" fill="#dbe8f3"/><path d="M3-5l4-7M5-9l3-1" stroke="#6b4a32" stroke-width="1" stroke-linecap="round"/>',
+    // sneeuwpop
+    '<ellipse cx="0" cy="0" rx="11" ry="2.6" fill="#fff" opacity=".75"/><circle cx="0" cy="-8" r="8" fill="#fbfdff"/><circle cx="-2" cy="-10" r="6" fill="#fff"/><circle cx="0" cy="-20" r="5.8" fill="#fbfdff"/>' +
+    '<path d="M-6-7-14-13M-12-12-15-11M6-7 14-14M12-12.5 15-12" stroke="#6b4a32" stroke-width="1.2" stroke-linecap="round"/>' +
+    '<path d="M-5.6-15.6h11.2v2.8h-11.2z" fill="#d6453d"/><path d="M2.4-15v8.5h2.8V-15z" fill="#d6453d"/><path d="M-4.6-25.2h9.2v-1.6h-9.2zM-3.2-26.6h6.4v-6h-6.4z" fill="#2a2f3a"/>' +
+    '<circle cx="-2" cy="-21.4" r=".95" fill="#223"/><circle cx="2" cy="-21.4" r=".95" fill="#223"/><path d="M0-19.6l6 1.2L0-17.2z" fill="#f08a24"/><circle cx="0" cy="-9.5" r=".9" fill="#223"/><circle cx="0" cy="-6" r=".9" fill="#223"/>'
+  ],
+  lente: [
+    wegTulp(-5, 13, "#e94f6a") + wegTulp(0, 16, "#f7c531") + wegTulp(5, 12, "#f49ac1"),
+    wegTulp(-3, 14, "#f49ac1") + wegTulp(3, 12, "#e94f6a"),
+    // madeliefjes
+    [[-6, -2], [0, -4], [6, -1.5], [2, 0]].map(([x, y]) => { let p = ''; for(let i = 0; i < 8; i++) p += '<ellipse cx="' + x + '" cy="' + (y - 2) + '" rx=".9" ry="2" fill="#fff" transform="rotate(' + i * 45 + ' ' + x + ' ' + y + ')"/>'; return p + '<circle cx="' + x + '" cy="' + y + '" r="1.2" fill="#f7c531"/>'; }).join(''),
+    wegTulp(-4, 12, "#c9a0ff") + wegTulp(1, 15, "#e94f6a") + wegTulp(6, 13, "#f7c531")
+  ],
+  zomer: [
+    wegZonnebloem(-4, 20) + wegZonnebloem(5, 25),
+    '<path d="M-8 0q1-6 2-10q0 6 1 10q1-8 3-13q0 7 1 13q1-6 3-9q-1 5 0 9z" fill="#4f9a4a"/><path d="M2 0q1-5 2-8q0 5 1 8q1-6 3-10q0 6 1 10z" fill="#5fae58"/>',
+    wegZonnebloem(0, 22),
+    '<path d="M-6 0q1-5 2-9q0 5 1 9q1-7 3-11q0 6 1 11q1-5 3-8q-1 4 0 8z" fill="#5fae58"/><circle cx="6" cy="-3" r="2" fill="#f49ac1"/><circle cx="9" cy="-1.5" r="1.8" fill="#fff"/>'
+  ],
+  herfst: [
+    wegPaddenstoel(-3, 1) + wegPaddenstoel(5, .7),
+    wegBladhoop,
+    // pompoen
+    '<ellipse cx="0" cy="-5.5" rx="9" ry="6" fill="#e8801f"/><ellipse cx="-3.5" cy="-5.5" rx="4" ry="5.8" fill="#d9701a"/><ellipse cx="3.5" cy="-5.5" rx="4" ry="5.8" fill="#d9701a"/><ellipse cx="0" cy="-5.5" rx="3.6" ry="6" fill="#f39a3a"/>' +
+    '<path d="M0-11q.5-4 3-5" stroke="#4b6b2a" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M1-13q4-2 6 1q-4 1-6-1z" fill="#5d8a32"/>' + wegBladhoop.replace(/cx="(-?[\d.]+)"/g, (m, x) => 'cx="' + (+x + 12) + '"'),
+    wegPaddenstoel(0, .85) + wegBladhoop.replace(/cx="(-?[\d.]+)"/g, (m, x) => 'cx="' + (+x - 9) + '"')
+  ]
+};
+const WEG_SEIZOEN_ICOON = {
+  winter: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>',
+  lente: '<circle cx="12" cy="12" r="2.6"/><circle cx="12" cy="6.5" r="3"/><circle cx="12" cy="17.5" r="3"/><circle cx="6.5" cy="12" r="3"/><circle cx="17.5" cy="12" r="3"/>',
+  zomer: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>',
+  herfst: '<path d="M5 19C5 10 11 4 20 4c0 9-6 15-15 15z"/><path d="M5 19 14 10"/>'
+};
 function renderWeg(){
   const box = $("weg"), baan = $("wegBaan"), rij = $("wegRij"), sc = $("wegScroll"); if(!box || !baan || !rij || !sc) return;
   const since = settings.since, tk = todayKey();
@@ -469,7 +523,8 @@ function renderWeg(){
     list.push(Object.assign({}, last, {big: String(jr), label: jr + vt(" jaar", " years"), name: last.name, key: addMonthsKey(since, 12 * jr), years: jr}));
   }
   const d = daysClean(tk);
-  const sig = [since, tk, isEn() ? "en" : "nl", list.length, list[list.length - 1].label, W].join("|");
+  const seizoen = wegSeizoen(tk);
+  const sig = [since, tk, isEn() ? "en" : "nl", list.length, list[list.length - 1].label, W, seizoen].join("|");
   if(sig === wegSig) return;
   const eerste = wegSig === ""; wegSig = sig;
   if(eerste) wegGetekend = performance.now();
@@ -489,19 +544,59 @@ function renderWeg(){
   const a = dagenTot(list[L].key), b = dagenTot(volg.key);
   const tJij = tLaatst + (tVolg - tLaatst) * Math.max(.28, Math.min(.82, (dagenTot(tk) - a) / ((b - a) || 1)));   // nooit bovenop een keytag
 
-  const svg = svgEl("svg", {class: "wegpad", viewBox: "0 0 " + W + " " + H, "aria-hidden": "true"});
+  const svg = svgEl("svg", {class: "wegpad", viewBox: "0 0 " + W + " " + H, "aria-hidden": "true", "data-seizoen": seizoen});
+  const chip = $("wegSeizoen");
+  if(chip){
+    chip.dataset.seizoen = seizoen; chip.classList.remove("hidden");
+    chip.innerHTML = '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + WEG_SEIZOEN_ICOON[seizoen] + '</svg>';
+    chip.appendChild(el("span", null, {winter: vt("Winter", "Winter"), lente: vt("Lente", "Spring"), zomer: vt("Zomer", "Summer"), herfst: vt("Herfst", "Autumn")}[seizoen]));
+  }
   svg.appendChild(svgEl("path", {class: "wegheuvel h-ver", d: wegHeuvel(W, WEG_HZ - 14, 12, 2.6, .6, H)}));
   svg.appendChild(svgEl("path", {class: "wegheuvel h-mid", d: wegHeuvel(W, WEG_HZ + 54, 16, 1.7, 2.2, H)}));
   svg.appendChild(svgEl("path", {class: "wegheuvel h-voor", d: wegHeuvel(W, WEG_H - 70, 18, 1.3, 4, H)}));
+  if(seizoen === "winter") [[WEG_HZ - 14, 12, 2.6, .6, 2.5], [WEG_HZ + 54, 16, 1.7, 2.2, 3.5], [WEG_H - 70, 18, 1.3, 4, 5]].forEach(([y0, amp, fr, fase, w]) => {
+    let d = ""; for(let x = 0; x <= W + 8; x += 8) d += (x ? " L" : "M") + x + " " + (y0 + amp * Math.sin(x / W * Math.PI * fr + fase)).toFixed(1);
+    svg.appendChild(svgEl("path", {class: "wegsneeuwrand", d, "stroke-width": w}));
+  });
   // boompjes aan de kant waar geen keytag staat, kleiner naarmate ze verder weg staan
+  let boomNr = 0;
+  const f = v => v.toFixed(1);
   const boom = (bx, y, s) => {
-    const r = 11 * s; if(bx < r || bx > W - r) return;
-    svg.appendChild(svgEl("rect", {class: "wegstam", x: (bx - 1.2 * s).toFixed(1), y: (y - 8 * s).toFixed(1), width: (2.4 * s).toFixed(1), height: (8 * s).toFixed(1), rx: 1}));
-    svg.appendChild(svgEl("ellipse", {class: "wegboom", cx: bx.toFixed(1), cy: (y - 8 * s - r * .9).toFixed(1), rx: (r * .8).toFixed(1), ry: r.toFixed(1)}));
+    const r = 15.5 * s; if(bx < r || bx > W - r) return;
+    const nr = boomNr++, cy = y - 8 * s - r * .9, rx = r * .8;
+    if(seizoen === "winter"){   // dennenboom met sneeuw op de takken
+      const voet = y - 5 * s;
+      svg.appendChild(svgEl("rect", {class: "wegstam", x: f(bx - 1.4 * s), y: f(voet), width: f(2.8 * s), height: f(5 * s), rx: 1}));
+      [[0, 1.05, .8], [.5, .82, .78], [.98, .6, .72]].forEach(([op, br, hg]) => {
+        const bot = voet - r * op, top = bot - r * hg * 1.25, bw = r * br;
+        svg.appendChild(svgEl("path", {class: "wegden", d: "M" + f(bx) + " " + f(top) + " L" + f(bx + bw) + " " + f(bot) + " L" + f(bx - bw) + " " + f(bot) + "Z"}));
+        const sb = top + (bot - top) * .5, sw = bw * .52;
+        svg.appendChild(svgEl("path", {class: "wegsneeuw", d: "M" + f(bx) + " " + f(top) + " L" + f(bx + sw) + " " + f(sb) + " Q" + f(bx + sw * .35) + " " + f(sb - 2.4 * s) + " " + f(bx) + " " + f(sb + 1.6 * s) +
+          " Q" + f(bx - sw * .35) + " " + f(sb - 2.4 * s) + " " + f(bx - sw) + " " + f(sb) + "Z"}));
+        svg.appendChild(svgEl("path", {class: "wegsneeuw", d: "M" + f(bx - bw) + " " + f(bot) + " Q" + f(bx) + " " + f(bot - 2.2 * s) + " " + f(bx + bw) + " " + f(bot) + " Q" + f(bx) + " " + f(bot + 1.2 * s) + " " + f(bx - bw) + " " + f(bot) + "Z"}));
+      });
+      return;
+    }
+    svg.appendChild(svgEl("rect", {class: "wegstam", x: f(bx - 1.3 * s), y: f(y - 8 * s), width: f(2.6 * s), height: f(8 * s), rx: 1}));
+    if(seizoen === "herfst") [[-6, -18], [5, 15], [9, -10], [-2, 30]].forEach(([dx, rot], k) => svg.appendChild(svgEl("ellipse", {class: "wegblad b" + (k % 3), cx: f(bx + dx * s), cy: f(y - .5 * s), rx: f(2.6 * s), ry: f(1.2 * s), transform: "rotate(" + rot + " " + f(bx + dx * s) + " " + f(y) + ")"})));
+    svg.appendChild(svgEl("ellipse", {class: "wegboomschaduw", cx: f(bx + rx * .18), cy: f(cy + r * .16), rx: f(rx * .92), ry: f(r * .86)}));
+    svg.appendChild(svgEl("ellipse", {class: "wegboom" + (nr % 2 ? " b2" : "") + (nr % 3 === 2 ? " b3" : ""), cx: f(bx), cy: f(cy), rx: f(rx), ry: f(r)}));
+    svg.appendChild(svgEl("ellipse", {class: "wegboomglans", cx: f(bx - rx * .3), cy: f(cy - r * .35), rx: f(rx * .35), ry: f(r * .3)}));
+    if(seizoen === "lente") [[-.45, -.35], [.3, -.55], [.05, .1], [-.15, -.7], [.5, .05], [-.5, .25], [.25, .45], [-.1, -.25], [.55, -.3], [-.3, .55]].forEach(([dx, dy], k) =>
+      svg.appendChild(svgEl("circle", {class: "wegbloesem" + (k % 3 ? "" : " wit"), cx: f(bx + dx * rx), cy: f(cy + dy * r), r: f((k % 2 ? 1.9 : 2.4) * s)})));
+    if(seizoen === "zomer" && nr % 2 === 0) [[.35, .15], [-.4, .3], [.05, -.35]].forEach(([dx, dy]) => svg.appendChild(svgEl("circle", {class: "wegappel", cx: f(bx + dx * rx), cy: f(cy + dy * r), r: f(1.8 * s)})));
   };
   [[.12, -1], [.3, 1], [.44, -1], [.66, 1], [.8, -1], [.97, 1.6]].forEach(([t, kant]) => {
     const [x, y] = wegPunt(t, W), s = wegSchaal(t), side = -wegKant(t, W) * kant;
     boom(x + side * (wegBreed(t) + 26 * s), y, s);
+  });
+  // langs het pad, aan de kant zonder keytags: sneeuwpop en sneeuwhopen, tulpen, zonnebloemen, paddenstoelen en een pompoen
+  [.07, .2, .5, .62, .78, .9].forEach((t, i) => {
+    const [x, y] = wegPunt(t, W), sc = wegSchaal(t), bx = x - wegKant(t, W) * (wegBreed(t) + 20 * sc);
+    if(bx < 12 || bx > W - 12) return;
+    const g = svgEl("g", {class: "wegdecor", transform: "translate(" + f(bx) + " " + f(y + 4 * sc) + ") scale(" + (sc * 1.6).toFixed(3) + ")"});
+    g.innerHTML = WEG_DECOR[seizoen][i % WEG_DECOR[seizoen].length];
+    svg.appendChild(g);
   });
   // langs het lagere stuk: een boompje in elke bocht, aan de buitenkant (de keytag staat binnen de bocht)
   tOud.forEach(t => { const [x, y] = wegPunt(t, W), k = x < W / 2 ? -1 : 1; boom(x + k * (wegBreed(t) + 14), y + 30, .9); });
@@ -518,7 +613,7 @@ function renderWeg(){
     const side = wegKant(t, W) * (binnen ? -1 : 1), hx = Math.max(26, Math.min(W - 26, x + side * (wegBreed(t) + (binnen ? 56 : 16 * s))));
     const knop = el("button", "wegstop" + (on ? "" : " komt")); knop.type = "button";
     knop.style.left = hx.toFixed(1) + "px"; knop.style.top = (y + (binnen ? 34 : 0)).toFixed(1) + "px";
-    const svgTag = keytagSvg(tag, on, Math.round(44 * s));
+    const svgTag = keytagSvg(tag, on, Math.round(44 * s * (on ? 1 : 1.45)));   // de volgende (die volloopt) iets groter
     knop.setAttribute("aria-label", svgTag.getAttribute("aria-label")); svgTag.setAttribute("aria-hidden", "true"); svgTag.classList.add("wegtag");
     if(on && tag.glow) svgTag.classList.add("wegglow");
     if(i % 2) svgTag.style.animationDelay = "-2.4s";
@@ -557,8 +652,28 @@ function renderWeg(){
   const ver = halte(tVolg, volg, false, 1);
   const bord = el("span", "wegbord"); bord.appendChild(el("b", null, volg.label)); bord.appendChild(el("span", null, nogTekst));
   ver.insertBefore(bord, ver.firstChild);
+  ver.dataset.bord = parseFloat(ver.style.left) < W / 2 ? "r" : "l";   // bordje naast de keytag, aan de kant met de meeste ruimte
   ver.setAttribute("aria-label", volg.name + " · " + volg.label + " · " + nogTekst);
-  ver.onclick = () => toast(volg.name + " · " + volg.label + " · " + nogTekst + " (" + shortDate(volg.key) + ")");
+  // de volgende keytag loopt vol met zijn eigen kleur: hoe dichter bij de mijlpaal, hoe voller (golfje bovenop; tik = klotsen)
+  const vul = Math.max(.05, Math.min(.96, (dagenTot(tk) - a) / ((b - a) || 1))), vs = ver.querySelector(".wegtag");
+  let klots = null;
+  if(vs){
+    const id = "wegvul" + (++ktUid), lvl = 98 - vul * 64, licht = volg.c === "#ffffff" || volg.c === "#EEF2E6";
+    const cp = svgEl("clipPath", {id}); cp.appendChild(svgEl("path", {d: KT_BODY}));
+    (vs.querySelector("defs") || vs).appendChild(cp);
+    const buiten = svgEl("g", {"clip-path": "url(#" + id + ")"}); klots = svgEl("g", {class: "ktklots"});
+    klots.style.transformOrigin = "30px " + lvl.toFixed(1) + "px";
+    let d = "M-60 " + lvl.toFixed(1); for(let i = 0; i < 6; i++) d += " q15 " + (i % 2 ? 3 : -3) + " 30 0";
+    klots.appendChild(svgEl("path", {class: "ktgolf", d: d + " V110 H-60Z", fill: licht ? "#cfe3c4" : volg.c, "fill-opacity": .92}));
+    buiten.appendChild(klots);
+    vs.insertBefore(buiten, vs.querySelector("text"));
+    if(lvl < 64) vs.querySelectorAll("text").forEach(t => t.setAttribute("fill", licht ? "#4a5a40" : volg.tc));   // getal staat in de kleur: wit maken
+    ver.dataset.vul = Math.round(vul * 100);
+  }
+  ver.onclick = () => {
+    if(klots && klots.animate && !KT_RUSTIG()) klots.animate([{transform: "rotate(0)"}, {transform: "rotate(16deg)"}, {transform: "rotate(-12deg)"}, {transform: "rotate(7deg)"}, {transform: "rotate(-3deg)"}, {transform: "rotate(0)"}], {duration: 1300, easing: "ease-out"});
+    toast(volg.name + " · " + volg.label + " · " + nogTekst + " (" + shortDate(volg.key) + ")");
+  };
   baan.appendChild(ver);
 
   const [jx, jy] = wegPunt(tJij, W);
@@ -570,6 +685,29 @@ function renderWeg(){
   jij.appendChild(el("span", "wegorb"));
   baan.appendChild(jij);
   wegNu.jij = jij;
+  const oudWeer = rij.querySelector(".wegweer"); if(oudWeer) oudWeer.remove();
+  if(!KT_RUSTIG()){
+    const weer = el("div", "wegweer"); weer.dataset.seizoen = seizoen; weer.setAttribute("aria-hidden", "true");
+    const donker = /nacht|avond/.test(document.documentElement.getAttribute("data-tod") || "");
+    const soort = seizoen === "winter" ? "vlok" : seizoen === "herfst" ? "blad" : seizoen === "lente" ? "blaadje" : donker ? "vuurvlieg" : "pluis";
+    const n = {vlok: 48, blad: 20, blaadje: 18, vuurvlieg: 16, pluis: 10}[soort];
+    for(let i = 0; i < n; i++){
+      const v = el("i", soort); v.style.left = (Math.random() * 100).toFixed(1) + "%";
+      if(soort === "vuurvlieg" || soort === "pluis") v.style.top = (15 + Math.random() * 75).toFixed(0) + "%";
+      v.style.animationDuration = ({vlok: 6, blad: 8, blaadje: 9, vuurvlieg: 4, pluis: 10}[soort] + Math.random() * 5).toFixed(1) + "s";
+      v.style.animationDelay = (-Math.random() * 14).toFixed(1) + "s";
+      v.style.setProperty("--x", ((Math.random() - .5) * (soort === "vlok" ? 60 : 140)).toFixed(0) + "px");
+      v.style.setProperty("--m", (soort === "vlok" ? 2 + Math.random() * 5 : soort === "blad" ? 9 + Math.random() * 6 : 6 + Math.random() * 4).toFixed(1) + "px");
+      if(soort === "vlok" && i % 6 === 0) v.classList.add("vaag");
+      weer.appendChild(v);
+    }
+    if(seizoen === "lente" || (seizoen === "zomer" && !donker)) ["#f7c531", "#7fb8ff", "#ff9a5a"].forEach((k, i) => {
+      const v = el("i", "vlinder"); v.style.top = (18 + i * 22 + Math.random() * 10).toFixed(0) + "%"; v.style.setProperty("--k", k);
+      v.style.animationDuration = (13 + Math.random() * 8).toFixed(1) + "s"; v.style.animationDelay = (-Math.random() * 18).toFixed(1) + "s";
+      v.appendChild(el("b")); v.appendChild(el("b")); weer.appendChild(v);
+    });
+    rij.appendChild(weer);
+  }
 
   // hint onderaan het venster: alleen als er iets te vegen valt, weg zodra je veegt
   const hint = $("wegHint");
