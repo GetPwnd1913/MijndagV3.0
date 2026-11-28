@@ -4,12 +4,12 @@
 // Verschijnt elke keer, tot je "Niet meer laten zien" aanvinkt: dan staat settings.nieuwGezien = NIEUW_VERSIE.
 // Bij een volgende update met nieuws: NIEUW_VERSIE en NIEUW_ITEMS aanpassen, dan komt het venster weer.
 // Op een nieuw toestel komt eerst de uitleg (uitleg.js); dan niet ook nog dit venster.
-const NIEUW_VERSIE = "2026-11-25-2";
+const NIEUW_VERSIE = "2026-11-27";
 const NIEUW_ITEMS = [
-  {icoon: "book", kleur: "var(--tv-groen)", naar: "werkboek",
-   t: "Mooie bestanden van je werkboek", te: "Nice files from your workbook",
-   u: "De Word- en PDF-bestanden van je werkboek zien er nu net zo uit als je dagbeschouwing: een gekleurde kop, per stap een eigen blok en witte vakken met wat je hebt ingevuld. Handig om te bespreken met je begeleider.",
-   ue: "The Word and PDF files from your workbook now look just like your daily reflection: a coloured header, a block for each step and white boxes with what you filled in. Handy to talk through with your support worker."},
+  {icoon: "award", kleur: "var(--warm)", naar: "home",
+   t: "Tik op een mijlpaal", te: "Tap a milestone",
+   u: "Er is iets veranderd op Jouw weg. Tik op een van je keytags en kijk wat er gebeurt.",
+   ue: "Something has changed on Your road. Tap one of your keytags and see what happens."},
   {icoon: "gschema", kleur: "var(--accent)", naar: "werkboek",
    t: "Mijn werkboek", te: "My workbook",
    u: "Nieuw in het menu: zes opdrachten zoals je ze in de verslavingszorg meekrijgt. Terugvalpreventieplan, Nee zeggen, G-schema, Beslisbalans, Netwerkkaart en Plezierlijst. Je kunt ze downloaden als Word of PDF.",
