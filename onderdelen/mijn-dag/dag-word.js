@@ -96,12 +96,22 @@ function answerLines(q, e){
 }
 const longDate2 = k => parseKey(k).toLocaleDateString(locale(), {weekday: "long", day: "numeric", month: "long", year: "numeric"});
 function documentXml(e, withLogo){
-  const TH = exportTheme(), d = daysClean(e.date), GRAY = "6B7370", INK = "1F2A28";
+  const F = typeof dagFeest === "function" ? dagFeest(e) : null;   // dag-feest.js: feestelijke versie op de dag van een mijlpaal
+  const TH = F ? {hex: F.hex, softHex: F.softHex} : exportTheme(), d = daysClean(e.date), GRAY = "6B7370", INK = "1F2A28";
   const r = (t, o) => { o = o || {}; return '<w:r><w:rPr>' + (o.b ? '<w:b/>' : '') + (o.i ? '<w:i/>' : '') + (o.caps ? '<w:caps/>' : '') + '<w:color w:val="' + (o.c || INK) + '"/>' + (o.sz ? '<w:sz w:val="' + o.sz + '"/><w:szCs w:val="' + o.sz + '"/>' : '') + (o.sp ? '<w:spacing w:val="' + o.sp + '"/>' : '') + '</w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>'; };
   const p = (runs, o) => { o = o || {}; return '<w:p><w:pPr>' + (o.keep ? '<w:keepNext/>' : '') + (o.bdrTop ? '<w:pBdr><w:top w:val="single" w:sz="4" w:space="12" w:color="E3DED3"/></w:pBdr>' : '') + '<w:spacing w:before="' + (o.before || 0) + '" w:after="' + (o.after == null ? 60 : o.after) + '"/>' + (o.ind ? '<w:ind w:left="' + o.ind + '"' + (o.hang ? ' w:hanging="' + o.hang + '"' : '') + '/>' : '') + (o.jc ? '<w:jc w:val="' + o.jc + '"/>' : '') + '</w:pPr>' + runs + '</w:p>'; };
   let body = "";
   const titleP = p(r(vt("Dagbeschouwing", "Daily reflection"), {b: 1, sz: 52, c: TH.hex}), {after: 40}) + p(r(cap(longDate2(e.date)) + (d !== null ? "  ·  " + aantal(d, "dag", "dagen", "day", "days") + " clean" : ""), {sz: 22, c: GRAY}), {after: 0});
-  if(withLogo){
+  if(F){
+    // feestelijke kop: gekleurd vlak met bovenregel, titel en datum; rechts groot het getal van de mijlpaal
+    const nb = '<w:tblBorders>' + ["top","left","bottom","right","insideH","insideV"].map(x => '<w:' + x + ' w:val="nil"/>').join("") + '</w:tblBorders>';
+    const tc = (w, inner, va) => '<w:tc><w:tcPr><w:tcW w:w="' + w + '" w:type="dxa"/><w:shd w:val="clear" w:color="auto" w:fill="' + F.hex + '"/><w:tcMar><w:top w:w="260" w:type="dxa"/><w:bottom w:w="260" w:type="dxa"/><w:left w:w="320" w:type="dxa"/><w:right w:w="320" w:type="dxa"/></w:tcMar><w:vAlign w:val="' + va + '"/></w:tcPr>' + inner + '</w:tc>';
+    const W1 = "FFFFFF", deel = F.kort.split(" "), getal = /^\d+$/.test(deel[0]) ? deel[0] : "★";
+    const links = p(r("✦  " + F.kick, {b: 1, sz: 16, c: W1, sp: 30}), {after: 80}) + p(r(F.titel, {b: 1, sz: 54, c: W1}), {after: 60}) + p(r(vt("Dagbeschouwing · ", "Daily reflection · ") + cap(longDate2(e.date)), {sz: 21, c: W1}), {after: 0});
+    const rechts = p(r(getal, {b: 1, sz: 72, c: W1}), {jc: "center", after: 0}) + p(r(deel.slice(1).join(" ").replace(/\s*(clean|nuchter)$/i, ""), {b: 1, sz: 20, c: W1}), {jc: "center", after: 0});
+    body += '<w:tbl><w:tblPr><w:tblW w:w="9638" w:type="dxa"/>' + nb + '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="7600"/><w:gridCol w:w="2038"/></w:tblGrid><w:tr>' +
+      tc(7600, links, "center") + tc(2038, rechts, "center") + '</w:tr></w:tbl>' + p("", {after: 200});
+  } else if(withLogo){
     const EMU = 594360;
     const pic = '<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="' + EMU + '" cy="' + EMU + '"/><wp:docPr id="1" name="Logo Mijn dag"/><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="1" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId3"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + EMU + '" cy="' + EMU + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>';
     const nb = '<w:tblBorders>' + ["top","left","bottom","right","insideH","insideV"].map(x => '<w:' + x + ' w:val="nil"/>').join("") + '</w:tblBorders>';
@@ -116,6 +126,11 @@ function documentXml(e, withLogo){
   const none = '<w:tblBorders>' + ["top","left","bottom","right","insideH","insideV"].map(x => '<w:' + x + ' w:val="nil"/>').join("") + '</w:tblBorders>';
   body += '<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/><w:tblCellSpacing w:w="60" w:type="dxa"/>' + none + '<w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="3120"/><w:gridCol w:w="3120"/><w:gridCol w:w="3120"/></w:tblGrid><w:tr>' +
     cell(vt("Naam", "Name"), settings.naam || "") + cell(vt("Dagen nuchter/clean", "Days sober/clean"), d === null ? "" : String(d)) + cell(vt("Datum", "Date"), shortDate(e.date)) + '</w:tr></w:tbl>';
+  if(F){
+    // vak "Vandaag is een bijzondere dag": zacht vlak met een dikke streep links in de kleur van de keytag
+    body += p("", {after: 120}) + '<w:tbl><w:tblPr><w:tblW w:w="9360" w:type="dxa"/><w:tblLayout w:type="fixed"/></w:tblPr><w:tblGrid><w:gridCol w:w="9360"/></w:tblGrid><w:tr><w:tc><w:tcPr><w:tcW w:w="9360" w:type="dxa"/><w:tcBorders><w:top w:val="nil"/><w:right w:val="nil"/><w:bottom w:val="nil"/><w:left w:val="single" w:sz="36" w:space="0" w:color="' + F.hex + '"/></w:tcBorders><w:shd w:val="clear" w:color="auto" w:fill="' + F.softHex + '"/><w:tcMar><w:top w:w="180" w:type="dxa"/><w:bottom w:w="180" w:type="dxa"/><w:left w:w="280" w:type="dxa"/><w:right w:w="280" w:type="dxa"/></w:tcMar></w:tcPr>' +
+      p(r(vt("Vandaag is een bijzondere dag", "Today is a special day"), {b: 1, sz: 25}), {after: 60}) + p(r(F.tekst, {sz: 21}), {after: 0}) + '</w:tc></w:tr></w:tbl>';
+  }
   body += p(r(vt("Bij een dagbeschouwing doe je zelfonderzoek. Je gaat na wat er op de dag goed verlopen is en wat voor verbetering vatbaar is. Wees open en eerlijk.", "In a daily reflection you take a personal inventory. You look at what went well during the day and what could be better. Be open and honest."), {i: 1, sz: 19, c: GRAY}), {before: 240, after: 120});
   // ochtendmoment (alleen als het is ingevuld)
   const ochR = ochtendRegels(e);
@@ -136,12 +151,15 @@ function documentXml(e, withLogo){
   });
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
     '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"><w:body>' + body +
-    '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>';
+    '<w:sectPr><w:footerReference w:type="default" r:id="rId2"/><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/>' +
+    (F ? '<w:pgBorders w:offsetFrom="page">' + ["top", "left", "bottom", "right"].map(x => '<w:' + x + ' w:val="single" w:sz="12" w:space="22" w:color="' + F.randHex + '"/>').join("") + '</w:pgBorders>' : "") +
+    '</w:sectPr></w:body></w:document>';
 }
 function footerXml(e){
   const rr = t => '<w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:t xml:space="preserve">' + xesc(t) + '</w:t></w:r>';
   const fld = '<w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="begin"/></w:r><w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:instrText xml:space="preserve"> PAGE </w:instrText></w:r><w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:t>1</w:t></w:r><w:r><w:rPr><w:color w:val="8A928F"/><w:sz w:val="16"/></w:rPr><w:fldChar w:fldCharType="end"/></w:r>';
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:jc w:val="center"/></w:pPr>' + rr(vt("Mijn dag  ·  Dagbeschouwing ", "My day  ·  Daily reflection ") + shortDate(e.date) + vt("  ·  pagina ", "  ·  page ")) + fld + '</w:p></w:ftr>';
+  const F = typeof dagFeest === "function" ? dagFeest(e) : null;
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p><w:pPr><w:jc w:val="center"/></w:pPr>' + rr(vt("Mijn dag  ·  Dagbeschouwing ", "My day  ·  Daily reflection ") + shortDate(e.date) + (F ? "  ·  " + F.kort : "") + vt("  ·  pagina ", "  ·  page ")) + fld + '</w:p></w:ftr>';
 }
 const DOCX_PARTS = {
   "[Content_Types].xml": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/></Types>',
