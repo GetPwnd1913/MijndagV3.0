@@ -73,71 +73,71 @@ function talkVolgendeKaart(open){
   dr.appendChild(di); c.appendChild(dr);
   // korte samenvatting van de 7 dagen vóór de volgende 1-op-1 (woensdag-gesprek: woensdag t/m dinsdag)
   const [van, tot] = talkPeriode();
+  // mailadres van de begeleider (voor het versturen van de samenvatting)
+  const mr = el("label", "wddatum");
+  mr.appendChild(el("span", null, vt("Mail begeleider", "Support worker's email")));
+  const mi = el("input"); mi.type = "email"; mi.inputMode = "email"; mi.autocomplete = "off"; mi.placeholder = vt("naam@voorbeeld.nl", "name@example.com");
+  mi.value = settings.talkMail || "";
+  mi.onchange = async () => { settings.talkMail = mi.value.trim(); await saveSettingsNow(); };
+  mr.appendChild(mi); c.appendChild(mr);
   const sv = el("button", "ghost wdsamen"); sv.type = "button";
-  sv.appendChild(el("b", null, vt("Samenvatting voor mijn 1-op-1 (PDF)", "Summary for my 1-to-1 (PDF)")));
+  sv.appendChild(el("b", null, vt("Samenvatting maken en versturen (PDF)", "Make and send summary (PDF)")));
   sv.appendChild(el("small", null, dayMonth(van) + " – " + dayMonth(tot)));
-  sv.onclick = async () => {
-    try{ await offerFile(vt("Samenvatting 1-op-1 ", "1-to-1 summary ") + tot + ".pdf", talkSamenvattingPdf(), "application/pdf"); }
-    catch(e){ if(!(e && e.code === "declined")) toast(vt("Het bestand maken lukte niet.", "Could not create the file."), true); }
-  };
+  sv.onclick = () => talkVerstuur();
   c.appendChild(sv);
   return c;
+}
+// samenvatting maken en versturen: op de telefoon via het deelmenu (kies Mail: de PDF zit er dan al in),
+// op de computer wordt de PDF opgeslagen en opent je mail met het adres van je begeleider en een onderwerp.
+async function talkVerstuur(){
+  const [van, tot] = talkPeriode(), naam = (settings.naam || "").trim();
+  const onderwerp = vt("Samenvatting voor mijn 1-op-1", "Summary for my 1-to-1") + (naam ? " - " + naam : "") + " (" + dayMonth(van) + " - " + dayMonth(tot) + ")";
+  const tekst = vt("Hoi,\n\nIn de bijlage staat mijn samenvatting voor onze 1-op-1.\n\nGroet", "Hi,\n\nAttached is my summary for our 1-to-1.\n\nRegards") + (naam ? ",\n" + naam : "");
+  const bestand = vt("Samenvatting 1-op-1 ", "1-to-1 summary ") + tot + ".pdf";
+  let pdf;
+  try{ pdf = talkSamenvattingPdf(); }catch(e){ toast(vt("Het bestand maken lukte niet.", "Could not create the file."), true); return; }
+  const touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  try{
+    const file = new File([pdf], bestand, {type: "application/pdf"});
+    if(touch && !(window.claude && window.claude.use) && navigator.canShare && navigator.share && navigator.canShare({files: [file]})){
+      await navigator.share({files: [file], title: onderwerp, text: tekst});
+    } else {
+      await offerFile(bestand, pdf, "application/pdf");
+      const adres = (settings.talkMail || settings.mail || "").trim();
+      if(!touch){
+        location.href = "mailto:" + encodeURIComponent(adres).replace("%40", "@") + "?subject=" + encodeURIComponent(onderwerp) + "&body=" + encodeURIComponent(tekst);
+        toast(vt("De PDF staat in je Downloads. Voeg hem als bijlage toe aan de mail.", "The PDF is in your Downloads. Add it to the email as an attachment."));
+      }
+    }
+    settings.talkVerstuurd = todayKey();
+    if(typeof renderTalkHerinnering === "function") renderTalkHerinnering();
+    await saveSettingsNow();
+  }catch(e){
+    if(e && (e.name === "AbortError" || e.code === "declined")) return;
+    toast(vt("Versturen lukte niet. Probeer het nog eens.", "Sending did not work. Please try again."), true);
+  }
+}
+// beginscherm: op de dag van je 1-op-1 een herinnering om de samenvatting te maken en te versturen
+function renderTalkHerinnering(){
+  const c = $("talkHerinnering"); if(!c) return;
+  const tk = todayKey(), toon = talkVolgendeDatum() === tk && settings.talkVerstuurd !== tk;
+  c.classList.toggle("hidden", !toon); c.innerHTML = "";
+  if(!toon) return;
+  const kop = el("div", "plankop"); kop.style.cursor = "default";
+  kop.appendChild(icon("calendar", 20)); kop.appendChild(el("div", "qtitle", vt("Vandaag is je 1-op-1", "Your 1-to-1 is today")));
+  c.appendChild(kop);
+  const n = note(vt("Maak je samenvatting van de afgelopen week en stuur hem naar je begeleider.", "Make your summary of the past week and send it to your support worker.")); n.style.marginTop = "4px"; c.appendChild(n);
+  const rij = el("div", "row"); rij.style.cssText = "margin-top:10px;gap:8px;flex-wrap:wrap";
+  const ok = el("button", "primary", vt("Samenvatting versturen", "Send summary")); ok.type = "button"; ok.onclick = () => talkVerstuur();
+  const nee = el("button", "ghost", vt("Niet nodig", "Not needed")); nee.type = "button";
+  nee.onclick = async () => { settings.talkVerstuurd = tk; renderTalkHerinnering(); if(typeof renderMeldingen === "function") renderMeldingen(); await saveSettingsNow(); };
+  rij.appendChild(ok); rij.appendChild(nee); c.appendChild(rij);
 }
 // de 7 dagen tot en met de dag vóór je volgende 1-op-1; zonder datum: de laatste 7 dagen
 function talkPeriode(){
   const nx = talkVolgendeDatum(), tot = nx ? addDaysKey(nx, -1) : todayKey();
   return [addDaysKey(tot, -6), tot];
 }
-function talkSamenvattingPdf(){
-  const [van, tot] = talkPeriode();
-  const map = {}; local.days().forEach(e => { if(e && e.date) map[e.date] = e; });
-  if(typeof entry !== "undefined" && entry && entry.date) map[entry.date] = entry;
-  const dagen = []; for(let k = van; k <= tot; k = addDaysKey(k, 1)) dagen.push(k);
-  const ing = dagen.map(k => map[k]).filter(e => e && hasContent(e));
-  const cijfers = ing.map(patCijfer).filter(x => x != null), gem = patGem(cijfers);
-  const meet = dagen.reduce((s, k) => s + (map[k] ? meetBezoekenVan(map[k]) : 0), 0);
-  const kl = settings.kleuren || {}, kleur = {groen: 0, oranje: 0, rood: 0}; dagen.forEach(k => { if(kleur[kl[k]] != null) kleur[kl[k]]++; });
-  const regels = [];   // [tekst, grootte, vet, ruimte erboven]
-  const kop = t => regels.push(["#" + t, 12.5, true, 16]);
-  const punt = t => regels.push(["- " + t, 10.5, false, 3]);
-  kop(vt("Hoe ging het?", "How did it go?"));
-  punt(vt("Dagbeschouwing ingevuld: " + ing.length + " van de 7 dagen", "Daily reflection filled in: " + ing.length + " of 7 days"));
-  if(gem != null) punt(vt("Gemiddeld cijfer: " + nl1(gem) + " (laagste " + Math.min(...cijfers) + ", hoogste " + Math.max(...cijfers) + ")", "Average score: " + nl1(gem) + " (lowest " + Math.min(...cijfers) + ", highest " + Math.max(...cijfers) + ")"));
-  if(ing.length){
-    punt(vt("Zucht of trek: " + ing.filter(e => hadIt(e, "q5")).length + " dagen", "Cravings: " + ing.filter(e => hadIt(e, "q5")).length + " days"));
-    punt(vt("Triggers: " + ing.filter(e => hadIt(e, "q6")).length + " dagen", "Triggers: " + ing.filter(e => hadIt(e, "q6")).length + " days"));
-  }
-  if(kleur.groen + kleur.oranje + kleur.rood) punt(vt("Stoplicht: " + kleur.groen + "x groen, " + kleur.oranje + "x oranje, " + kleur.rood + "x rood", "Traffic light: " + kleur.groen + "x green, " + kleur.oranje + "x orange, " + kleur.rood + "x red"));
-  punt(vt("Meetings bezocht: " + meet, "Meetings attended: " + meet));
-  const weken = dagen.map(mondayOf).filter((w, i, a) => a.indexOf(w) === i), doelen = [];
-  weken.forEach(w => weekData(w).goals.forEach(g => { if(!doelen.some(x => x.text === g.text)) doelen.push(g); else if(g.done) doelen.find(x => x.text === g.text).done = g.done; }));
-  if(doelen.length){
-    kop(vt("Weekdoelen", "Weekly goals"));
-    doelen.forEach(g => punt((g.done ? vt("[gelukt] ", "[done] ") : vt("[nog open] ", "[still open] ")) + g.text + (g.stuck ? vt(" (loop ik tegenaan: ", " (stuck on: ") + g.stuck.trim() + ")" : "")));
-  }
-  const open = (settings.talk || []).filter(t => !t.done).sort((a, b) => (b.prio ? 1 : 0) - (a.prio ? 1 : 0));
-  kop(vt("Wat ik wil bespreken", "What I want to discuss"));
-  if(open.length) open.forEach(t => punt((t.prio ? vt("(belangrijk) ", "(important) ") : "") + t.text)); else punt(vt("Geen open punten", "No open points"));
-  // opmaak: A4, kop met kleurvlak, daarna de regels
-  const W = 595.28, H = 841.89, M = 56, k = pdfKit(); k.page();
-  k.fill(0, H - 118, W, 118, "e6f1ec");
-  k.txt(cp1252(vt("Samenvatting voor mijn 1-op-1", "Summary for my 1-to-1")), M, H - 62, 20, "F2");
-  k.txt(cp1252(((settings.naam || "").trim() ? settings.naam.trim() + "  ·  " : "") + dayMonth(van) + " – " + dayMonth(tot)), M, H - 86, 11, "F1");
-  let y = H - 140;
-  regels.forEach(([t, sz, vet, voor]) => {
-    const isKop = t.charAt(0) === "#", tekst = isKop ? t.slice(1) : t;
-    y -= voor;
-    wrap(tekst, sz, vet, W - 2 * M - (isKop ? 0 : 12)).forEach((r, i) => {
-      if(y < 50){ k.page(); y = H - 60; }
-      y -= sz * 1.35;
-      k.txt(r, M + (isKop || i === 0 ? 0 : 9), y, sz, vet ? "F2" : "F1");
-    });
-    if(isKop){ y -= 4; k.line(M, y, W - M, y); y -= 2; }
-  });
-  pdfFooter(k, W, M, vt("Mijn dag", "My day"));
-  return pdfAssemble(k.pages, W, H);
-}
-window.__talkPdf = talkSamenvattingPdf;
 // settings.talkDag = 0 (zondag) … 6 (zaterdag) of null; settings.talkNext = een losse datum (gaat voor zolang hij niet voorbij is)
 function talkVasteDag(){ const d = settings.talkDag; return typeof d === "number" && d >= 0 && d <= 6 ? d : null; }
 function talkVolgendeDatum(){

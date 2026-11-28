@@ -223,9 +223,11 @@ function buildRows(q, ta){
   const box = document.createElement("div");
   const chips = [];
   const subs = [];
+  let lees = null;   // meelezen.js: voorstellen uit je eigen tekst
   const refresh = () => {
     chips.forEach(c => c.el.classList.toggle("on", rowSelected(ta.value, q, c.row).some(l => lineIsItem(l, c.item))));
     subs.forEach(f => f());
+    if(lees) lees.teken(refresh);
   };
   (q.rows||[]).forEach(row => {
     const l = document.createElement("div"); l.className = "label"; l.textContent = rowLabel(row); box.appendChild(l);
@@ -291,6 +293,8 @@ function buildRows(q, ta){
     box.appendChild(addBox);
     if(row.sub) box.appendChild(buildSub(q, ta, row, refresh, subs));
   });
+  lees = typeof leesMee === "function" ? leesMee(q, ta) : null;
+  if(lees){ lees.__refresh = refresh; box.insertBefore(lees, box.firstChild); }
   ta.addEventListener("input", refresh);
   refresh();
   return box;
