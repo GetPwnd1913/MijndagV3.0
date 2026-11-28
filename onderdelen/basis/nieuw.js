@@ -4,8 +4,20 @@
 // Verschijnt elke keer, tot je "Niet meer laten zien" aanvinkt: dan staat settings.nieuwGezien = NIEUW_VERSIE.
 // Bij een volgende update met nieuws: NIEUW_VERSIE en NIEUW_ITEMS aanpassen, dan komt het venster weer.
 // Op een nieuw toestel komt eerst de uitleg (uitleg.js); dan niet ook nog dit venster.
-const NIEUW_VERSIE = "2026-11-28";
+const NIEUW_VERSIE = "2026-11-28-2";
 const NIEUW_ITEMS = [
+  {icoon: "pin", kleur: "var(--accent)", naar: "meetings",
+   t: "Meetings bij jou in de buurt", te: "Meetings near you",
+   u: "Vul je plaats of adres in bij Meetings. Dan zie je alle meetings van NA, AA en CA binnen 30 km, met de afstand erbij.",
+   ue: "Enter your town or address under Meetings. You will then see all NA, AA and CA meetings within 30 km, with the distance."},
+  {icoon: "target", kleur: "var(--tv-groen)", naar: "talk",
+   t: "Je weekdoel, mooier en handiger", te: "Your weekly goal, nicer and handier",
+   u: "Zie in één oogopslag hoe je week gaat. Haal een doel en er volgt een klein feestje. Wat vorige week niet lukte, neem je met één tik mee.",
+   ue: "See at a glance how your week is going. Reach a goal and there is a little celebration. What didn't work out last week, you carry over with one tap."},
+  {icoon: "calendar", kleur: "var(--warm)", naar: "talk-punten",
+   t: "Klaar voor je 1-op-1", te: "Ready for your 1-to-1",
+   u: "Zet de datum van je volgende gesprek erin, markeer wat belangrijk is, en maak van een afspraak meteen een weekdoel.",
+   ue: "Add the date of your next talk, mark what is important, and turn an agreement straight into a weekly goal."},
   {icoon: "star", kleur: "var(--tv-groen)", naar: "home",
    t: "Jouw weg door de seizoenen", te: "Your road through the seasons",
    u: "Jouw weg verandert mee met het seizoen, en je volgende keytag loopt langzaam vol met kleur.",
@@ -17,23 +29,11 @@ const NIEUW_ITEMS = [
   {icoon: "gschema", kleur: "var(--accent)", naar: "werkboek",
    t: "Mijn werkboek", te: "My workbook",
    u: "Nieuw in het menu: zes opdrachten zoals je ze in de verslavingszorg meekrijgt. Terugvalpreventieplan, Nee zeggen, G-schema, Beslisbalans, Netwerkkaart en Plezierlijst. Je kunt ze downloaden als Word of PDF.",
-   ue: "New in the menu: six assignments like the ones you get in addiction care. Relapse prevention plan, Saying no, ABC diary, Decision balance, Network map and Fun list. You can download them as Word or PDF."},
-  {icoon: "terugval", kleur: "var(--tv-oranje)", naar: "sos",
-   t: "Waar sta ik nu?", te: "Where am I right now?",
-   u: "In het noodplan kies je groen, oranje of rood. Je ziet meteen hoe je het herkent, wat je moet doen en wie je kunt bellen.",
-   ue: "In the emergency plan you choose green, orange or red. You see straight away how to recognise it, what to do and who to call."},
+   ue: "New in the menu: six assignments like the ones you get in addiction care. Relapse prevention plan, Saying no, ABC diary, Decision balance, Network map and Fun list. You can download them as Word or PDF."},,
   {icoon: "plezier", kleur: "var(--warm)", naar: "sos",
    t: "Pot met mooie momenten", te: "Jar of good moments",
    u: "Schud de pot in je noodplan en lees terug waar je dankbaar en trots op was. Je eigen woorden, van je eigen goede dagen.",
-   ue: "Shake the jar in your emergency plan and read back what you were grateful for and proud of. Your own words, from your own good days."},
-  {icoon: "bell", kleur: "var(--tv-rood)", naar: null,
-   t: "De app denkt mee", te: "The app thinks along",
-   u: "Laat je dagbeschouwing zucht, triggers of een laag cijfer zien? Dan krijg je op het beginscherm een seintje, met een knop naar je plan.",
-   ue: "Does your daily reflection show cravings, triggers or a low score? Then you get a gentle nudge on the home screen, with a button to your plan."},
-  {icoon: "target", kleur: "var(--tv-groen)", naar: "patterns",
-   t: "Waar stond ik?", te: "Where was I?",
-   u: "In Mijn patronen zie je hoe vaak je groen, oranje of rood was, met bolletjes voor de laatste 4 weken.",
-   ue: "In My patterns you see how often you were green, orange or red, with dots for the last 4 weeks."}
+   ue: "Shake the jar in your emergency plan and read back what you were grateful for and proud of. Your own words, from your own good days."},,
 ];
 const nieuwNodig = () => settings.nieuwGezien !== NIEUW_VERSIE;
 async function nieuwNietMeer(){
@@ -57,6 +57,7 @@ function openNieuw(){
     if(vink.checked) nieuwNietMeer();
     back.classList.remove("show"); document.removeEventListener("keydown", onKey);
     setTimeout(() => back.remove(), 200); nieuwOpen = null;
+    if(naar === "talk-punten"){ talkTab = "punten"; naar = "talk"; } else if(naar === "talk") talkTab = "doel";
     if(naar) showView(naar);
     else if(terugFocus && terugFocus.focus) try{ terugFocus.focus({preventScroll: true}); }catch(e){}
   };

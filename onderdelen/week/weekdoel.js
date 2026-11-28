@@ -19,30 +19,80 @@ function updateGoal(wk, id, patch){
 }
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const goalStuckOpen = new Set();
-let reflectOpen = false;
-// één weekdoel als korte regel: afvinken, wissen, en pas op verzoek het vak "loop je ergens tegenaan?"
-function goalRow(wk, g, first){
-  const w = el("div", "goalrow"); if(first) w.style.borderTop = "0";
-  const head = el("div"); head.style.cssText = "display:flex;gap:10px;align-items:flex-start";
-  const lab = el("label", "goalcheck" + (g.done ? " done" : ""));
-  const cb = el("input"); cb.type = "checkbox"; cb.checked = !!g.done;
-  cb.onchange = () => { updateGoal(wk, g.id, {done: cb.checked ? todayKey() : ""}); setTimeout(renderGoals, 300); renderGoalsMini(); saveSettingsNow(); };
-  const tx = el("div", "tx"); tx.appendChild(el("span", "gtext", g.text));
-  if(g.done) tx.appendChild(el("small", "gdone", vt("✓ Gelukt op ", "✓ Done on ") + dayMonth(g.done)));
-  lab.appendChild(cb); lab.appendChild(tx); head.appendChild(lab);
+let reflectOpen = false, goalNetAf = null;
+const WD_KLEUREN = ["var(--accent)", "var(--tv-groen)", "var(--warm)", "var(--tv-oranje)"];
+const WD_VOORBEELDEN = [["Elke dag mijn dagbeschouwing invullen", "Fill in my daily reflection every day"], ["Drie meetings bezoeken", "Go to three meetings"],
+  ["Mijn sponsor twee keer bellen", "Call my sponsor twice"], ["Elke dag 20 minuten wandelen", "Walk 20 minutes every day"],
+  ["Werken aan mijn volgende stap", "Work on my next step"], ["Op tijd naar bed", "Go to bed on time"], ["Iets leuks doen voor mezelf", "Do something nice for myself"]];
+// voortgangsring (af van tot) als svg
+function wdRing(af, tot){
+  const r = 30, omtrek = 2 * Math.PI * r, deel = tot ? af / tot : 0;
+  const s = '<svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="' + r + '" class="wdrb"/>' +
+    '<circle cx="36" cy="36" r="' + r + '" class="wdrf" stroke-dasharray="' + omtrek.toFixed(1) + '" stroke-dashoffset="' + (omtrek * (1 - deel)).toFixed(1) + '"/>' +
+    (tot && af >= tot ? '<path d="M24 37l8 8 16-17" class="wdrv"/>' : '<text x="36" y="42" text-anchor="middle" class="wdrt">' + af + '/' + tot + '</text>') + '</svg>';
+  const w = el("div", "wdring" + (tot && af >= tot ? " vol" : "")); w.innerHTML = s; return w;
+}
+// de weekkaart bovenaan: weeknavigatie, ring, dagen van de week
+function wdWeekKaart(wk, data, isNow, thisWeek){
+  const c = el("div", "card wdheld");
+  const nav = el("div", "wdnav");
+  const pv = el("button", "iconbtn"); pv.appendChild(icon("chevL")); pv.type = "button"; pv.setAttribute("aria-label", vt("Vorige week", "Previous week"));
+  pv.onclick = () => { goalWeek = addDaysKey(wk, -7); reflectOpen = false; renderGoals(); };
+  const nx = el("button", "iconbtn"); nx.appendChild(icon("chevR")); nx.type = "button"; nx.setAttribute("aria-label", vt("Volgende week", "Next week")); nx.disabled = wk >= thisWeek;
+  nx.onclick = () => { if(wk < thisWeek){ goalWeek = addDaysKey(wk, 7); reflectOpen = false; renderGoals(); } };
+  const lab = el("div", "wdnavtx");
+  lab.appendChild(el("b", null, (isNow ? vt("Deze week · ", "This week · ") : "") + vt("week ", "week ") + isoWeek(wk)));
+  lab.appendChild(el("small", null, dayMonth(wk) + " – " + dayMonth(addDaysKey(wk, 6))));
+  nav.appendChild(pv); nav.appendChild(lab); nav.appendChild(nx); c.appendChild(nav);
+  const tot = data.goals.length, af = data.goals.filter(g => g.done).length;
+  const rij = el("div", "wdheldrij");
+  rij.appendChild(wdRing(af, tot));
+  const tx = el("div", "wdheldtx");
+  const dagNr = (parseKey(todayKey()).getDay() + 6) % 7, over = 6 - dagNr;
+  tx.appendChild(el("div", "wdgroot", !tot ? vt("Nog geen doelen", "No goals yet") : af >= tot ? vt("Alles gelukt!", "All done!") : af + vt(" van ", " of ") + tot + vt(" gelukt", " done")));
+  tx.appendChild(el("div", "wdklein", !isNow ? vt("Deze week is voorbij.", "This week is over.") : over === 0 ? vt("Vandaag is de laatste dag van de week.", "Today is the last day of the week.") : vt("Nog " + over + (over === 1 ? " dag" : " dagen") + " deze week.", over + (over === 1 ? " day" : " days") + " left this week.")));
+  rij.appendChild(tx); c.appendChild(rij);
+  // dagen: verleden licht gevuld, vandaag omcirkeld, een vinkje op dagen waarop je een doel haalde
+  const dagen = el("div", "wddagen"), tk = todayKey();
+  for(let i = 0; i < 7; i++){
+    const k = addDaysKey(wk, i), d = el("div", "wddag" + (k < tk ? " voorbij" : "") + (k === tk ? " nu" : ""));
+    d.appendChild(el("small", null, cap(dayName((i + 1) % 7)).slice(0, 2)));
+    const bol = el("span", "wdbol"); if(data.goals.some(g => g.done === k)){ bol.classList.add("af"); bol.appendChild(icon("check", 14)); }
+    d.appendChild(bol); dagen.appendChild(d);
+  }
+  c.appendChild(dagen);
+  return c;
+}
+// één weekdoel als gekleurd kaartje: grote afvinkknop, wissen, en op verzoek "loop je ergens tegenaan?"
+function goalRow(wk, g, i){
+  const w = el("div", "wdkaart" + (g.done ? " done" : "")); w.style.setProperty("--k", WD_KLEUREN[i % WD_KLEUREN.length]);
+  w.dataset.goal = g.id;
+  const vink = el("button", "wdvink" + (g.done ? " af" : "")); vink.type = "button"; vink.appendChild(icon("check", 20));
+  vink.setAttribute("aria-pressed", g.done ? "true" : "false");
+  vink.setAttribute("aria-label", g.done ? vt("Toch nog niet gelukt", "Not done after all") : vt("Gelukt", "Done"));
+  vink.onclick = () => {
+    const nu = !g.done; updateGoal(wk, g.id, {done: nu ? todayKey() : ""});
+    w.classList.toggle("done", nu); vink.classList.toggle("af", nu);
+    if(nu) goalNetAf = g.id;
+    setTimeout(renderGoals, 350); renderGoalsMini(); saveSettingsNow();
+  };
+  w.appendChild(vink);
+  const tx = el("div", "wdtx"); tx.appendChild(el("span", "wdtekst", g.text));
+  if(g.done) tx.appendChild(el("small", "wdok", vt("✓ Gelukt op ", "✓ Done on ") + dayMonth(g.done)));
+  w.appendChild(tx);
   const del = el("button", "xbtn"); del.appendChild(icon("x", 18)); del.type = "button"; del.setAttribute("aria-label", vt("Weekdoel wissen", "Delete weekly goal"));
   del.onclick = async () => {
     if(!(await confirmDialog(vt("Weekdoel wissen?", "Delete weekly goal?"), "“" + g.text + "”" + vt(" wordt gewist, met wat je erbij hebt geschreven.", " will be deleted, along with what you wrote about it."), vt("Wissen", "Delete")))) return;
     const d = JSON.parse(JSON.stringify(weekData(wk))); d.goals = d.goals.filter(x => x.id !== g.id); setWeek(wk, d); renderGoals(); renderGoalsMini(); saveSettingsNow();
   };
-  head.appendChild(del); w.appendChild(head);
+  w.appendChild(del);
   if(g.done && !g.stuck) return w;
+  const onder = el("div", "wdonder");
   if(!goalStuckOpen.has(g.id) && !g.stuck){
-    const lk = el("button", "linkbtn gstuck", vt("Loop je hier ergens tegenaan?", "Stuck on this?")); lk.type = "button";
+    const lk = el("button", "linkbtn", vt("Loop je hier ergens tegenaan?", "Stuck on this?")); lk.type = "button";
     lk.onclick = () => { goalStuckOpen.add(g.id); renderGoals(); const t = document.querySelector('[data-stuck="' + g.id + '"]'); if(t) t.focus(); };
-    w.appendChild(lk); return w;
+    onder.appendChild(lk); w.appendChild(onder); return w;
   }
-  const box = el("div", "gstuckbox");
   const ta = el("textarea"); ta.dataset.stuck = g.id; ta.value = g.stuck || ""; ta.rows = 2;
   ta.setAttribute("aria-label", vt("Waar loop je tegenaan?", "What are you stuck on?"));
   ta.placeholder = vt("Waar loop je tegenaan?", "What are you stuck on?");
@@ -51,22 +101,22 @@ function goalRow(wk, g, first){
     settings.updated = Date.now(); local.set("settings", settings);
     clearTimeout(goalTimer); goalTimer = setTimeout(saveSettingsNow, 900);
   };
-  box.appendChild(ta);
+  onder.appendChild(ta);
   if((settings.talk || []).some(t => t.goal === g.id && !t.done)){
-    box.appendChild(el("div", "note gdone", vt("✓ Staat op je bespreeklijst", "✓ On your talking points")));
+    onder.appendChild(el("div", "wdok", vt("✓ Staat op je bespreeklijst", "✓ On your talking points")));
   } else {
-    const bt = el("button", "linkbtn gstuck", vt("Zet op mijn bespreeklijst", "Add to my talking points")); bt.type = "button";
+    const bt = el("button", "linkbtn", vt("Zet op mijn bespreeklijst", "Add to my talking points")); bt.type = "button";
     bt.onclick = async () => {
       const v = ta.value.trim(); if(!v){ ta.focus(); return; }
       settings.talk = (settings.talk || []).concat([{id: newId(), text: g.text + ": " + v, added: todayKey(), done: "", goal: g.id}]);
-      renderGoals(); await saveSettingsNow();
+      renderGoals(); renderTalkTabs(); await saveSettingsNow();
     };
-    box.appendChild(bt);
+    onder.appendChild(bt);
   }
-  w.appendChild(box);
+  w.appendChild(onder);
   return w;
 }
-const REFLECT_OPTS = [["goed","Goed gelukt","Went well"],["deels","Deels gelukt","Partly"],["niet","Niet gelukt","Didn't work"]];
+const REFLECT_OPTS = [["goed","Goed gelukt","Went well","groen"],["deels","Deels gelukt","Partly","oranje"],["niet","Niet gelukt","Didn't work","rood"]];
 let reflectTimer = null;
 function setReflect(wk, patch){
   const d = JSON.parse(JSON.stringify(weekData(wk)));
@@ -76,18 +126,19 @@ function setReflect(wk, patch){
 function reflectCard(wk, isNow){
   const r = weekData(wk).reflect || {how: "", text: ""};
   const c = el("div", "card");
-  c.appendChild(el("div", "qtitle", vt("Hoe ging mijn weekdoel?", "How did my weekly goal go?")));
+  c.appendChild(el("div", "qtitle", vt("Hoe ging mijn week?", "How did my week go?")));
   const n = note(isNow ? vt("Kijk aan het eind van de week, bijvoorbeeld op zondag, kort terug.", "Look back briefly at the end of the week, for example on Sunday.") : vt("Je terugblik op deze week.", "Your review of this week.")); n.style.marginTop = "2px"; c.appendChild(n);
-  const sc = el("div", "scale");
-  REFLECT_OPTS.forEach(([v, l, len]) => {
-    const b = el("button", null, vt(l, len)); b.type = "button";
-    if(r.how === v) b.classList.add("on");
-    if(v === "niet") b.classList.add("warn");
+  const sc = el("div", "wdkeuzes");
+  REFLECT_OPTS.forEach(([v, l, len, z]) => {
+    const b = el("button", "wdkeus" + (r.how === v ? " on" : "")); b.type = "button"; b.dataset.z = z;
+    b.setAttribute("aria-pressed", r.how === v ? "true" : "false");
+    b.appendChild(el("span", "wdstip")); b.appendChild(el("span", null, vt(l, len)));
     b.onclick = async () => { const cur = (weekData(wk).reflect || {}).how; setReflect(wk, {how: cur === v ? "" : v}); renderGoals(); await saveSettingsNow(); };
     sc.appendChild(b);
   });
   c.appendChild(sc);
   const ta = el("textarea"); ta.value = r.text || "";
+  ta.setAttribute("aria-label", vt("Wat neem je mee naar volgende week?", "What will you take into next week?"));
   ta.placeholder = vt("Wat hielp je, of waar liep je tegenaan? Wat neem je mee naar volgende week?", "What helped you, or what got in the way? What will you take into next week?");
   ta.oninput = () => {
     setReflect(wk, {text: ta.value});
@@ -97,39 +148,52 @@ function reflectCard(wk, isNow){
   c.appendChild(ta);
   return c;
 }
+// doelen van vorige week die niet gelukt zijn en nog niet in deze week staan
+function wdOpenVanVorige(wk){
+  const nu = weekData(wk).goals.map(g => g.text.trim().toLowerCase());
+  return weekData(addDaysKey(wk, -7)).goals.filter(g => !g.done && nu.indexOf(g.text.trim().toLowerCase()) < 0);
+}
+function wdNeemMee(wk, lijst){
+  const d = JSON.parse(JSON.stringify(weekData(wk)));
+  lijst.forEach(g => d.goals.push({id: newId(), text: g.text, done: "", stuck: ""}));
+  setWeek(wk, d); renderGoals(); renderGoalsMini(); saveSettingsNow();
+}
 function renderGoals(){
   const tk = todayKey(), thisWeek = mondayOf(tk);
   if(!goalWeek) goalWeek = thisWeek;
   const wk = goalWeek, data = weekData(wk), isNow = wk === thisWeek;
   const box = $("goalsBox"); box.innerHTML = "";
-  const nav = el("div", "datebar"); nav.style.margin = "0 2px 12px";
-  const pv = el("button", "iconbtn"); pv.appendChild(icon("chevL")); pv.type = "button"; pv.setAttribute("aria-label", vt("Vorige week", "Previous week"));
-  pv.onclick = () => { goalWeek = addDaysKey(wk, -7); reflectOpen = false; renderGoals(); };
-  const nx = el("button", "iconbtn"); nx.appendChild(icon("chevR")); nx.type = "button"; nx.setAttribute("aria-label", vt("Volgende week", "Next week")); nx.disabled = wk >= thisWeek;
-  nx.onclick = () => { if(wk < thisWeek){ goalWeek = addDaysKey(wk, 7); reflectOpen = false; renderGoals(); } };
-  const lab = el("div", "d", (isNow ? vt("Deze week · ", "This week · ") : "") + "week " + isoWeek(wk));
-  const sub = el("div", null, dayMonth(wk) + " – " + dayMonth(addDaysKey(wk, 6))); sub.style.cssText = "font-size:calc(13px*var(--ts));color:var(--muted);font-weight:400";
-  lab.appendChild(sub);
-  nav.appendChild(pv); nav.appendChild(lab); nav.appendChild(nx); box.appendChild(nav);
+  box.appendChild(wdWeekKaart(wk, data, isNow, thisWeek));
 
-  if(!data.goals.length){
-    box.appendChild(emptyState("target", isNow ? vt("Nog geen weekdoel", "No weekly goal yet") : vt("Geen weekdoel in deze week", "No weekly goal this week"), isNow ? vt("Schrijf hieronder op wat je met je begeleider hebt afgesproken.", "Write below what you agreed with your support worker.") : vt("In deze week stond er geen weekdoel.", "There was no weekly goal this week.")));
+  if(!data.goals.length && !isNow){
+    box.appendChild(emptyState("target", vt("Geen weekdoel in deze week", "No weekly goal this week"), vt("In deze week stond er geen weekdoel.", "There was no weekly goal this week.")));
   }
-  if(data.goals.length || wk >= thisWeek){
+  // nog open van vorige week: met één tik meenemen
+  const mee = isNow ? wdOpenVanVorige(wk) : [];
+  if(mee.length){
+    const c = el("div", "card wdmee");
+    c.appendChild(el("div", "qtitle", vt("Nog open van vorige week", "Still open from last week")));
+    const n = note(vt("Wil je hier deze week verder mee?", "Do you want to keep working on these this week?")); n.style.marginTop = "2px"; c.appendChild(n);
+    mee.forEach(g => {
+      const r = el("div", "wdmeerij"); r.appendChild(el("span", null, g.text));
+      const b = el("button", "linkbtn more", vt("Meenemen", "Carry over")); b.type = "button"; b.onclick = () => wdNeemMee(wk, [g]);
+      r.appendChild(b); c.appendChild(r);
+    });
+    if(mee.length > 1){ const b = el("button", "ghost", vt("Alles meenemen", "Carry over all")); b.type = "button"; b.style.marginTop = "10px"; b.onclick = () => wdNeemMee(wk, mee); c.appendChild(b); }
+    box.appendChild(c);
+  }
+  if(data.goals.length || isNow){
     const c = el("div", "card");
-    if(data.goals.length){
-      const kop = el("div"); kop.style.cssText = "display:flex;align-items:baseline;gap:10px;margin-bottom:4px";
-      kop.appendChild(el("div", "qtitle", vt("Mijn weekdoelen", "My weekly goals")));
-      const af = data.goals.filter(g => g.done).length;
-      const cnt = el("div", "note", af + vt(" van ", " of ") + data.goals.length); cnt.style.cssText = "margin:0 0 0 auto;flex:none;font-weight:600"; kop.appendChild(cnt);
-      c.appendChild(kop);
-      data.goals.filter(g => !g.done).concat(data.goals.filter(g => g.done)).forEach((g, i) => c.appendChild(goalRow(wk, g, i === 0)));
-    }
-    if(wk >= thisWeek){
-      const row = el("div"); row.style.cssText = "display:flex;gap:6px;margin-top:" + (data.goals.length ? "12px" : "0");
+    c.appendChild(el("div", "qtitle", vt("Mijn weekdoelen", "My weekly goals")));
+    if(!data.goals.length){ const n = note(vt("Schrijf op wat je met je begeleider hebt afgesproken, of kies hieronder een voorbeeld.", "Write down what you agreed with your support worker, or pick an example below.")); n.style.marginTop = "2px"; c.appendChild(n); }
+    const lijst = el("div", "wdlijst");
+    data.goals.filter(g => !g.done).concat(data.goals.filter(g => g.done)).forEach(g => lijst.appendChild(goalRow(wk, g, data.goals.indexOf(g))));
+    c.appendChild(lijst);
+    if(isNow){
+      const row = el("div", "wdinvoer");
       const inp = el("input", "sosinp"); inp.id = "goalInput"; inp.placeholder = data.goals.length ? vt("Nog een weekdoel…", "Another weekly goal…") : vt("Wat heb je afgesproken?", "What did you agree?");
       inp.setAttribute("aria-label", vt("Weekdoel toevoegen", "Add a weekly goal"));
-      const go = el("button", "primary", vt("Toevoegen", "Add")); go.type = "button"; go.style.cssText = "flex:none;padding:10px 14px";
+      const go = el("button", "primary", vt("Toevoegen", "Add")); go.type = "button";
       const doAdd = () => {
         const v = inp.value.trim(); if(!v){ inp.focus(); return; }
         const d = JSON.parse(JSON.stringify(weekData(wk)));
@@ -138,6 +202,13 @@ function renderGoals(){
       };
       go.onclick = doAdd; inp.onkeydown = e => { if(e.key === "Enter"){ e.preventDefault(); doAdd(); } };
       row.appendChild(inp); row.appendChild(go); c.appendChild(row);
+      const al = data.goals.map(g => g.text);
+      const vb = WD_VOORBEELDEN.map(p => vt(p[0], p[1])).filter(v => al.indexOf(v) < 0).slice(0, data.goals.length ? 4 : 7);
+      if(vb.length){
+        const ch = el("div", "wdchips");
+        vb.forEach(v => { const b = el("button", "chip", "+ " + v); b.type = "button"; b.onclick = () => { inp.value = v; inp.focus(); }; ch.appendChild(b); });
+        c.appendChild(ch);
+      }
     }
     box.appendChild(c);
   }
@@ -152,6 +223,17 @@ function renderGoals(){
     }
   }
   renderTalkTabs();
+  // net gehaald: een klein feestje op het vinkje (en bij het laatste doel ook op de ring)
+  const netAf = goalNetAf; goalNetAf = null;
+  if(netAf && typeof ktShow === "function" && !KT_RUSTIG()){
+    const v = box.querySelector('.wdkaart[data-goal="' + netAf + '"] .wdvink'), ring = box.querySelector(".wdring.vol");
+    try{
+      const show = ktShow();
+      if(v){ const [x, y] = ktMidden(v); show.knal(x, y, ktFeestKleuren(wbxKleurVan("var(--accent)")), 22, 5, ["stip", "ster"]); }
+      if(ring){ const [x, y] = ktMidden(ring); setTimeout(() => show.knal(x, y, ktFeestKleuren(wbxKleurVan("var(--warm)")), 46, 7, ["strook", "stip", "ster"]), 250); }
+      if(navigator.vibrate) navigator.vibrate(20);
+    }catch(e){}
+  }
 }
 // op het beginscherm een rustige regel "Mijn weekdoel · 0 van 2 ›"; tikken klapt de doelen open
 let goalsMiniOpen = false;

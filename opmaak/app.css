@@ -1422,7 +1422,82 @@
   }
 
   /* 1-op-1 & weekdoel: tabbladen en compacte weekdoelregels */
-  .talktabs{margin:4px 0 var(--ruimte-4)}
+  .talktabs{margin:4px 0 var(--ruimte-4);display:grid;grid-template-columns:1fr 1fr;gap:var(--ruimte-2)}
+  /* vernieuwd (een-op-een.js / weekdoel.js): tegels, weekkaart met ring, gekleurde doelkaartjes, voorbeelden */
+  .wdtab{display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:10px 12px;border-radius:var(--hoek-l,18px);border:1px solid var(--gr,var(--line));
+    background:var(--gk,var(--card));color:var(--ink);font:inherit;font-size:var(--fs-tekst);font-weight:650;cursor:pointer;transition:background var(--t-snel,.15s),transform var(--t-snel,.15s)}
+  .wdtab .i{stroke:currentColor;fill:none;stroke-width:2}
+  .wdtab:active{transform:scale(.97)}
+  .wdtab.on{background:var(--accent);border-color:var(--accent);color:var(--op-accent)}
+  .wdtabcnt{font-size:var(--fs-klein);font-weight:700;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,currentColor 16%,transparent)}
+  .wdheld{padding:var(--ruimte-4)}
+  .wdnav{display:flex;align-items:center;gap:8px;margin:-4px -4px 12px}
+  .wdnavtx{flex:1;text-align:center;display:flex;flex-direction:column}
+  .wdnavtx b{font-size:var(--fs-tekst);font-weight:700}
+  .wdnavtx small{font-size:var(--fs-klein);color:var(--muted)}
+  .wdheldrij{display:flex;align-items:center;gap:16px}
+  .wdheldtx{flex:1;min-width:0}
+  .wdgroot{font-family:var(--serif);font-size:var(--fs-kop-m,calc(22px*var(--ts)));font-weight:600;line-height:1.2;color:var(--ink)}
+  .wdklein{font-size:var(--fs-klein);color:var(--muted);margin-top:2px}
+  .wdring{flex:none;width:76px;height:76px}
+  .wdring svg{width:100%;height:100%}
+  .wdring circle{fill:none;stroke-width:7}
+  .wdring .wdrb{stroke:var(--line)}
+  .wdring .wdrf{stroke:var(--accent);stroke-linecap:round;transform:rotate(-90deg);transform-origin:36px 36px;transition:stroke-dashoffset .6s var(--ease,ease)}
+  .wdring .wdrt{font:700 calc(17px*var(--ts)) "Figtree",sans-serif;fill:var(--ink)}
+  .wdring .wdrv{fill:none;stroke:var(--accent);stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+  .wdring.vol .wdrf{stroke:var(--tv-groen)} .wdring.vol .wdrv{stroke:var(--tv-groen)}
+  .wddagen{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:16px}
+  .wddag{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .wddag small{font-size:var(--fs-klein);color:var(--muted);font-weight:600;text-transform:capitalize}
+  .wdbol{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;color:#fff}
+  .wddag.voorbij .wdbol{background:color-mix(in srgb,var(--accent) 18%,transparent);border-color:transparent}
+  .wddag.nu .wdbol{border-color:var(--accent);border-width:3px}
+  .wddag.nu small{color:var(--accent);font-weight:800}
+  .wdbol.af{background:var(--tv-groen);border-color:var(--tv-groen)}
+  .wdbol .i{stroke:currentColor;stroke-width:3.2;fill:none}
+  .wdlijst{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+  .wdlijst:empty{display:none}
+  .wdkaart,.wdpunt{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:start;padding:12px 10px 12px 12px;border-radius:var(--hoek-m,14px);
+    background:color-mix(in srgb,var(--k,var(--accent)) 9%,transparent);border-left:5px solid var(--k,var(--accent));transition:opacity .3s}
+  .wdpunt{--k:var(--line)}
+  .wdpunt.prio{--k:var(--warm)}
+  .wdkaart.done,.wdpunt.done{opacity:.62}
+  .wdkaart.done .wdtekst,.wdpunt.done .wdtekst{text-decoration:line-through}
+  .wdvink{width:38px;height:38px;border-radius:50%;border:2.5px solid var(--k,var(--accent));background:var(--card);color:transparent;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;transition:background .2s,color .2s,transform .3s var(--ease-veer,ease)}
+  .wdpunt .wdvink{--k:var(--accent);width:32px;height:32px}
+  .wdvink .i{stroke:currentColor;stroke-width:3.2;fill:none}
+  .wdvink.af{background:var(--k,var(--accent));color:#fff;transform:scale(1.08)}
+  .wdvink:active{transform:scale(.9)}
+  .wdtx{min-width:0;display:flex;flex-direction:column;gap:3px;padding-top:6px}
+  .wdtekst{font-size:var(--fs-lees);font-weight:600;word-wrap:break-word;color:var(--ink)}
+  .wdtx small{font-size:var(--fs-klein);color:var(--muted)}
+  .wdok{font-size:var(--fs-klein);color:var(--accent);font-weight:600}
+  .wdacties{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:2px}
+  .wdacties .linkbtn{font-size:var(--fs-klein);width:auto;display:inline-flex;align-items:center;margin:0;padding:0;min-height:36px}
+  .wdacties{row-gap:0}
+  .wdacties .linkbtn.aan{color:var(--warm-text,var(--warm));font-weight:700}
+  .wdonder{grid-column:2 / 4;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+  .wdonder .linkbtn{font-size:var(--fs-klein)}
+  .wdonder textarea{width:100%;min-height:0}
+  .wdinvoer{display:flex;gap:6px;margin-top:14px}
+  .wdinvoer .primary{flex:none;padding:10px 14px}
+  .wdchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .wdchips .chip{font-size:var(--fs-klein)}
+  .wdmee .wdmeerij{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}
+  .wdmee .wdmeerij:first-of-type{margin-top:8px}
+  .wdmee .wdmeerij span{flex:1;min-width:0;font-size:var(--fs-lees)}
+  .wdkeuzes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+  .wdkeus{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 6px;border-radius:var(--hoek-m,14px);border:2px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:var(--fs-klein);font-weight:650;cursor:pointer}
+  .wdstip{width:22px;height:22px;border-radius:50%;background:var(--z)}
+  .wdkeus.on{border-color:var(--z);background:color-mix(in srgb,var(--z) 14%,var(--card))}
+  .wdkal{flex:none;width:68px;height:72px;border-radius:16px;background:var(--card);border:2px solid var(--accent);display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--accent);overflow:hidden}
+  .wdkal small{font-size:var(--fs-klein);font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+  .wdkal b{font-family:var(--serif);font-size:calc(30px*var(--ts));line-height:1;color:var(--ink)}
+  .wdkal .i{stroke:currentColor;fill:none;stroke-width:1.8}
+  .wddatum{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:var(--fs-klein);color:var(--muted);font-weight:600}
+  .wddatum input{flex:1;min-width:0;max-width:220px;min-height:44px;padding:8px 12px;border-radius:var(--hoek-m,14px);border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:var(--fs-tekst);color-scheme:light dark}
+  @media (prefers-reduced-motion:reduce){.wdvink,.wdring .wdrf{transition:none}}
   .goalrow{padding:10px 0;border-top:1px solid var(--line)}
   .goalrow .tx{flex:1;min-width:0;font-size:var(--fs-lees);word-wrap:break-word}
   .goalrow .gtext{font-weight:600}
