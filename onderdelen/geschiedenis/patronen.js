@@ -69,6 +69,7 @@ async function renderPatterns(){
   sub.style.cssText = "margin-top:10px;font-size:calc(14px*var(--ts))"; top.appendChild(sub);
   box.appendChild(top);
   { const k = patKleurKaart(van, tk); if(k) box.appendChild(k); }
+  if(typeof patSlaapKaart === "function"){ const k = patSlaapKaart(days); if(k) box.appendChild(k); }   // slaap.js
 
   if(days.length < PAT_MIN){
     box.appendChild(emptyState("target", vt("Nog even volhouden", "Keep going for a bit"),

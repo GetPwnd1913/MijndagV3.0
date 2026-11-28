@@ -594,6 +594,7 @@ function render(){
   renderGreetingWf();
   if(typeof renderJft === "function") try{ renderJft(); }catch(e){}
   const qs = $("questions"); qs.innerHTML="";
+  if(typeof buildSlaapKaart === "function") qs.appendChild(buildSlaapKaart());   // slaap.js: vast blok bovenaan
   const ochKaart = buildOchtendKaart(); if(ochKaart) qs.appendChild(ochKaart);   // alleen op dagen met een ochtendvoornemen
   QUESTIONS.forEach((q,i)=>qs.appendChild(buildQuestion(q,i)));
   // het grote schrijfscherm (vraag 1) bestaat na opnieuw tekenen niet meer: pagina niet laten vastzitten
@@ -660,7 +661,7 @@ function renderStapKop(){
   const k = stapKaarten(), kop = $("stapSeg"); if(!kop) return;
   kop.innerHTML = dbBoog(k, stapNu);   // zonneboog (dag-stijl.js); tik = alle vragen
   const nu = k[stapNu], vraagNr = nu && nu.dataset.q ? QUESTIONS.findIndex(q => q.id === nu.dataset.q) + 1 : 0, st = nu && DB_STIJL[nu.dataset.q];
-  $("stapTeller").textContent = vraagNr ? vt("Vraag " + vraagNr + " van " + QUESTIONS.length, "Question " + vraagNr + " of " + QUESTIONS.length) + (st ? " · " + vt(st.t[0], st.t[1]) : "") : vt("Ochtend", "Morning");
+  $("stapTeller").textContent = vraagNr ? vt("Vraag " + vraagNr + " van " + QUESTIONS.length, "Question " + vraagNr + " of " + QUESTIONS.length) + (st ? " · " + vt(st.t[0], st.t[1]) : "") : nu && nu.classList.contains("slaapkaart") ? vt("Slaap", "Sleep") : vt("Ochtend", "Morning");
   const laatste = stapNu >= k.length - 1;
   $("stapVorige").disabled = stapNu <= 0;
   $("stapVolgende").textContent = laatste ? vt("Afronden", "Finish") : vt("Volgende ›", "Next ›");

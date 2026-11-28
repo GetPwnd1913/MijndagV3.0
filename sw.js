@@ -3,7 +3,7 @@
 // Strategie: eerst netwerk, cache als terugval. Tijdens ontwikkelen zie je zo altijd je laatste wijziging,
 // en zonder internet werkt de app toch met de laatst geladen versie.
 // Verhoog CACHE als je de lijst met bestanden hieronder verandert.
-const CACHE = "mijn-dag-v28-b68898d";
+const CACHE = "mijn-dag-v29-479364d";
 const SHELL = [
   "./",
   "index.html",
@@ -22,6 +22,7 @@ const SHELL = [
   "onderdelen/mijn-dag/dag.js",
   "onderdelen/mijn-dag/weergave.js",
   "onderdelen/mijn-dag/meelezen.js",
+  "onderdelen/mijn-dag/slaap.js",
   "onderdelen/mijn-dag/dag-stijl.js",
   "onderdelen/mijn-dag/ochtend.js",
   "onderdelen/mijn-dag/vandaag.js",

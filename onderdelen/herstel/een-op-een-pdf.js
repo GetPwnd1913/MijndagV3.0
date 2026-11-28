@@ -13,7 +13,9 @@ function talkSamenvattingPdf(){
   const cijfers = ing.map(patCijfer).filter(x => x != null), gem = patGem(cijfers);
   const meet = dagen.reduce((s, k) => s + (map[k] ? meetBezoekenVan(map[k]) : 0), 0);
   const kl = settings.kleuren || {}, slaap = {goed: 0, matig: 0, slecht: 0};
-  dagen.forEach(k => { const s = map[k] && map[k].ochtend && map[k].ochtend.slaap; if(slaap[s] != null) slaap[s]++; });
+  dagen.forEach(k => { const s = map[k] ? slaapKwaliteit(map[k]) : ""; if(slaap[s] != null) slaap[s]++; });
+  const slaapMin = dagen.map(k => map[k] ? slaapMinuten(map[k]) : null).filter(x => x != null), slaapGem = slaapMin.length ? Math.round(slaapMin.reduce((a, b) => a + b, 0) / slaapMin.length) : null;
+  const uurKort = m => Math.floor(m / 60) + ":" + String(m % 60).padStart(2, "0");
   const nx = talkVolgendeDatum();
 
   const W = 595.28, H = 841.89, M = 46, CW = W - 2 * M, BOTTOM = 56;
@@ -99,6 +101,11 @@ function talkSamenvattingPdf(){
       T(vt("Beste dag: ", "Best day: ") + dagKort(hoog.date) + " (" + patCijfer(hoog) + ")   ·   " + vt("Zwaarste dag: ", "Hardest day: ") + dagKort(laag.date) + " (" + patCijfer(laag) + ")", M, y - 10, 9.5, "F1", MUT);
       y -= 18;
     }
+    if(slaapGem != null){
+      const kort = slaapMin.filter(m => m < 360).length;
+      T(vt("Slaap: gemiddeld " + slaapUrenTekst(slaapGem) + " per nacht", "Sleep: on average " + slaapUrenTekst(slaapGem) + " a night") + (kort ? vt(", " + kort + (kort === 1 ? " nacht" : " nachten") + " korter dan 6 uur", ", " + kort + (kort === 1 ? " night" : " nights") + " shorter than 6 hours") : ""), M, y - 10, 9.5, "F1", kort ? ZK.oranje : MUT);
+      y -= 18;
+    }
     if(kleurN.groen + kleurN.oranje + kleurN.rood){
       let x = M; T(vt("Stoplicht:", "Traffic light:"), x, y - 10, 9.5, "F1", MUT); x += 62;
       [["groen", vt("groen", "green")], ["oranje", vt("oranje", "orange")], ["rood", vt("rood", "red")]].forEach(([z, l]) => {
@@ -111,7 +118,7 @@ function talkSamenvattingPdf(){
   // ---- de week in beeld: tabel ----
   sectie(vt("De week in beeld", "The week at a glance"));
   {
-    const kol = [[vt("Dag", "Day"), 92], [vt("Cijfer", "Score"), 52], [vt("Slaap", "Sleep"), 64], [vt("Stoplicht", "Light"), 60], [vt("Trek", "Cravings"), 66], [vt("Triggers", "Triggers"), 62], [vt("Meeting", "Meeting"), 0]];
+    const kol = [[vt("Dag", "Day"), 86], [vt("Cijfer", "Score"), 46], [vt("Slaap", "Sleep"), 92], [vt("Stoplicht", "Light"), 64], [vt("Trek", "Cravings"), 56], [vt("Triggers", "Triggers"), 56], [vt("Meeting", "Meeting"), 0]];
     kol[kol.length - 1][1] = CW - kol.slice(0, -1).reduce((s, k) => s + k[1], 0);
     const rh = 24;
     rrect(M, y - rh, CW, rh, 6, TH.soft);
@@ -125,7 +132,7 @@ function talkSamenvattingPdf(){
       cel((x0) => T(cap(dagKort(k)), x0 + 8, cy - 3.5, 9.5, "F2", leeg ? MUT : INK));
       if(k > todayKey() && leeg){ T(vt("nog niet geweest", "still to come"), x + 8, cy - 3.5, 9, "F3", MUT); y -= rh; return; }
       cel((x0, w) => { const n = e ? patCijfer(e) : null; if(n == null){ T("–", x0 + 8, cy - 3.5, 9.5, "F1", MUT); return; } circle(x0 + 17, cy, 9, scoreKleur(n)); midden(String(n), x0 + 17, cy - 3.3, 9, "F2", WHITE); });
-      cel((x0) => { const s = e && e.ochtend && e.ochtend.slaap; T(s ? cap(och(s)) : "–", x0 + 8, cy - 3.5, 9.5, "F1", s === "slecht" ? ZK.rood : s ? INK : MUT); });
+      cel((x0) => { const s = e ? slaapKwaliteit(e) : "", m = e ? slaapMinuten(e) : null; const t = [s ? cap(och(s)) : "", m != null ? uurKort(m) : ""].filter(Boolean).join("  "); T(t || "–", x0 + 8, cy - 3.5, 9.5, "F1", s === "slecht" || (m != null && m < 360) ? ZK.rood : t ? INK : MUT); });
       cel((x0) => { const z = kl[k]; if(!ZK[z]){ T("–", x0 + 8, cy - 3.5, 9.5, "F1", MUT); return; } circle(x0 + 13, cy, 5.5, ZK[z]); T(vt(z, {groen: "green", oranje: "orange", rood: "red"}[z]), x0 + 23, cy - 3.5, 9, "F1", INK); });
       cel((x0) => { if(!e || !hadIt(e, "q5")){ T(leeg ? "–" : vt("nee", "no"), x0 + 8, cy - 3.5, 9.5, "F1", MUT); return; } const st = patSterkte(e); T(st ? st + "/10" : vt("ja", "yes"), x0 + 8, cy - 3.5, 9.5, "F2", st >= 7 ? ZK.rood : ZK.oranje); });
       cel((x0) => { T(!e || leeg ? "–" : hadIt(e, "q6") ? vt("ja", "yes") : vt("nee", "no"), x0 + 8, cy - 3.5, 9.5, e && hadIt(e, "q6") ? "F2" : "F1", e && hadIt(e, "q6") ? ZK.oranje : MUT); });
@@ -208,7 +215,9 @@ function talkSamenvattingPdf(){
       T(cap(parseKey(e.date).toLocaleDateString(locale(), {weekday: "long", day: "numeric", month: "long"})), M + 12, y - 18.5, 11.5, "F2", INK);
       if(n != null){ circle(M + CW - 18, y - 14, 10, scoreKleur(n)); midden(String(n), M + CW - 18, y - 17.5, 10, "F2", WHITE); T(vt("cijfer", "score"), M + CW - 62, y - 17.5, 8.5, "F1", MUT); }
       y -= 38;
-      const ochR = typeof ochtendRegels === "function" ? ochtendRegels(e) : null;
+      const sr = typeof slaapRegel === "function" ? slaapRegel(e) : "";
+      let ochR = typeof ochtendRegels === "function" ? ochtendRegels(e) : null;
+      if(sr){ ochR = [[vt("Slaap", "Sleep"), sr]].concat((ochR || []).filter(r => r[0] !== vt("Slaap", "Sleep"))); }
       if(ochR){
         ochR.forEach(([k, v]) => wrap(k + ": " + v, 9.5, false, CW - 12).forEach(l => { ruimte(13); txt(l, M + 6, y - 9.5, 9.5, "F1", MUT); y -= 13; }));
         y -= 4;

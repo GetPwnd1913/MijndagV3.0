@@ -62,7 +62,14 @@ function openSummary(e, fromHistory){
 }
 $("summaryBtn").onclick = async () => {
   const open = QUESTIONS.map((q, i) => ({q, i})).filter(o => !isDone(o.q));
-  if(open.length){ showOpenQuestions(open); return; } if(dirty){ clearTimeout(saveTimer); await flush(); }
+  if(open.length){ showOpenQuestions(open); return; }
+  if(typeof slaapKlaar === "function" && slaapVerplicht(curKey) && !slaapKlaar(entry)){   // slaap.js: eerst je slaap invullen
+    toast(vt("Vul eerst bovenaan in hoe je hebt geslapen.", "First fill in at the top how you slept."), true);
+    const k = document.querySelector("#questions .slaapkaart");
+    if(k){ if($("questions").classList.contains("stap")) stapNaarKaart(k); else k.scrollIntoView({block: "center", behavior: "smooth"}); k.classList.remove("trilt"); void k.offsetWidth; k.classList.add("trilt"); }
+    return;
+  }
+  if(dirty){ clearTimeout(saveTimer); await flush(); }
   if(curKey === todayKey()){ try{ localStorage.setItem("dagbeschouwing:wegStap", curKey); }catch(e){} }   // op het beginscherm loopt je bolletje dan een stapje verder (keytags.js: wegMomenten)
   if(curKey === todayKey() && typeof toonDagRond === "function") toonDagRond(() => openSummary(entry, false)); else openSummary(entry, false); };
 $("closeSum").onclick = () => $("overlay").classList.remove("show");

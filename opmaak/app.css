@@ -2067,3 +2067,21 @@
   .leesrij{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
   .leeslabel{flex-basis:100%;font-size:var(--fs-klein);color:var(--muted);font-weight:600}
   .chip.leeschip{border-style:dashed;border-color:var(--accent);color:var(--ink);font-size:var(--fs-klein);min-height:36px;padding:6px 12px}
+
+  /* slaap (slaap.js): vast blok bovenaan de dagbeschouwing */
+  .slaapkaart{border-left:5px solid #7a6cc4}
+  .slaapkaart.done{border-left-color:var(--tv-groen)}
+  .slaapkop{display:flex;gap:12px;align-items:flex-start}
+  .slaapic{flex:none;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,#7a6cc4 18%,transparent);color:#7a6cc4}
+  html[data-donker] .slaapic{color:#b3a8f0}
+  .slaapic svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .slaapkaart.done .slaapic{background:color-mix(in srgb,var(--tv-groen) 18%,transparent);color:var(--tv-groen)}
+  .slaapkop .note{margin:2px 0 0}
+  .slaaptijden{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+  .slaapveld{display:flex;flex-direction:column;gap:4px;font-size:var(--fs-klein);font-weight:600;color:var(--muted)}
+  .slaapveld input{min-height:46px;padding:8px 12px;border-radius:var(--hoek-m,14px);border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:var(--fs-tekst);color-scheme:light dark}
+  .slaapuren{margin-top:8px;font-size:var(--fs-klein);font-weight:700;color:var(--accent);min-height:1em}
+  .slaapscale{margin-top:6px}
+  .card.trilt{animation:trilt .5s}
+  @keyframes trilt{0%,100%{transform:none}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+  @media (prefers-reduced-motion:reduce){.card.trilt{animation:none}}
